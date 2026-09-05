@@ -1,0 +1,272 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color: #f4f5f7;
+    color: #333;
+}
+
+/* Header/Toolbar universal */
+.toolbar, .header-bar {
+    background-color: #7b1fa2;
+    color: white;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+.toolbar h1, .header-bar h1 {
+    font-size: 1.3rem;
+    font-weight: 600;
+}
+
+.btn-back {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.4rem;
+    cursor: pointer;
+}
+
+/* Containers principais */
+.container {
+    max-width: 900px;
+    margin: 20px auto;
+    padding: 0 16px;
+}
+
+/* --- TELA HOME: GRID DE CARDS --- */
+.lottery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 16px;
+}
+
+.lottery-card {
+    background: #ffffff;
+    border-radius: 10px;
+    padding: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.lottery-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.card-header h2 {
+    font-size: 1.1rem;
+}
+
+.badge-conc {
+    font-size: 0.75rem;
+    color: #666;
+    background: #eeeeee;
+    padding: 2px 8px;
+    border-radius: 10px;
+}
+
+.drawn-numbers {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #444;
+    margin: 8px 0;
+    line-height: 1.3;
+}
+
+.badge-accumulated {
+    display: inline-block;
+    background-color: #d32f2f;
+    color: white;
+    font-size: 0.7rem;
+    font-weight: bold;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-bottom: 6px;
+}
+
+.estimate-prize {
+    font-size: 0.8rem;
+    color: #2e7d32;
+    margin: 4px 0;
+}
+
+.premium-card {
+    border-top: 5px solid #ffd700 !important;
+    background: linear-gradient(135deg, #fffdf0 0%, #fff8d6 100%);
+}
+
+.premium-card h2 {
+    color: #b78103;
+}
+
+.premium-sub {
+    font-weight: bold;
+    font-size: 0.85rem;
+    margin-top: 4px;
+}
+
+.premium-desc {
+    font-size: 0.75rem;
+    color: #666;
+}
+
+/* --- TELA INDEX: VOLANTE COMPACTO EM 10 COLUNAS --- */
+.volante-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    max-width: 580px; /* Mantém o card centralizado e compacto */
+    margin: 0 auto;
+}
+
+.volante-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 12px;
+    margin-bottom: 12px;
+}
+
+.mode-selector {
+    display: flex;
+    gap: 12px;
+    font-size: 0.9rem;
+}
+
+.summary-info {
+    font-size: 0.85rem;
+    color: #555;
+    margin-bottom: 16px;
+}
+
+/* Força exatamente 10 colunas (01-10, 11-20, etc.) */
+.numbers-grid {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    gap: 6px;
+    justify-items: center;
+    margin: 16px 0;
+}
+
+/* Bolinha Pequena e Ajustada */
+.num-ball {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1px solid #ccc;
+    background-color: #fafafa;
+    color: #333;
+    font-size: 0.85rem;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.2s, color 0.2s;
+}
+
+.num-ball:hover {
+    border-color: #7b1fa2;
+    background-color: #f0e5f5;
+}
+
+.num-ball.fixed {
+    background-color: #2e7d32;
+    color: white;
+    border-color: #1b5e20;
+}
+
+.num-ball.excluded {
+    background-color: #c62828;
+    color: white;
+    border-color: #b71c1c;
+    text-decoration: line-through;
+}
+
+/* Botões da Tela de Ação */
+.actions-panel {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+}
+
+.btn-primary {
+    background-color: #7b1fa2;
+    color: white;
+    border: none;
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    flex: 1;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    flex: 1;
+}
+
+.btn-premium {
+    background-color: #d4a017;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    width: 100%;
+}
+
+.mt-10 {
+    margin-top: 10px;
+}
+
+/* Lista de Jogos Gerados */
+.games-container {
+    max-width: 580px;
+    margin: 20px auto 0 auto;
+}
+
+.games-container h3 {
+    font-size: 1rem;
+    margin-bottom: 10px;
+}
+
+.game-row {
+    background: white;
+    border-left: 4px solid #7b1fa2;
+    padding: 10px 14px;
+    margin-bottom: 8px;
+    border-radius: 6px;
+    font-weight: bold;
+    font-size: 0.9rem;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
