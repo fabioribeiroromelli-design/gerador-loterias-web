@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogos Salvos</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <header class="header-bar">
+        <button class="btn-back" onclick="window.location.href='home.html'">← Voltar</button>
+        <h1>Jogos Salvos</h1>
+    </header>
+
+    <main class="container" style="max-width: 1000px; margin: 20px auto; padding: 0 15px;">
+        <div style="margin-bottom: 20px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap;">
+            <div>
+                <label for="select_saved_type" style="font-weight: bold;">Escolha a Loteria:</label>
+                <select id="select_saved_type" style="padding: 8px; border-radius: 6px; border: 1px solid #ccc;">
+                    <option value="LOTOFACIL">Lotofácil</option>
+                    <option value="MEGA_SENA">Mega-Sena</option>
+                    <option value="QUINA">Quina</option>
+                    <option value="LOTOMANIA">Lotomania</option>
+                    <option value="TIMEMANIA">Timemania</option>
+                    <option value="DUPLA_SENA">Dupla Sena</option>
+                    <option value="DIA_DE_SORTE">Dia de Sorte</option>
+                    <option value="SUPER_SETE">Super Sete</option>
+                    <option value="MAIS_MILIONARIA">+Milionária</option>
+                </select>
+            </div>
+            <button id="btn_clear_all_saved" style="background: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold;">
+                <i class="fa-solid fa-trash"></i> Apagar Todos desta Loteria
+            </button>
+        </div>
+
+        <div id="saved_games_list"></div>
+    </main>
+
+    <script src="saved_games.js"></script>
+</body>
+</html>
