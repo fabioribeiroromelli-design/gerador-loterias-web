@@ -1,92 +1,105 @@
-const i18nHome = {
-    pt: {
-        title: "Loterias Disponíveis",
-        btnGenerate: "Gerar Jogo",
-        conc: "Concurso",
-        accumulated: "Acumulou!",
-        nextPrize: "Estimativa:",
-        premiumTitle: "💎 Estratégias Premium",
-        premiumSub: "12 estratégias exclusivas",
-        premiumDesc: "Matemática avançada e IA"
-    },
-    en: {
-        title: "Available Lotteries",
-        btnGenerate: "Generate Game",
-        conc: "Draw",
-        accumulated: "Rollover!",
-        nextPrize: "Est. Prize:",
-        premiumTitle: "💎 Premium Strategies",
-        premiumSub: "12 exclusive strategies",
-        premiumDesc: "Advanced math & AI"
-    },
-    es: {
-        title: "Loterías Disponibles",
-        btnGenerate: "Generar Juego",
-        conc: "Sorteo",
-        accumulated: "¡Acumulado!",
-        nextPrize: "Estimación:",
-        premiumTitle: "💎 Estrategias Premium",
-        premiumSub: "12 estrategias exclusivas",
-        premiumDesc: "Matemática avanzada e IA"
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. Injeta os estilos do FontAwesome (ícones)
+    if (!document.getElementById('fa-icons')) {
+        const fontAwesome = document.createElement('link');
+        fontAwesome.id = 'fa-icons';
+        fontAwesome.rel = 'stylesheet';
+        fontAwesome.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css';
+        document.head.appendChild(fontAwesome);
     }
-};
 
-// Dados simulados mantendo o padrão exato da MainActivity do Android
-const lotteryData = [
-    { key: "MEGA_SENA", name: "Mega-Sena", color: "#209869", concurso: "2810", numbers: "05 - 12 - 24 - 33 - 41 - 58", accumulated: true, estimate: "R$ 45.000.000" },
-    { key: "LOTOFACIL", name: "Lotofácil", color: "#930089", concurso: "3100", numbers: "01 - 03 - 05 - 08 - 09 - 10 - 12 - 15...", accumulated: false, estimate: "R$ 1.700.000" },
-    { key: "QUINA", name: "Quina", color: "#261490", concurso: "6450", numbers: "14 - 28 - 39 - 52 - 71", accumulated: true, estimate: "R$ 12.500.000" },
-    { key: "LOTOMANIA", name: "Lotomania", color: "#f78100", concurso: "2620", numbers: "02 - 11 - 18 - 25 - 33 - 42...", accumulated: true, estimate: "R$ 8.000.000" },
-    { key: "TIMEMANIA", name: "Timemania", color: "#00ff80", colorText: "#000", concurso: "2090", numbers: "07 - 19 - 22 - 45 - 61 - 70 - 79", accumulated: false, estimate: "R$ 5.200.000" },
-    { key: "DUPLA_SENA", name: "Dupla Sena", color: "#a61324", concurso: "2665", numbers: "08 - 14 - 27 - 31 - 40 - 49", accumulated: true, estimate: "R$ 3.800.000" },
-    { key: "DIA_DE_SORTE", name: "Dia de Sorte", color: "#cb852b", concurso: "0915", numbers: "03 - 09 - 14 - 18 - 21 - 25 - 30", accumulated: false, estimate: "R$ 1.200.000" },
-    { key: "SUPER_SETE", name: "Super Sete", color: "#a8cf45", colorText: "#000", concurso: "0540", numbers: "3 - 7 - 1 - 9 - 4 - 0 - 8", accumulated: true, estimate: "R$ 2.100.000" },
-    { key: "MAIS_MILIONARIA", name: "+Milionária", color: "#1c325c", concurso: "0145", numbers: "12 - 21 - 34 - 38 - 42 - 47", accumulated: true, estimate: "R$ 185.000.000" },
-    { key: "LOTECA", name: "Loteca", color: "#ca1323", concurso: "1112", numbers: "📋 Ver Placares", accumulated: false, estimate: "R$ 600.000" }
-];
+    // 2. Cria a barra de ações/atalhos direcionando para os arquivos HTML corretos
+    let shortcutsContainer = document.querySelector('.shortcuts-bar');
+    if (!shortcutsContainer) {
+        shortcutsContainer = document.createElement('div');
+        shortcutsContainer.className = 'shortcuts-bar';
+        shortcutsContainer.setAttribute('style', `
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            max-width: 1200px;
+            margin: 15px auto;
+            padding: 0 10px;
+        `);
 
-let currentLang = 'pt';
+        const shortcuts = [
+            { label: 'Gerar Jogos', icon: 'fa-wand-magic-sparkles', url: 'index.html' },
+            { label: 'Jogos Salvos', icon: 'fa-bookmark', url: 'saved_games.html' },
+            { label: 'Downloads', icon: 'fa-download', url: 'downloads.html' },
+            { label: 'Estatísticas', icon: 'fa-chart-pie', url: 'statistics.html' },
+            { label: 'Filtrar Números', icon: 'fa-filter', url: 'filters.html' },
+            { label: 'Sorteio ao Vivo', icon: 'fa-tv', externalUrl: 'https://www.youtube.com/channel/UCPbhr02AfVb2nd5pm12BxTw/live' }
+        ];
 
-window.onload = () => {
-    const txt = i18nHome[currentLang];
-    document.getElementById('home_title').textContent = txt.title;
-    const grid = document.getElementById('lottery_grid');
-    grid.innerHTML = '';
+        shortcuts.forEach(item => {
+            const btn = document.createElement('button');
+            btn.setAttribute('style', `
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                background: #ffffff;
+                border: 1px solid #e0e0e0;
+                border-radius: 8px;
+                padding: 10px 14px;
+                font-weight: 600;
+                color: #444;
+                cursor: pointer;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+                transition: all 0.2s ease;
+            `);
+            btn.innerHTML = `<i class="fa-solid ${item.icon}" style="color: #8e44ad; font-size: 1.1rem;"></i> <span>${item.label}</span>`;
+            
+            btn.addEventListener('mouseover', () => btn.style.background = '#f5f5f5');
+            btn.addEventListener('mouseout', () => btn.style.background = '#ffffff');
+            btn.addEventListener('click', () => {
+                if (item.externalUrl) {
+                    window.open(item.externalUrl, '_blank');
+                } else if (item.url) {
+                    window.location.href = item.url;
+                }
+            });
 
-    // Renderiza cada card de loteria
-    lotteryData.forEach(lottery => {
-        const card = document.createElement('div');
-        card.className = 'lottery-card';
-        card.style.borderTop = `6px solid ${lottery.color}`;
-        
-        card.innerHTML = `
-            <div class="card-header">
-                <h2 style="color: ${lottery.color}">${lottery.name}</h2>
-                <span class="badge-conc">${txt.conc}: ${lottery.concurso}</span>
+            shortcutsContainer.appendChild(btn);
+        });
+
+        document.body.insertBefore(shortcutsContainer, document.body.children[1] || document.body.firstChild);
+    }
+
+    // 3. Renderização dos cards de loterias
+    const lotteries = [
+        { name: 'Mega-Sena', type: 'MEGA_SENA', concurso: '2810', numbers: '05 - 12 - 24 - 33 - 41 - 58', estimativa: 'R$ 45.000.000', acumulo: true, color: '#27ae60' },
+        { name: 'Lotofácil', type: 'LOTOFACIL', concurso: '3100', numbers: '01 - 03 - 05 - 08 - 09 - 10 - 12 - 15...', estimativa: 'R$ 1.700.000', acumulo: false, color: '#9b59b6' },
+        { name: 'Quina', type: 'QUINA', concurso: '6450', numbers: '14 - 28 - 39 - 52 - 71', estimativa: 'R$ 12.500.000', acumulo: true, color: '#2c3e50' },
+        { name: 'Lotomania', type: 'LOTOMANIA', concurso: '2620', numbers: '02 - 11 - 18 - 25 - 33 - 42...', estimativa: 'R$ 8.000.000', acumulo: true, color: '#e67e22' },
+        { name: 'Timemania', type: 'TIMEMANIA', concurso: '2090', numbers: '07 - 19 - 22 - 45 - 61 - 70 - 79', estimativa: 'R$ 5.200.000', acumulo: false, color: '#2ecc71' },
+        { name: 'Dupla Sena', type: 'DUPLA_SENA', concurso: '2665', numbers: '08 - 14 - 27 - 31 - 40 - 49', estimativa: 'R$ 3.800.000', acumulo: true, color: '#a00037' },
+        { name: 'Dia de Sorte', type: 'DIA_DE_SORTE', concurso: '0915', numbers: '03 - 09 - 14 - 18 - 21 - 25 - 30', estimativa: 'R$ 1.200.000', acumulo: false, color: '#d35400' },
+        { name: 'Super Sete', type: 'SUPER_SETE', concurso: '0540', numbers: '3 - 7 - 1 - 9 - 4 - 0 - 8', estimativa: 'R$ 2.100.000', acumulo: true, color: '#a2b700' },
+        { name: '+Milionária', type: 'MAIS_MILIONARIA', concurso: '0145', numbers: '12 - 21 - 34 - 38 - 42 - 47', estimativa: 'R$ 185.000.000', acumulo: true, color: '#1b365d' }
+    ];
+
+    let container = document.querySelector('.main-content, .grid-container, main');
+
+    if (!container || container.tagName === 'BODY') {
+        container = document.createElement('main');
+        document.body.appendChild(container);
+    }
+
+    container.setAttribute('style', 'display: grid !important; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)) !important; gap: 20px !important; padding: 10px 20px 20px 20px !important; max-width: 1200px !important; margin: 0 auto !important;');
+
+    container.innerHTML = lotteries.map(lot => `
+        <div style="background: #fff; border-radius: 12px; border-top: 6px solid ${lot.color}; box-shadow: 0 4px 10px rgba(0,0,0,0.08); padding: 16px; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box;">
+            <div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <h3 style="margin: 0; color: ${lot.color}; font-size: 1.2rem;">${lot.name}</h3>
+                    <span style="font-size: 0.8rem; background: #eee; padding: 2px 6px; border-radius: 4px;">Concurso: ${lot.concurso}</span>
+                </div>
+                <div style="font-size: 0.9rem; font-weight: bold; margin-bottom: 8px; color: #444;">${lot.numbers}</div>
+                ${lot.acumulo ? '<span style="background: #dc3545; color: #fff; font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; font-weight: bold;">Acumulou!</span>' : ''}
+                <div style="font-size: 0.85rem; color: #666; margin-top: 8px;">Estimativa: <strong style="color: ${lot.color};">${lot.estimativa}</strong></div>
             </div>
-            <div class="card-body">
-                <p class="drawn-numbers">${lottery.numbers}</p>
-                ${lottery.accumulated ? `<span class="badge-accumulated">${txt.accumulated}</span>` : ''}
-                <p class="estimate-prize">${txt.nextPrize} <strong>${lottery.estimate}</strong></p>
-            </div>
-            <button class="btn-primary mt-10">${txt.btnGenerate}</button>
-        `;
-
-        card.onclick = () => {
-            window.location.href = `index.html?type=${lottery.key}`;
-        };
-
-        grid.appendChild(card);
-    });
-
-    // Card Especial "Estratégias Premium" (Semelhante ao app Android)
-    const premiumCard = document.createElement('div');
-    premiumCard.className = 'lottery-card premium-card';
-    premiumCard.innerHTML = `
-        <h2>${txt.premiumTitle}</h2>
-        <p class="premium-sub">${txt.premiumSub}</p>
-        <p class="premium-desc">${txt.premiumDesc}</p>
-        <button class="btn-premium mt-10">${txt.btnGenerate}</button>
-    `;
-    grid.appendChild(premiumCard);
-};
+            <button onclick="window.location.href='index.html?type=${lot.type}'" style="margin-top: 15px; background: #8e44ad; color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; width: 100%;">Gerar Jogo</button>
+        </div>
+    `).join('');
+});

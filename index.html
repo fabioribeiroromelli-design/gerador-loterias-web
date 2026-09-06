@@ -5,12 +5,45 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gerador de Jogos - Volante</title>
     <link rel="stylesheet" href="style.css">
+    <!-- Ícones do FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
     <header class="header-bar">
-        <button class="btn-back" onclick="window.location.href='home.html'">←</button>
+        <button class="btn-back" onclick="window.location.href='home.html'">← Voltar</button>
         <h1 id="page_title">Gerador de Jogos</h1>
     </header>
+
+    <!-- Barra de seleção de loterias com ícones -->
+    <nav class="lotteries-bar" style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; padding: 12px; background: #fff; border-bottom: 1px solid #e0e0e0; margin-bottom: 15px;">
+        <button class="btn-lottery" data-type="MEGA_SENA" style="background: #27ae60; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-clover"></i> Mega-Sena
+        </button>
+        <button class="btn-lottery" data-type="LOTOFACIL" style="background: #9b59b6; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-star"></i> Lotofácil
+        </button>
+        <button class="btn-lottery" data-type="QUINA" style="background: #2c3e50; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-gem"></i> Quina
+        </button>
+        <button class="btn-lottery" data-type="LOTOMANIA" style="background: #e67e22; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-circle-dot"></i> Lotomania
+        </button>
+        <button class="btn-lottery" data-type="TIMEMANIA" style="background: #2ecc71; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-shield-halved"></i> Timemania
+        </button>
+        <button class="btn-lottery" data-type="DUPLA_SENA" style="background: #a00037; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-dice-two"></i> Dupla Sena
+        </button>
+        <button class="btn-lottery" data-type="DIA_DE_SORTE" style="background: #d35400; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-calendar-day"></i> Dia de Sorte
+        </button>
+        <button class="btn-lottery" data-type="SUPER_SETE" style="background: #a2b700; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-list-ol"></i> Super Sete
+        </button>
+        <button class="btn-lottery" data-type="MAIS_MILIONARIA" style="background: #1b365d; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-sack-dollar"></i> +Milionária
+        </button>
+    </nav>
 
     <main class="container">
         <div class="volante-card">
@@ -26,11 +59,9 @@
                 Fixos: <strong>Nenhum</strong> | Excluídos: <strong>Nenhum</strong>
             </div>
 
-            <!-- Grade de números/colunas -->
             <div id="numbers_grid" class="numbers-grid"></div>
 
-            <!-- Painel de Configurações e Filtros -->
-            <div class="filters-panel" style="margin: 15px 0; display: flex; flex-wrap: wrap; gap: 10px;">
+            <div class="filters-panel" style="margin: 15px 0; display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
                 <div>
                     <label for="qtd_jogos">Qtd. Jogos:</label>
                     <input type="number" id="qtd_jogos" value="1" min="1" max="50" style="width: 60px; padding: 4px;">
@@ -49,19 +80,27 @@
                 </div>
             </div>
 
-            <div class="actions-panel">
+            <div class="actions-panel" style="display: flex; gap: 8px; flex-wrap: wrap;">
                 <button id="btn_clear" class="btn-secondary">Limpar</button>
                 <button id="btn_generate" class="btn-primary">Gerar Jogo</button>
+                <button id="btn_save" class="btn-secondary" style="background-color: #28a745; color: white;">Salvar</button>
+                <button id="btn_download" class="btn-secondary" style="background-color: #17a2b8; color: white;">Baixar TXT</button>
             </div>
         </div>
 
-        <div class="games-container">
+        <div class="stats-card" style="margin-top: 15px; padding: 12px; background: #f8f9fa; border-radius: 8px; border: 1px solid #ddd;">
+            <h4 style="margin: 0 0 5px 0;">Estatísticas do Volante</h4>
+            <div id="stats_info" style="font-size: 14px; color: #333;">
+                Pares: <strong>0</strong> | Ímpares: <strong>0</strong> | Primos: <strong>0</strong> | Soma: <strong>0</strong>
+            </div>
+        </div>
+
+        <div class="games-container" style="margin-top: 20px;">
             <h3 id="lbl_generated_title">Jogos Gerados</h3>
             <div id="generated_games_list"></div>
         </div>
     </main>
 
-    <!-- Importação dos Scripts -->
     <script src="superSete.js"></script>
     <script src="script.js"></script>
 </body>
