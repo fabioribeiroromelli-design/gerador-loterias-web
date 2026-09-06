@@ -3,90 +3,196 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Baixar Histórico de Resultados</title>
+    <title>Baixar e Exibir Histórico Completo</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        .grid-loterias { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; }
-        .btn-lottery { color: white; border: none; padding: 14px; border-radius: 6px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.95rem; }
-        .status-box { margin-top: 20px; padding: 12px; border-radius: 6px; font-weight: bold; text-align: center; }
+        .grid-loterias { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+        .btn-lottery { color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.9rem; }
+        .status-box { margin-top: 20px; padding: 15px; border-radius: 6px; font-weight: bold; text-align: center; }
+        .progress-bar-container { width: 100%; background-color: #e0e0e0; border-radius: 8px; margin-top: 10px; overflow: hidden; display: none; }
+        .progress-bar { width: 0%; height: 18px; background-color: #27ae60; transition: width 0.2s; }
+        
+        /* Tabela de Histórico no Site */
+        .history-table-container { margin-top: 30px; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); overflow-x: auto; }
+        table.history-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }
+        table.history-table th, table.history-table td { padding: 10px 12px; border-bottom: 1px solid #ddd; }
+        table.history-table th { background-color: #f4f6f9; color: #333; }
+        .ball { display: inline-block; background: #27ae60; color: white; width: 26px; height: 26px; line-height: 26px; border-radius: 50%; text-align: center; font-weight: bold; font-size: 12px; margin-right: 4px; }
     </style>
 </head>
-<body>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f6f9;">
     <header class="header-bar" style="background: #800080; color: white; padding: 15px 20px; display: flex; align-items: center; gap: 15px;">
         <button class="btn-back" onclick="window.location.href='home.html'" style="background: white; color: #800080; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: bold;">← Voltar</button>
-        <h1 style="margin: 0; font-size: 1.5rem;">Baixar Histórico Oficial (9 Loterias)</h1>
+        <h1 style="margin: 0; font-size: 1.5rem;">Histórico de Resultados</h1>
     </header>
 
-    <main class="container" style="max-width: 900px; margin: 30px auto; padding: 0 15px;">
+    <main class="container" style="max-width: 1000px; margin: 30px auto; padding: 0 15px;">
         <div style="background: #ffffff; padding: 25px; border-radius: 8px; border: 1px solid #e0e0e0; box-shadow: 0 2px 6px rgba(0,0,0,0.05);">
-            <h2><i class="fa-solid fa-cloud-arrow-down"></i> Selecione a Loteria para Download</h2>
-            <p style="color: #666; margin-bottom: 20px;">Clique na loteria para salvar o arquivo no computador e atualizar o site:</p>
+            <h2><i class="fa-solid fa-cloud-arrow-down"></i> Baixar Histórico de Resultados</h2>
+            <p style="color: #666; margin-bottom: 15px;">Escolha a quantidade de últimos concursos para buscar e salvar no site:</p>
+            
+            <div style="margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                <label for="limit_concursos"><strong>Qtd. de Concursos:</strong></label>
+                <select id="limit_concursos" style="padding: 8px; border-radius: 6px; border: 1px solid #ccc;">
+                    <option value="10">Últimos 10</option>
+                    <option value="50" selected>Últimos 50</option>
+                    <option value="100">Últimos 100</option>
+                    <option value="500">Últimos 500</option>
+                </select>
+            </div>
 
             <div class="grid-loterias">
-                <button class="btn-lottery" onclick="extrairEBaixar('megasena')" style="background: #209869;"><i class="fa-solid fa-download"></i> Mega-Sena</button>
-                <button class="btn-lottery" onclick="extrairEBaixar('lotofacil')" style="background: #930089;"><i class="fa-solid fa-download"></i> Lotofácil</button>
-                <button class="btn-lottery" onclick="extrairEBaixar('quina')" style="background: #260085;"><i class="fa-solid fa-download"></i> Quina</button>
-                <button class="btn-lottery" onclick="extrairEBaixar('lotomania')" style="background: #f78100;"><i class="fa-solid fa-download"></i> Lotomania</button>
-                <button class="btn-lottery" onclick="extrairEBaixar('timemania')" style="background: #00ff48; color: #222;"><i class="fa-solid fa-download"></i> Timemania</button>
-                <button class="btn-lottery" onclick="extrairEBaixar('duplasena')" style="background: #a61324;"><i class="fa-solid fa-download"></i> Dupla Sena</button>
-                <button class="btn-lottery" onclick="extrairEBaixar('diadesorte')" style="background: #cb831d;"><i class="fa-solid fa-download"></i> Dia de Sorte</button>
-                <button class="btn-lottery" onclick="extrairEBaixar('supersete')" style="background: #a8cf45; color: #222;"><i class="fa-solid fa-download"></i> Super Sete</button>
-                <button class="btn-lottery" onclick="extrairEBaixar('maismilionaria')" style="background: #1b3582;"><i class="fa-solid fa-download"></i> +Milionária</button>
+                <button class="btn-lottery" onclick="baixarHistorico('megasena')" style="background: #209869;"><i class="fa-solid fa-download"></i> Mega-Sena</button>
+                <button class="btn-lottery" onclick="baixarHistorico('lotofacil')" style="background: #930089;"><i class="fa-solid fa-download"></i> Lotofácil</button>
+                <button class="btn-lottery" onclick="baixarHistorico('quina')" style="background: #260085;"><i class="fa-solid fa-download"></i> Quina</button>
+                <button class="btn-lottery" onclick="baixarHistorico('lotomania')" style="background: #f78100;"><i class="fa-solid fa-download"></i> Lotomania</button>
+                <button class="btn-lottery" onclick="baixarHistorico('timemania')" style="background: #00ff48; color: #222;"><i class="fa-solid fa-download"></i> Timemania</button>
+                <button class="btn-lottery" onclick="baixarHistorico('duplasena')" style="background: #a61324;"><i class="fa-solid fa-download"></i> Dupla Sena</button>
+                <button class="btn-lottery" onclick="baixarHistorico('diadesorte')" style="background: #cb831d;"><i class="fa-solid fa-download"></i> Dia de Sorte</button>
+                <button class="btn-lottery" onclick="baixarHistorico('supersete')" style="background: #a8cf45; color: #222;"><i class="fa-solid fa-download"></i> Super Sete</button>
+                <button class="btn-lottery" onclick="baixarHistorico('maismilionaria')" style="background: #1b3582;"><i class="fa-solid fa-download"></i> +Milionária</button>
             </div>
 
             <div id="download_status" class="status-box" style="display: none;"></div>
+            <div id="progress_container" class="progress-bar-container">
+                <div id="progress_bar" class="progress-bar"></div>
+            </div>
+        </div>
+
+        <!-- Tabela de Histórico Exibida no Site -->
+        <div id="history_display" class="history-table-container" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 id="table_title" style="margin: 0;">Histórico Carregado</h3>
+                <button onclick="exportarJSON()" style="background: #34495e; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold;">
+                    <i class="fa-solid fa-file-code"></i> Baixar JSON
+                </button>
+            </div>
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>Concurso</th>
+                        <th>Data</th>
+                        <th>Dezenas Sorteadas</th>
+                        <th>Acumulado</th>
+                    </tr>
+                </thead>
+                <tbody id="table_body"></tbody>
+            </table>
         </div>
     </main>
 
     <script>
-        async function extrairEBaixar(loteria) {
+        let ultimoHistoricoBaixado = [];
+        let nomeLoteriaAtual = '';
+
+        async function baixarHistorico(loteria) {
             const statusEl = document.getElementById('download_status');
+            const progressContainer = document.getElementById('progress_container');
+            const progressBar = document.getElementById('progress_bar');
+            const limit = parseInt(document.getElementById('limit_concursos').value, 10);
+
             statusEl.style.display = 'block';
             statusEl.style.background = '#e8f4fd';
             statusEl.style.color = '#0056b3';
-            statusEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Baixando e salvando no site...';
+            statusEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Consultando concurso mais recente...';
+            
+            progressContainer.style.display = 'block';
+            progressBar.style.width = '0%';
 
             try {
-                const response = await fetch('https://servicebus2.caixa.gov.br/portaldeloterias/api/' + loteria);
-                if (!response.ok) throw new Error('Erro na resposta');
+                // 1. Obtém o número do último concurso
+                const respRecente = await fetch(`https://servicebus2.caixa.gov.br/portaldeloterias/api/${loteria}`);
+                if (!respRecente.ok) throw new Error('Falha ao conectar com a API');
+                const dataRecente = await respRecente.json();
                 
-                const data = await response.json();
+                const ultimoConcursoNum = dataRecente.numero;
+                const concursoInicial = Math.max(1, ultimoConcursoNum - limit + 1);
 
-                const jsonLimpo = {
-                    loteria: data.tipoJogo || loteria,
-                    concurso: data.numero,
-                    dataApuracao: data.dataApuracao,
-                    dezenasSorteadas: data.listaDezenas || data.dezenasSorteadasOrdemSorteio || [],
-                    acumulado: data.acumulado || false,
-                    valorEstimadoProximoConcurso: data.valorEstimadoProximoConcurso || 0,
-                    dataProximoConcurso: data.dataProximoConcurso || ""
-                };
+                statusEl.innerHTML = `<i class="fa-solid fa-sync fa-spin"></i> Baixando históricos do concurso ${concursoInicial} ao ${ultimoConcursoNum}...`;
 
-                // 1. Salva os dados no navegador para o site exibir
-                localStorage.setItem('ultimo_resultado_' + loteria, JSON.stringify(jsonLimpo));
+                const historicoList = [];
+                nomeLoteriaAtual = loteria;
 
-                // 2. Faz o download do arquivo JSON para o seu Bloco de Notas
-                const blob = new Blob([JSON.stringify(jsonLimpo, null, 2)], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = loteria + '_concurso_' + data.numero + '.json';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
+                // 2. Loop para buscar o histórico de concursos
+                for (let num = ultimoConcursoNum; num >= concursoInicial; num--) {
+                    try {
+                        const res = await fetch(`https://servicebus2.caixa.gov.br/portaldeloterias/api/${loteria}/${num}`);
+                        if (res.ok) {
+                            const cData = await res.json();
+                            historicoList.push({
+                                concurso: cData.numero,
+                                dataApuracao: cData.dataApuracao,
+                                dezenas: cData.listaDezenas || cData.dezenasSorteadasOrdemSorteio || [],
+                                acumulado: cData.acumulado || false
+                            });
+                        }
+                    } catch (e) {
+                        console.warn(`Erro no concurso ${num}`, e);
+                    }
+
+                    // Atualiza a barra de progresso
+                    const totalParaBaixar = (ultimoConcursoNum - concursoInicial + 1);
+                    const baixados = historicoList.length;
+                    const percent = Math.round((baixados / totalParaBaixar) * 100);
+                    progressBar.style.width = percent + '%';
+                }
+
+                // 3. Salva no localStorage para uso do site
+                localStorage.setItem(`historico_${loteria}`, JSON.stringify(historicoList));
+                ultimoHistoricoBaixado = historicoList;
 
                 statusEl.style.background = '#d4edda';
                 statusEl.style.color = '#155724';
-                statusEl.innerHTML = '<i class="fa-solid fa-circle-check"></i> Concurso <b>' + data.numero + '</b> baixado e atualizado no site com sucesso!';
+                statusEl.innerHTML = `<i class="fa-solid fa-circle-check"></i> Histórico com ${historicoList.length} concursos atualizado com sucesso no site!`;
+
+                // Renderiza na tabela do site
+                renderizarTabelaHistórico(loteria, historicoList);
 
             } catch (err) {
-                window.open('https://servicebus2.caixa.gov.br/portaldeloterias/api/' + loteria, '_blank');
-                statusEl.style.background = '#fff8e1';
-                statusEl.style.color = '#856404';
-                statusEl.innerHTML = '<i class="fa-solid fa-info-circle"></i> Abrindo dados oficiais na aba ao lado...';
+                statusEl.style.background = '#f8d7da';
+                statusEl.style.color = '#721c24';
+                statusEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Erro ao baixar histórico. Verifique sua conexão ou se a API da Caixa está acessível.';
             }
+        }
+
+        function renderizarTabelaHistórico(loteria, lista) {
+            const container = document.getElementById('history_display');
+            const tbody = document.getElementById('table_body');
+            const title = document.getElementById('table_title');
+
+            title.textContent = `Histórico: ${loteria.toUpperCase()} (${lista.length} concursos)`;
+            tbody.innerHTML = '';
+
+            lista.forEach(item => {
+                const tr = document.createElement('tr');
+                
+                let dezenasHtml = '';
+                if (Array.isArray(item.dezenas)) {
+                    dezenasHtml = item.dezenas.map(d => `<span class="ball">${d}</span>`).join('');
+                }
+
+                tr.innerHTML = `
+                    <td><strong>#${item.concurso}</strong></td>
+                    <td>${item.dataApuracao || '-'}</td>
+                    <td>${dezenasHtml}</td>
+                    <td>${item.acumulado ? '<span style="color: #e74c3c; font-weight: bold;">Sim</span>' : 'Não'}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            container.style.display = 'block';
+        }
+
+        function exportarJSON() {
+            if (!ultimoHistoricoBaixado.length) return;
+            const blob = new Blob([JSON.stringify(ultimoHistoricoBaixado, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `historico_${nomeLoteriaAtual}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
         }
     </script>
 </body>
