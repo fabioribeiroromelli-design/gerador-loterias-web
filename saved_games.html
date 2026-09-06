@@ -6,31 +6,105 @@
     <title>Jogos Salvos</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .lottery-grid-nav {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+        .lottery-card-btn {
+            border: none;
+            padding: 12px 8px;
+            border-radius: 8px;
+            color: #fff;
+            font-weight: bold;
+            font-size: 13px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+        }
+        .lottery-card-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+        }
+        .lottery-card-btn.active {
+            outline: 3px solid #333;
+            transform: scale(1.03);
+        }
+        .game-item-card {
+            background: #fff;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .game-numbers {
+            font-weight: bold;
+            font-size: 16px;
+            color: #2c3e50;
+            letter-spacing: 0.5px;
+        }
+        .game-date {
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+    </style>
 </head>
-<body>
-    <header class="header-bar">
-        <button class="btn-back" onclick="window.location.href='home.html'">← Voltar</button>
-        <h1>Jogos Salvos</h1>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f6f9;">
+
+    <header class="header-bar" style="background: #8e44ad; color: white; padding: 15px 20px; display: flex; align-items: center; gap: 15px;">
+        <button class="btn-back" onclick="window.location.href='home.html'" style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;">← Voltar</button>
+        <h1 style="margin: 0; font-size: 1.5rem;">Jogos Salvos</h1>
     </header>
 
     <main class="container" style="max-width: 1000px; margin: 20px auto; padding: 0 15px;">
-        <div style="margin-bottom: 20px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap;">
-            <div>
-                <label for="select_saved_type" style="font-weight: bold;">Escolha a Loteria:</label>
-                <select id="select_saved_type" style="padding: 8px; border-radius: 6px; border: 1px solid #ccc;">
-                    <option value="LOTOFACIL">Lotofácil</option>
-                    <option value="MEGA_SENA">Mega-Sena</option>
-                    <option value="QUINA">Quina</option>
-                    <option value="LOTOMANIA">Lotomania</option>
-                    <option value="TIMEMANIA">Timemania</option>
-                    <option value="DUPLA_SENA">Dupla Sena</option>
-                    <option value="DIA_DE_SORTE">Dia de Sorte</option>
-                    <option value="SUPER_SETE">Super Sete</option>
-                    <option value="MAIS_MILIONARIA">+Milionária</option>
-                </select>
-            </div>
-            <button id="btn_clear_all_saved" style="background: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold;">
-                <i class="fa-solid fa-trash"></i> Apagar Todos desta Loteria
+        
+        <!-- Cards de seleção de Loterias -->
+        <div class="lottery-grid-nav">
+            <button class="lottery-card-btn active" data-type="MEGA_SENA" style="background: #27ae60;">
+                <i class="fa-solid fa-clover"></i> Mega-Sena
+            </button>
+            <button class="lottery-card-btn" data-type="LOTOFACIL" style="background: #9b59b6;">
+                <i class="fa-solid fa-star"></i> Lotofácil
+            </button>
+            <button class="lottery-card-btn" data-type="QUINA" style="background: #2c3e50;">
+                <i class="fa-solid fa-gem"></i> Quina
+            </button>
+            <button class="lottery-card-btn" data-type="LOTOMANIA" style="background: #e67e22;">
+                <i class="fa-solid fa-circle-dot"></i> Lotomania
+            </button>
+            <button class="lottery-card-btn" data-type="TIMEMANIA" style="background: #2ecc71;">
+                <i class="fa-solid fa-shield-halved"></i> Timemania
+            </button>
+            <button class="lottery-card-btn" data-type="DUPLA_SENA" style="background: #a00037;">
+                <i class="fa-solid fa-dice-two"></i> Dupla Sena
+            </button>
+            <button class="lottery-card-btn" data-type="DIA_DE_SORTE" style="background: #d35400;">
+                <i class="fa-solid fa-calendar-day"></i> Dia de Sorte
+            </button>
+            <button class="lottery-card-btn" data-type="SUPER_SETE" style="background: #a2b700;">
+                <i class="fa-solid fa-table-cells"></i> Super Sete
+            </button>
+            <button class="lottery-card-btn" data-type="MAIS_MILIONARIA" style="background: #1b365d;">
+                <i class="fa-solid fa-sack-dollar"></i> +Milionária
+            </button>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h3 id="selected_title" style="margin: 0; color: #333;">Exibindo: Mega-Sena</h3>
+            <button id="btn_clear_all_saved" style="background: #dc3545; color: white; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: bold;">
+                <i class="fa-solid fa-trash"></i> Apagar Todos
             </button>
         </div>
 

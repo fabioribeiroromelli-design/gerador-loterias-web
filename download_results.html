@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Baixar Histórico de Resultados</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .grid-loterias { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; }
+        .btn-lottery { color: white; border: none; padding: 14px; border-radius: 6px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.95rem; }
+        .status-box { margin-top: 20px; padding: 12px; border-radius: 6px; font-weight: bold; text-align: center; }
+    </style>
+</head>
+<body>
+    <header class="header-bar" style="background: #800080; color: white; padding: 15px 20px; display: flex; align-items: center; gap: 15px;">
+        <button class="btn-back" onclick="window.location.href='home.html'" style="background: white; color: #800080; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: bold;">← Voltar</button>
+        <h1 style="margin: 0; font-size: 1.5rem;">Baixar Histórico Oficial (9 Loterias)</h1>
+    </header>
+
+    <main class="container" style="max-width: 900px; margin: 30px auto; padding: 0 15px;">
+        <div style="background: #ffffff; padding: 25px; border-radius: 8px; border: 1px solid #e0e0e0; box-shadow: 0 2px 6px rgba(0,0,0,0.05);">
+            <h2><i class="fa-solid fa-cloud-arrow-down"></i> Selecione a Loteria para Download</h2>
+            <p style="color: #666; margin-bottom: 20px;">Clique na loteria para salvar o arquivo no computador e atualizar o site:</p>
+
+            <div class="grid-loterias">
+                <button class="btn-lottery" onclick="extrairEBaixar('megasena')" style="background: #209869;"><i class="fa-solid fa-download"></i> Mega-Sena</button>
+                <button class="btn-lottery" onclick="extrairEBaixar('lotofacil')" style="background: #930089;"><i class="fa-solid fa-download"></i> Lotofácil</button>
+                <button class="btn-lottery" onclick="extrairEBaixar('quina')" style="background: #260085;"><i class="fa-solid fa-download"></i> Quina</button>
+                <button class="btn-lottery" onclick="extrairEBaixar('lotomania')" style="background: #f78100;"><i class="fa-solid fa-download"></i> Lotomania</button>
+                <button class="btn-lottery" onclick="extrairEBaixar('timemania')" style="background: #00ff48; color: #222;"><i class="fa-solid fa-download"></i> Timemania</button>
+                <button class="btn-lottery" onclick="extrairEBaixar('duplasena')" style="background: #a61324;"><i class="fa-solid fa-download"></i> Dupla Sena</button>
+                <button class="btn-lottery" onclick="extrairEBaixar('diadesorte')" style="background: #cb831d;"><i class="fa-solid fa-download"></i> Dia de Sorte</button>
+                <button class="btn-lottery" onclick="extrairEBaixar('supersete')" style="background: #a8cf45; color: #222;"><i class="fa-solid fa-download"></i> Super Sete</button>
+                <button class="btn-lottery" onclick="extrairEBaixar('maismilionaria')" style="background: #1b3582;"><i class="fa-solid fa-download"></i> +Milionária</button>
+            </div>
+
+            <div id="download_status" class="status-box" style="display: none;"></div>
+        </div>
+    </main>
+
+    <script>
+        async function extrairEBaixar(loteria) {
+            const statusEl = document.getElementById('download_status');
+            statusEl.style.display = 'block';
+            statusEl.style.background = '#e8f4fd';
+            statusEl.style.color = '#0056b3';
+            statusEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Baixando e salvando no site...';
+
+            try {
+                const response = await fetch('https://servicebus2.caixa.gov.br/portaldeloterias/api/' + loteria);
+                if (!response.ok) throw new Error('Erro na resposta');
+                
+                const data = await response.json();
+
+                const jsonLimpo = {
+                    loteria: data.tipoJogo || loteria,
+                    concurso: data.numero,
+                    dataApuracao: data.dataApuracao,
+                    dezenasSorteadas: data.listaDezenas || data.dezenasSorteadasOrdemSorteio || [],
+                    acumulado: data.acumulado || false,
+                    valorEstimadoProximoConcurso: data.valorEstimadoProximoConcurso || 0,
+                    dataProximoConcurso: data.dataProximoConcurso || ""
+                };
+
+                // 1. Salva os dados no navegador para o site exibir
+                localStorage.setItem('ultimo_resultado_' + loteria, JSON.stringify(jsonLimpo));
+
+                // 2. Faz o download do arquivo JSON para o seu Bloco de Notas
+                const blob = new Blob([JSON.stringify(jsonLimpo, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = loteria + '_concurso_' + data.numero + '.json';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                statusEl.style.background = '#d4edda';
+                statusEl.style.color = '#155724';
+                statusEl.innerHTML = '<i class="fa-solid fa-circle-check"></i> Concurso <b>' + data.numero + '</b> baixado e atualizado no site com sucesso!';
+
+            } catch (err) {
+                window.open('https://servicebus2.caixa.gov.br/portaldeloterias/api/' + loteria, '_blank');
+                statusEl.style.background = '#fff8e1';
+                statusEl.style.color = '#856404';
+                statusEl.innerHTML = '<i class="fa-solid fa-info-circle"></i> Abrindo dados oficiais na aba ao lado...';
+            }
+        }
+    </script>
+</body>
+</html>

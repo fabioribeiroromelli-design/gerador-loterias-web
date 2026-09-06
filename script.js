@@ -1,297 +1,341 @@
-const LOTTERY_CONFIGS = {
-    LOTOFACIL: { totalNumbers: 25, pickCount: 15, cols: 5 },
-    MEGA_SENA: { totalNumbers: 60, pickCount: 6, cols: 10 },
-    QUINA: { totalNumbers: 80, pickCount: 5, cols: 10 },
-    LOTOMANIA: { totalNumbers: 100, pickCount: 50, cols: 10, startZero: true },
-    TIMEMANIA: { totalNumbers: 80, pickCount: 10, cols: 10 },
-    DUPLA_SENA: { totalNumbers: 50, pickCount: 6, cols: 10 },
-    DIA_DE_SORTE: { totalNumbers: 31, pickCount: 7, cols: 7 },
-    MAIS_MILIONARIA: { totalNumbers: 50, pickCount: 6, cols: 10, trevos: true },
-    SUPER_SETE: { totalNumbers: 10, pickCount: 7, cols: 7 }
+const LOTTERIES_CONFIG = {
+    MEGA_SENA: { name: 'Mega-Sena', maxNum: 60, defaultSelect: 6, zeroBased: false },
+    LOTOFACIL: { name: 'Lotofácil', maxNum: 25, defaultSelect: 15, zeroBased: false },
+    QUINA: { name: 'Quina', maxNum: 80, defaultSelect: 5, zeroBased: false },
+    LOTOMANIA: { name: 'Lotomania', maxNum: 100, defaultSelect: 50, zeroBased: true },
+    TIMEMANIA: { name: 'Timemania', maxNum: 80, defaultSelect: 10, zeroBased: false },
+    DUPLA_SENA: { name: 'Dupla Sena', maxNum: 50, defaultSelect: 6, zeroBased: false },
+    DIA_DE_SORTE: { name: 'Dia de Sorte', maxNum: 31, defaultSelect: 7, zeroBased: false },
+    SUPER_SETE: { name: 'Super Sete', isSuperSete: true, columns: 7, rows: 10, defaultSelect: 7 },
+    MAIS_MILIONARIA: { name: '+Milionária', maxNum: 50, defaultSelect: 6, zeroBased: false }
 };
 
-const genericSelectedState = {};
-let lastGeneratedGames = [];
-let currentLotteryType = 'LOTOFACIL';
+let currentLottery = 'MEGA_SENA';
+let selectedMode = 'fixed';
+let fixedNumbers = new Set();
+let excludedNumbers = new Set();
+let generatedGames = [];
 
 document.addEventListener('DOMContentLoaded', () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    currentLotteryType = (urlParams.get('type') || 'LOTOFACIL').toUpperCase();
-
-    // Inicializa a loteria atual
-    initLottery(currentLotteryType);
-
-    // Escuta os cliques na barra de botões das loterias
-    const lotteryButtons = document.querySelectorAll('.btn-lottery');
-    lotteryButtons.forEach(button => {
-        button.addEventListener('click', (e) => {
-            const lotteryType = e.currentTarget.getAttribute('data-type');
-            if (lotteryType) {
-                changeLottery(lotteryType);
-            }
-        });
-    });
-
-    const btnGenerate = document.getElementById('btn_generate');
-    const btnClear = document.getElementById('btn_clear');
-    const btnSave = document.getElementById('btn_save');
-    const btnDownload = document.getElementById('btn_download');
-    const gamesListEl = document.getElementById('generated_games_list');
-
-    btnGenerate.onclick = () => {
-        const config = LOTTERY_CONFIGS[currentLotteryType] || LOTTERY_CONFIGS.LOTOFACIL;
-        const qtdJogos = parseInt(document.getElementById('qtd_jogos')?.value) || 1;
-        const pares = document.getElementById('select_pares')?.value !== "" ? parseInt(document.getElementById('select_pares').value) : null;
-        const impares = document.getElementById('select_impares')?.value !== "" ? parseInt(document.getElementById('select_impares').value) : null;
-        const primos = document.getElementById('select_primos')?.value !== "" ? parseInt(document.getElementById('select_primos').value) : null;
-
-        if (currentLotteryType === 'SUPER_SETE' && typeof generateSuperSeteGames === 'function') {
-            lastGeneratedGames = generateSuperSeteGames(qtdJogos, { pares, impares, primos });
-        } else {
-            lastGeneratedGames = generateGenericGames(config, qtdJogos, { pares, impares, primos });
-        }
-
-        renderGamesOutput(lastGeneratedGames, config, gamesListEl);
-    };
-
-    btnClear.onclick = () => {
-        const config = LOTTERY_CONFIGS[currentLotteryType] || LOTTERY_CONFIGS.LOTOFACIL;
-        if (currentLotteryType === 'SUPER_SETE' && typeof clearSuperSete === 'function') {
-            clearSuperSete('numbers_grid', 'summary-info');
-        } else {
-            clearGenericVolante(config, 'numbers_grid', 'summary-info');
-        }
-        lastGeneratedGames = [];
-        gamesListEl.innerHTML = '';
-        updateStats();
-    };
-
-    btnSave.onclick = () => {
-        if (!lastGeneratedGames.length) {
-            alert('Gere jogos antes de salvar!');
-            return;
-        }
-        const savedKey = `saved_games_${currentLotteryType}`;
-        const existing = JSON.parse(localStorage.getItem(savedKey) || '[]');
-        localStorage.setItem(savedKey, JSON.stringify([...existing, ...lastGeneratedGames]));
-        alert(`${lastGeneratedGames.length} jogo(s) salvo(s) com sucesso!`);
-    };
-
-    btnDownload.onclick = () => {
-        if (!lastGeneratedGames.length) {
-            alert('Gere jogos antes de baixar!');
-            return;
-        }
-        let textContent = `JOGOS GERADOS - ${currentLotteryType}\n\n`;
-        lastGeneratedGames.forEach((g, i) => {
-            if (g.numbers) {
-                textContent += `Jogo ${i + 1}: ${g.numbers.join(' - ')} [Trevos: ${g.trevos.join(' - ')}]\n`;
-            } else {
-                textContent += `Jogo ${i + 1}: ${g.map(n => String(n).padStart(2, '0')).join(' - ')}\n`;
-            }
-        });
-
-        const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `jogos_${currentLotteryType.toLowerCase()}.txt`;
-        link.click();
-    };
+    initEvents();
+    switchLottery(currentLottery);
 });
 
-// Função principal de inicialização/troca da loteria
-function initLottery(lotteryType) {
-    currentLotteryType = lotteryType;
-    const config = LOTTERY_CONFIGS[lotteryType] || LOTTERY_CONFIGS.LOTOFACIL;
-    const pageTitle = document.getElementById('page_title');
-    const gamesListEl = document.getElementById('generated_games_list');
+function initEvents() {
+    document.querySelectorAll('.btn-lottery').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const type = e.currentTarget.getAttribute('data-type');
+            switchLottery(type);
+        });
+    });
 
-    // Reseta o estado dos números e limpa jogos anteriores
-    for (let key in genericSelectedState) delete genericSelectedState[key];
-    lastGeneratedGames = [];
-    if (gamesListEl) gamesListEl.innerHTML = '';
+    document.querySelectorAll('input[name="mode"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            selectedMode = e.target.value;
+        });
+    });
 
-    if (pageTitle) {
-        pageTitle.textContent = lotteryType === 'MAIS_MILIONARIA' ? '+MILIONÁRIA' : lotteryType.replace(/_/g, ' ');
-    }
-
-    if (lotteryType === 'SUPER_SETE') {
-        if (typeof renderSuperSeteVolante === 'function') {
-            renderSuperSeteVolante('numbers_grid', 'summary-info');
-        }
-        populateFilterOptions(7);
-    } else {
-        renderGenericVolante(config, 'numbers_grid', 'summary-info');
-        populateFilterOptions(config.pickCount);
-    }
-
-    updateStats();
+    document.getElementById('btn_clear').addEventListener('click', clearSelections);
+    document.getElementById('btn_generate').addEventListener('click', generateGames);
+    document.getElementById('btn_save').addEventListener('click', saveGames);
+    document.getElementById('btn_download').addEventListener('click', downloadTXT);
 }
 
-// Troca dinamicamente a loteria via JS e atualiza a URL
-function changeLottery(lotteryType) {
-    const newUrl = new URL(window.location.href);
-    newUrl.searchParams.set('type', lotteryType);
-    window.history.pushState({}, '', newUrl);
-    initLottery(lotteryType);
+function switchLottery(type) {
+    if (!LOTTERIES_CONFIG[type]) return;
+    currentLottery = type;
+    const config = LOTTERIES_CONFIG[type];
+
+    document.getElementById('page_title').textContent = `Gerador - ${config.name}`;
+    document.getElementById('volante_title').textContent = `Volante de Seleção (${config.name})`;
+
+    clearSelections();
+    buildGrid();
+    populateFilterSelects();
 }
 
-function renderGenericVolante(config, containerId, statusId) {
-    const container = document.getElementById(containerId);
-    if (!container) return;
+function buildGrid() {
+    const grid = document.getElementById('numbers_grid');
+    grid.innerHTML = '';
+    const config = LOTTERIES_CONFIG[currentLottery];
 
-    container.innerHTML = '';
-    container.style.display = 'grid';
-    container.style.gridTemplateColumns = `repeat(${config.cols}, 1fr)`;
-    container.style.gap = '6px';
+    // Trata o visual específico do Super Sete (7 Colunas de 0 a 9)
+    if (config.isSuperSete) {
+        grid.style.display = 'grid';
+        grid.style.gridTemplateColumns = 'repeat(7, 1fr)';
+        grid.style.gap = '10px';
 
-    const startNum = config.startZero ? 0 : 1;
-    const endNum = config.startZero ? config.totalNumbers - 1 : config.totalNumbers;
+        for (let col = 1; col <= 7; col++) {
+            const colContainer = document.createElement('div');
+            colContainer.setAttribute('style', 'display: flex; flex-direction: column; align-items: center; background: #f8f9fa; padding: 6px; border-radius: 6px; border: 1px solid #ddd;');
+            colContainer.innerHTML = `<span style="font-weight: bold; margin-bottom: 6px; font-size: 12px;">Col. ${col}</span>`;
 
-    for (let i = startNum; i <= endNum; i++) {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.textContent = String(i).padStart(2, '0');
-        btn.className = 'num-ball';
+            for (let row = 0; row <= 9; row++) {
+                const itemKey = `C${col}_${row}`;
+                const btn = document.createElement('button');
+                btn.textContent = row;
+                btn.setAttribute('style', 'width: 100%; padding: 6px 0; margin: 2px 0; border: 1px solid #ccc; background: #fff; border-radius: 4px; font-weight: bold; cursor: pointer;');
 
-        const currentState = genericSelectedState[i];
-        if (currentState === 'fixed') btn.classList.add('fixed');
-        if (currentState === 'excluded') btn.classList.add('excluded');
-
-        btn.onclick = () => toggleGenericNum(i, btn, statusId);
-        container.appendChild(btn);
-    }
-
-    updateGenericStatus(statusId);
-}
-
-function toggleGenericNum(num, btnElement, statusId) {
-    const selectedMode = document.querySelector('input[name="mode"]:checked')?.value || 'fixed';
-    const currentState = genericSelectedState[num];
-
-    if (currentState === selectedMode) {
-        delete genericSelectedState[num];
-        btnElement.classList.remove('fixed', 'excluded');
-    } else {
-        genericSelectedState[num] = selectedMode;
-        btnElement.classList.remove('fixed', 'excluded');
-        btnElement.classList.add(selectedMode);
-    }
-
-    updateGenericStatus(statusId);
-    updateStats();
-}
-
-function updateGenericStatus(statusId) {
-    const fixedList = Object.keys(genericSelectedState).filter(n => genericSelectedState[n] === 'fixed').map(Number);
-    const excludedList = Object.keys(genericSelectedState).filter(n => genericSelectedState[n] === 'excluded').map(Number);
-
-    const statusEl = document.getElementById(statusId);
-    if (statusEl) {
-        const fixedText = fixedList.length ? fixedList.map(n => String(n).padStart(2, '0')).join(', ') : 'Nenhum';
-        const excludedText = excludedList.length ? excludedList.map(n => String(n).padStart(2, '0')).join(', ') : 'Nenhum';
-        statusEl.innerHTML = `Fixos: <strong>${fixedText}</strong> | Excluídos: <strong>${excludedText}</strong>`;
-    }
-}
-
-function updateStats() {
-    const fixedNums = Object.keys(genericSelectedState).filter(n => genericSelectedState[n] === 'fixed').map(Number);
-    const statsEl = document.getElementById('stats_info');
-    if (!statsEl) return;
-
-    const pares = fixedNums.filter(n => n % 2 === 0).length;
-    const impares = fixedNums.filter(n => n % 2 !== 0).length;
-    const primos = fixedNums.filter(n => isPrimeNumber(n)).length;
-    const soma = fixedNums.reduce((a, b) => a + b, 0);
-
-    statsEl.innerHTML = `Pares: <strong>${pares}</strong> | Ímpares: <strong>${impares}</strong> | Primos: <strong>${primos}</strong> | Soma: <strong>${soma}</strong>`;
-}
-
-function clearGenericVolante(config, containerId, statusId) {
-    for (let key in genericSelectedState) delete genericSelectedState[key];
-    renderGenericVolante(config, containerId, statusId);
-}
-
-function generateGenericGames(config, qtdGames, filters = {}) {
-    const { pares, impares, primos } = filters;
-    const games = [];
-    let attempts = 0;
-
-    const fixedNums = Object.keys(genericSelectedState).filter(n => genericSelectedState[n] === 'fixed').map(Number);
-    const excludedNums = Object.keys(genericSelectedState).filter(n => genericSelectedState[n] === 'excluded').map(Number);
-
-    const startNum = config.startZero ? 0 : 1;
-    const endNum = config.startZero ? config.totalNumbers - 1 : config.totalNumbers;
-
-    const pool = [];
-    for (let i = startNum; i <= endNum; i++) {
-        if (!fixedNums.includes(i) && !excludedNums.includes(i)) pool.push(i);
-    }
-
-    const neededToPick = config.pickCount - fixedNums.length;
-    if (neededToPick < 0 || pool.length < neededToPick) return [];
-
-    while (games.length < qtdGames && attempts < 5000) {
-        attempts++;
-        const shuffled = [...pool].sort(() => Math.random() - 0.5);
-        const randomPicked = shuffled.slice(0, neededToPick);
-        const currentGame = [...fixedNums, ...randomPicked].sort((a, b) => a - b);
-
-        if (validateGenericFilters(currentGame, pares, impares, primos)) {
-            if (config.trevos) {
-                const trevosPool = [1, 2, 3, 4, 5, 6].sort(() => Math.random() - 0.5);
-                games.push({ numbers: currentGame, trevos: trevosPool.slice(0, 2).sort((a, b) => a - b) });
-            } else {
-                games.push(currentGame);
+                btn.addEventListener('click', () => toggleNumber(itemKey, btn));
+                colContainer.appendChild(btn);
             }
+            grid.appendChild(colContainer);
+        }
+        return;
+    }
+
+    // Grid Padrão para as demais loterias
+    grid.style.display = 'grid';
+    grid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(42px, 1fr))';
+    grid.style.gap = '8px';
+
+    const start = config.zeroBased ? 0 : 1;
+    const end = config.zeroBased ? config.maxNum - 1 : config.maxNum;
+
+    for (let i = start; i <= end; i++) {
+        const numStr = String(i).padStart(2, '0');
+        const btn = document.createElement('button');
+        btn.textContent = numStr;
+        btn.setAttribute('style', 'padding: 10px 0; border: 1px solid #ccc; background: #fff; border-radius: 6px; font-weight: bold; cursor: pointer;');
+
+        btn.addEventListener('click', () => toggleNumber(i, btn));
+        grid.appendChild(btn);
+    }
+}
+
+function toggleNumber(val, btn) {
+    if (selectedMode === 'fixed') {
+        if (fixedNumbers.has(val)) {
+            fixedNumbers.delete(val);
+            btn.style.background = '#fff';
+            btn.style.color = '#000';
+        } else {
+            excludedNumbers.delete(val);
+            fixedNumbers.add(val);
+            btn.style.background = '#28a745';
+            btn.style.color = '#fff';
+        }
+    } else {
+        if (excludedNumbers.has(val)) {
+            excludedNumbers.delete(val);
+            btn.style.background = '#fff';
+            btn.style.color = '#000';
+        } else {
+            fixedNumbers.delete(val);
+            excludedNumbers.add(val);
+            btn.style.background = '#dc3545';
+            btn.style.color = '#fff';
         }
     }
-    return games;
+    updateSummary();
 }
 
-function validateGenericFilters(numbers, pares, impares, primos) {
-    if (pares !== null && numbers.filter(n => n % 2 === 0).length !== pares) return false;
-    if (impares !== null && numbers.filter(n => n % 2 !== 0).length !== impares) return false;
-    if (primos !== null && numbers.filter(n => isPrimeNumber(n)).length !== primos) return false;
-    return true;
+function updateSummary() {
+    const config = LOTTERIES_CONFIG[currentLottery];
+
+    if (config.isSuperSete) {
+        const fixos = Array.from(fixedNumbers).join(', ') || 'Nenhum';
+        const excl = Array.from(excludedNumbers).join(', ') || 'Nenhum';
+        document.getElementById('summary-info').innerHTML = `
+            Fixos: <strong style="color: #28a745;">${fixos}</strong> | 
+            Excluídos: <strong style="color: #dc3545;">${excl}</strong>
+        `;
+        return;
+    }
+
+    const fixos = Array.from(fixedNumbers).sort((a,b)=>a-b).map(n => String(n).padStart(2, '0')).join(', ') || 'Nenhum';
+    const excl = Array.from(excludedNumbers).sort((a,b)=>a-b).map(n => String(n).padStart(2, '0')).join(', ') || 'Nenhum';
+
+    document.getElementById('summary-info').innerHTML = `
+        Fixos: <strong style="color: #28a745;">${fixos}</strong> | 
+        Excluídos: <strong style="color: #dc3545;">${excl}</strong>
+    `;
+
+    updateStats(Array.from(fixedNumbers));
 }
 
-function isPrimeNumber(n) {
-    if (n <= 1) return false;
-    for (let i = 2; i <= Math.sqrt(n); i++) {
-        if (n % i === 0) return false;
+function updateStats(numbers) {
+    if (numbers.length === 0 || typeof numbers[0] === 'string') {
+        document.getElementById('stats_info').innerHTML = 'Pares: <strong>0</strong> | Ímpares: <strong>0</strong> | Primos: <strong>0</strong> | Soma: <strong>0</strong>';
+        return;
+    }
+    const pares = numbers.filter(n => n % 2 === 0).length;
+    const impares = numbers.filter(n => n % 2 !== 0).length;
+    const primos = numbers.filter(isPrime).length;
+    const soma = numbers.reduce((acc, curr) => acc + curr, 0);
+
+    document.getElementById('stats_info').innerHTML = `
+        Pares: <strong>${pares}</strong> | 
+        Ímpares: <strong>${impares}</strong> | 
+        Primos: <strong>${primos}</strong> | 
+        Soma: <strong>${soma}</strong>
+    `;
+}
+
+function isPrime(num) {
+    if (num <= 1) return false;
+    for (let i = 2; i <= Math.sqrt(num); i++) {
+        if (num % i === 0) return false;
     }
     return true;
 }
 
-function populateFilterOptions(maxOption) {
+function clearSelections() {
+    fixedNumbers.clear();
+    excludedNumbers.clear();
+    generatedGames = [];
+    document.getElementById('generated_games_list').innerHTML = '';
+    buildGrid();
+    updateSummary();
+}
+
+function populateFilterSelects() {
+    const config = LOTTERIES_CONFIG[currentLottery];
+    const max = config.defaultSelect;
+
     ['select_pares', 'select_impares', 'select_primos'].forEach(id => {
-        const el = document.getElementById(id);
-        if (!el) return;
-        el.innerHTML = '<option value="">Todos</option>';
-        for (let i = 0; i <= maxOption; i++) {
-            const opt = document.createElement('option');
-            opt.value = i;
-            opt.textContent = i;
-            el.appendChild(opt);
+        const select = document.getElementById(id);
+        select.innerHTML = '<option value="">Todos</option>';
+        for (let i = 0; i <= max; i++) {
+            select.innerHTML += `<option value="${i}">${i}</option>`;
         }
     });
 }
 
-function renderGamesOutput(generatedGames, config, gamesListEl) {
-    if (generatedGames.length > 0) {
-        gamesListEl.innerHTML = generatedGames
-            .map((gameData, index) => {
-                if (config.trevos && gameData.numbers) {
-                    const numbers = gameData.numbers.map(n => String(n).padStart(2, '0')).join(' - ');
-                    const trevos = gameData.trevos.map(t => String(t).padStart(2, '0')).join(' - ');
-                    return `<div class="game-row" style="margin: 5px 0; padding: 8px; background: #fff; border: 1px solid #ddd; border-radius: 4px;"><strong>Jogo ${index + 1}:</strong> ${numbers} <span style="color: #28a745; font-weight: bold;">[Trevos: ${trevos}]</span></div>`;
+function generateGames() {
+    const config = LOTTERIES_CONFIG[currentLottery];
+    const qtdGames = parseInt(document.getElementById('qtd_jogos').value) || 1;
+    generatedGames = [];
+
+    // Geração Especial para o Super Sete (1 número sorteado por coluna)
+    if (config.isSuperSete) {
+        for (let g = 0; g < qtdGames; g++) {
+            let gameCols = [];
+            for (let col = 1; col <= 7; col++) {
+                let fixedInCol = Array.from(fixedNumbers)
+                    .filter(k => k.startsWith(`C${col}_`))
+                    .map(k => parseInt(k.split('_')[1]));
+
+                if (fixedInCol.length > 0) {
+                    gameCols.push(fixedInCol[Math.floor(Math.random() * fixedInCol.length)]);
+                } else {
+                    let available = [];
+                    for (let r = 0; r <= 9; r++) {
+                        if (!excludedNumbers.has(`C${col}_${r}`)) available.push(r);
+                    }
+                    if (available.length === 0) available = [0,1,2,3,4,5,6,7,8,9];
+                    gameCols.push(available[Math.floor(Math.random() * available.length)]);
                 }
-                const numbers = gameData.map(n => String(n).padStart(2, '0')).join(' - ');
-                return `<div class="game-row" style="margin: 5px 0; padding: 8px; background: #fff; border: 1px solid #ddd; border-radius: 4px;"><strong>Jogo ${index + 1}:</strong> ${numbers}</div>`;
-            })
-            .join('');
-    } else {
-        gamesListEl.innerHTML = '<div class="game-row" style="color: red; margin-top: 10px;">Nenhum jogo gerado. Altere os filtros.</div>';
+            }
+            generatedGames.push(gameCols);
+        }
+        renderGeneratedGames();
+        return;
     }
+
+    // Geração Padrão para as demais Loterias
+    const reqPares = document.getElementById('select_pares').value;
+    const reqImpares = document.getElementById('select_impares').value;
+    const reqPrimos = document.getElementById('select_primos').value;
+
+    const pool = [];
+    const start = config.zeroBased ? 0 : 1;
+    const end = config.zeroBased ? config.maxNum - 1 : config.maxNum;
+
+    for (let i = start; i <= end; i++) {
+        if (!fixedNumbers.has(i) && !excludedNumbers.has(i)) pool.push(i);
+    }
+
+    let tentativas = 0;
+
+    while (generatedGames.length < qtdGames && tentativas < 2000) {
+        tentativas++;
+        let game = [...Array.from(fixedNumbers)];
+        let tempPool = [...pool].sort(() => Math.random() - 0.5);
+
+        while (game.length < config.defaultSelect && tempPool.length > 0) {
+            game.push(tempPool.pop());
+        }
+
+        game.sort((a, b) => a - b);
+
+        const pares = game.filter(n => n % 2 === 0).length;
+        const impares = game.filter(n => n % 2 !== 0).length;
+        const primos = game.filter(isPrime).length;
+
+        if (reqPares !== "" && pares !== parseInt(reqPares)) continue;
+        if (reqImpares !== "" && impares !== parseInt(reqImpares)) continue;
+        if (reqPrimos !== "" && primos !== parseInt(reqPrimos)) continue;
+
+        const gameKey = game.join('-');
+        if (!generatedGames.some(g => g.join('-') === gameKey)) {
+            generatedGames.push(game);
+        }
+    }
+
+    renderGeneratedGames();
+}
+
+function renderGeneratedGames() {
+    const container = document.getElementById('generated_games_list');
+    container.innerHTML = '';
+
+    if (generatedGames.length === 0) {
+        container.innerHTML = '<p style="color: #666;">Nenhum jogo gerado com esses filtros.</p>';
+        return;
+    }
+
+    const config = LOTTERIES_CONFIG[currentLottery];
+
+    generatedGames.forEach((game, index) => {
+        let gameStr = "";
+        if (config.isSuperSete) {
+            gameStr = game.map((val, idx) => `[C${idx+1}: ${val}]`).join(' ');
+        } else {
+            gameStr = game.map(n => String(n).padStart(2, '0')).join(' - ');
+        }
+
+        const card = document.createElement('div');
+        card.setAttribute('style', 'background: #fff; border-left: 5px solid #8e44ad; padding: 10px; margin-bottom: 8px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); font-weight: bold;');
+        card.innerHTML = `Jogo ${index + 1}: <span style="color: #2c3e50;">${gameStr}</span>`;
+        container.appendChild(card);
+    });
+}
+
+function saveGames() {
+    if (generatedGames.length === 0) {
+        alert("Gere pelo menos um jogo antes de salvar!");
+        return;
+    }
+    const saved = JSON.parse(localStorage.getItem('saved_games_list') || '[]');
+    generatedGames.forEach(game => {
+        saved.push({
+            loteria: currentLottery,
+            data: new Date().toLocaleDateString('pt-BR'),
+            numeros: game
+        });
+    });
+    localStorage.setItem('saved_games_list', JSON.stringify(saved));
+    alert(`${generatedGames.length} jogo(s) salvo(s) com sucesso!`);
+}
+
+function downloadTXT() {
+    if (generatedGames.length === 0) {
+        alert("Gere pelo menos um jogo antes de baixar!");
+        return;
+    }
+    const config = LOTTERIES_CONFIG[currentLottery];
+    let content = `=== JOGOS GERADOS (${config.name}) ===\n\n`;
+    generatedGames.forEach((game, i) => {
+        let gameStr = config.isSuperSete 
+            ? game.map((val, idx) => `[C${idx+1}: ${val}]`).join(' ')
+            : game.map(n => String(n).padStart(2, '0')).join(' - ');
+        content += `Jogo ${i + 1}: ${gameStr}\n`;
+    });
+
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `jogos_${currentLottery.toLowerCase()}.txt`;
+    a.click();
 }

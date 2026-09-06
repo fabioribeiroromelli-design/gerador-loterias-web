@@ -5,13 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gerador de Jogos - Loterias</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <header class="toolbar">
-        <h1 id="home_title">Loterias Disponíveis</h1>
+    <header class="toolbar" style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: #800080; color: white;">
+        <h1 id="home_title" style="margin: 0;">Loterias Disponíveis</h1>
+        <div style="display: flex; gap: 10px;">
+            <button onclick="window.location.href='saved_games.html'" style="background: #28a745; color: white; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 6px;">
+                <i class="fa-solid fa-bookmark"></i> Jogos Salvos
+            </button>
+            <button onclick="window.location.href='download_results.html'" style="background: #17a2b8; color: white; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 6px;">
+                <i class="fa-solid fa-cloud-arrow-down"></i> Baixar Histórico
+            </button>
+        </div>
     </header>
 
-    <main class="container">
+    <main class="container" style="max-width: 1200px; margin: 20px auto; padding: 0 15px;">
         <div id="lottery_grid" class="lottery-grid"></div>
     </main>
 

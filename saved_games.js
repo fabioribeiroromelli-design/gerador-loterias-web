@@ -1,90 +1,111 @@
+let currentFilter = 'MEGA_SENA';
+
+const LOTTERY_NAMES = {
+    MEGA_SENA: 'Mega-Sena',
+    LOTOFACIL: 'Lotofácil',
+    QUINA: 'Quina',
+    LOTOMANIA: 'Lotomania',
+    TIMEMANIA: 'Timemania',
+    DUPLA_SENA: 'Dupla Sena',
+    DIA_DE_SORTE: 'Dia de Sorte',
+    SUPER_SETE: 'Super Sete',
+    MAIS_MILIONARIA: '+Milionária'
+};
+
 document.addEventListener('DOMContentLoaded', () => {
-    const selectType = document.getElementById('select_saved_type');
-    const btnClearAll = document.getElementById('btn_clear_all_saved');
-
-    const urlParams = new URLSearchParams(window.location.search);
-    let currentLottery = (urlParams.get('type') || (selectType ? selectType.value : 'LOTOFACIL')).toUpperCase();
-
-    if (selectType) {
-        selectType.value = currentLottery;
-        selectType.addEventListener('change', (e) => {
-            currentLottery = e.target.value;
-            loadSavedGames(currentLottery);
-        });
-    }
-
-    if (btnClearAll) {
-        btnClearAll.addEventListener('click', () => {
-            const savedKey = `saved_games_${currentLottery}`;
-            if (confirm(`Tem certeza que deseja apagar todos os jogos salvos da ${currentLottery.replace(/_/g, ' ')}?`)) {
-                localStorage.removeItem(savedKey);
-                loadSavedGames(currentLottery);
-            }
-        });
-    }
-
-    loadSavedGames(currentLottery);
+    initEvents();
+    renderSavedGames();
 });
 
-function loadSavedGames(lotteryType) {
-    const gamesListEl = document.getElementById('saved_games_list');
-    if (!gamesListEl) return;
+function initEvents() {
+    document.querySelectorAll('.lottery-card-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            document.querySelectorAll('.lottery-card-btn').forEach(b => b.classList.remove('active'));
+            
+            const target = e.currentTarget;
+            target.classList.add('active');
+            currentFilter = target.getAttribute('data-type');
+            
+            document.getElementById('selected_title').textContent = `Exibindo: ${LOTTERY_NAMES[currentFilter] || currentFilter}`;
+            renderSavedGames();
+        });
+    });
 
-    const savedKey = `saved_games_${lotteryType}`;
-    let savedGames = [];
+    document.getElementById('btn_clear_all_saved').addEventListener('click', clearCurrentLotteryGames);
+}
 
-    try {
-        const rawData = localStorage.getItem(savedKey);
-        savedGames = rawData ? JSON.parse(rawData) : [];
-    } catch (err) {
-        savedGames = [];
-    }
+function renderSavedGames() {
+    const container = document.getElementById('saved_games_list');
+    container.innerHTML = '';
 
-    if (!Array.isArray(savedGames) || savedGames.length === 0) {
-        gamesListEl.innerHTML = `
-            <div style="background: #ffffff; padding: 25px; border-radius: 8px; text-align: center; border: 1px solid #e0e0e0; margin-top: 15px; color: #555;">
-                <i class="fa-solid fa-folder-open" style="font-size: 2rem; color: #ccc; margin-bottom: 10px; display: block;"></i>
-                Nenhum jogo salvo para a loteria <strong>${lotteryType.replace(/_/g, ' ')}</strong>.
-            </div>`;
+    const allSaved = JSON.parse(localStorage.getItem('saved_games_list') || '[]');
+
+    // Filtra os jogos tratando tanto as chaves como o nome direto da loteria
+    const filtered = allSaved.filter(item => {
+        const lot = (item.loteria || '').toUpperCase().replace(/\s+/g, '_');
+        return lot === currentFilter || item.loteria === LOTTERY_NAMES[currentFilter];
+    });
+
+    if (filtered.length === 0) {
+        container.innerHTML = `
+            <div style="text-align: center; padding: 40px 20px; background: #fff; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.05);">
+                <i class="fa-regular fa-folder-open" style="font-size: 40px; color: #bdc3c7; margin-bottom: 10px;"></i>
+                <p style="color: #7f8c8d; margin: 0;">Nenhum jogo salvo para <strong>${LOTTERY_NAMES[currentFilter]}</strong>.</p>
+            </div>
+        `;
         return;
     }
 
-    gamesListEl.innerHTML = savedGames.map((gameData, index) => {
-        let formattedNumbers = '';
+    filtered.forEach((item, index) => {
+        let gameFormatted = "";
 
-        if (Array.isArray(gameData)) {
-            formattedNumbers = gameData.map(n => String(n).padStart(2, '0')).join(' - ');
-        } else if (gameData && typeof gameData === 'object') {
-            if (gameData.numbers) {
-                const nums = gameData.numbers.map(n => String(n).padStart(2, '0')).join(' - ');
-                const trevos = gameData.trevos ? ` <strong style="color: #28a745;">[Trevos: ${gameData.trevos.map(t => String(t).padStart(2, '0')).join(' - ')}]</strong>` : '';
-                formattedNumbers = `${nums}${trevos}`;
-            } else {
-                formattedNumbers = JSON.stringify(gameData);
-            }
+        if (currentFilter === 'SUPER_SETE' && Array.isArray(item.numeros)) {
+            gameFormatted = item.numeros.map((val, idx) => `[C${idx + 1}: ${val}]`).join(' ');
+        } else if (Array.isArray(item.numeros)) {
+            gameFormatted = item.numeros.map(n => String(n).padStart(2, '0')).join(' - ');
+        } else {
+            gameFormatted = item.numeros;
         }
 
-        return `
-            <div style="background: #ffffff; padding: 14px 18px; border-radius: 8px; margin-top: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #e0e0e0; box-shadow: 0 2px 4px rgba(0,0,0,0.04);">
-                <div style="font-size: 0.95rem; color: #333;">
-                    <strong style="color: #007bff;">Jogo ${index + 1}:</strong> ${formattedNumbers}
-                </div>
-                <button onclick="removeGame('${lotteryType}', ${index})" style="background: none; border: none; color: #dc3545; cursor: pointer; font-size: 1.1rem; padding: 6px 10px; border-radius: 4px;" title="Apagar este jogo">
-                    <i class="fa-solid fa-trash"></i>
-                </button>
+        const card = document.createElement('div');
+        card.className = 'game-item-card';
+        card.innerHTML = `
+            <div>
+                <div class="game-numbers">Jogo ${index + 1}: ${gameFormatted}</div>
+                <div class="game-date"><i class="fa-regular fa-calendar"></i> Salvo em: ${item.data || 'Data indisponível'}</div>
             </div>
+            <button onclick="removeSingleGame(${allSaved.indexOf(item)})" style="background: #ffecb3; color: #c0392b; border: 1px solid #ffe082; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px;">
+                <i class="fa-solid fa-trash-can"></i> Excluir
+            </button>
         `;
-    }).join('');
+        container.appendChild(card);
+    });
 }
 
-window.removeGame = function(lotteryType, index) {
-    const savedKey = `saved_games_${lotteryType}`;
-    try {
-        let savedGames = JSON.parse(localStorage.getItem(savedKey) || '[]');
-        savedGames.splice(index, 1);
-        localStorage.setItem(savedKey, JSON.stringify(savedGames));
-        loadSavedGames(lotteryType);
-    } catch (err) {
-        console.error("Erro ao apagar o jogo:", err);
+function removeSingleGame(globalIndex) {
+    let allSaved = JSON.parse(localStorage.getItem('saved_games_list') || '[]');
+    if (globalIndex >= 0 && globalIndex < allSaved.length) {
+        allSaved.splice(globalIndex, 1);
+        localStorage.setItem('saved_games_list', JSON.stringify(allSaved));
+        renderSavedGames();
     }
-};
+}
+
+function clearCurrentLotteryGames() {
+    let allSaved = JSON.parse(localStorage.getItem('saved_games_list') || '[]');
+    
+    const remaining = allSaved.filter(item => {
+        const lot = (item.loteria || '').toUpperCase().replace(/\s+/g, '_');
+        return lot !== currentFilter && item.loteria !== LOTTERY_NAMES[currentFilter];
+    });
+
+    if (allSaved.length === remaining.length) {
+        alert("Não há jogos salvos para apagar nesta loteria.");
+        return;
+    }
+
+    if (confirm(`Tem certeza que deseja apagar todos os jogos salvos de ${LOTTERY_NAMES[currentFilter]}?`)) {
+        localStorage.setItem('saved_games_list', JSON.stringify(remaining));
+        renderSavedGames();
+    }
+}
