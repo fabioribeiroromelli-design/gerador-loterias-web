@@ -3,77 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Baixar e Exibir Histórico Completo</title>
+    <title>Histórico de Resultados - Automático</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        .grid-loterias { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
-        .btn-lottery { color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.9rem; }
-        .status-box { margin-top: 20px; padding: 15px; border-radius: 6px; font-weight: bold; text-align: center; }
-        .progress-bar-container { width: 100%; background-color: #e0e0e0; border-radius: 8px; margin-top: 10px; overflow: hidden; display: none; }
-        .progress-bar { width: 0%; height: 18px; background-color: #27ae60; transition: width 0.2s; }
+        .grid-loterias { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-top: 15px; }
+        .btn-lottery { color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.9rem; transition: transform 0.1s, opacity 0.2s; }
+        .btn-lottery:hover { opacity: 0.9; transform: translateY(-2px); }
+        .btn-lottery.active { outline: 3px solid #222; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+
+        .status-box { margin-top: 15px; padding: 12px; border-radius: 6px; font-weight: bold; text-align: center; }
+        .section-box { background: #ffffff; padding: 20px; border-radius: 8px; border: 1px solid #e0e0e0; box-shadow: 0 2px 6px rgba(0,0,0,0.05); margin-bottom: 20px; }
         
-        /* Tabela de Histórico no Site */
-        .history-table-container { margin-top: 30px; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); overflow-x: auto; }
+        .history-table-container { margin-top: 20px; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); overflow-x: auto; }
         table.history-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }
         table.history-table th, table.history-table td { padding: 10px 12px; border-bottom: 1px solid #ddd; }
         table.history-table th { background-color: #f4f6f9; color: #333; }
+        
         .ball { display: inline-block; background: #27ae60; color: white; width: 26px; height: 26px; line-height: 26px; border-radius: 50%; text-align: center; font-weight: bold; font-size: 12px; margin-right: 4px; }
+        .badge-extra { display: inline-block; margin-top: 4px; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
     </style>
 </head>
 <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f6f9;">
+
     <header class="header-bar" style="background: #800080; color: white; padding: 15px 20px; display: flex; align-items: center; gap: 15px;">
         <button class="btn-back" onclick="window.location.href='home.html'" style="background: white; color: #800080; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: bold;">← Voltar</button>
-        <h1 style="margin: 0; font-size: 1.5rem;">Histórico de Resultados</h1>
+        <h1 style="margin: 0; font-size: 1.5rem;">Histórico das Loterias</h1>
     </header>
 
-    <main class="container" style="max-width: 1000px; margin: 30px auto; padding: 0 15px;">
-        <div style="background: #ffffff; padding: 25px; border-radius: 8px; border: 1px solid #e0e0e0; box-shadow: 0 2px 6px rgba(0,0,0,0.05);">
-            <h2><i class="fa-solid fa-cloud-arrow-down"></i> Baixar Histórico de Resultados</h2>
-            <p style="color: #666; margin-bottom: 15px;">Escolha a quantidade de últimos concursos para buscar e salvar no site:</p>
-            
-            <div style="margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
-                <label for="limit_concursos"><strong>Qtd. de Concursos:</strong></label>
-                <select id="limit_concursos" style="padding: 8px; border-radius: 6px; border: 1px solid #ccc;">
-                    <option value="10">Últimos 10</option>
-                    <option value="50" selected>Últimos 50</option>
-                    <option value="100">Últimos 100</option>
-                    <option value="500">Últimos 500</option>
-                </select>
-            </div>
-
+    <main class="container" style="max-width: 1000px; margin: 25px auto; padding: 0 15px;">
+        
+        <!-- SELEÇÃO RÁPIDA DA LOTERIA -->
+        <div class="section-box">
+            <h2 style="margin-top: 0; font-size: 1.2rem; color: #333;"><i class="fa-solid fa-gamepad"></i> Selecione a Loteria para Visualizar:</h2>
             <div class="grid-loterias">
-                <button class="btn-lottery" onclick="baixarHistorico('megasena')" style="background: #209869;"><i class="fa-solid fa-download"></i> Mega-Sena</button>
-                <button class="btn-lottery" onclick="baixarHistorico('lotofacil')" style="background: #930089;"><i class="fa-solid fa-download"></i> Lotofácil</button>
-                <button class="btn-lottery" onclick="baixarHistorico('quina')" style="background: #260085;"><i class="fa-solid fa-download"></i> Quina</button>
-                <button class="btn-lottery" onclick="baixarHistorico('lotomania')" style="background: #f78100;"><i class="fa-solid fa-download"></i> Lotomania</button>
-                <button class="btn-lottery" onclick="baixarHistorico('timemania')" style="background: #00ff48; color: #222;"><i class="fa-solid fa-download"></i> Timemania</button>
-                <button class="btn-lottery" onclick="baixarHistorico('duplasena')" style="background: #a61324;"><i class="fa-solid fa-download"></i> Dupla Sena</button>
-                <button class="btn-lottery" onclick="baixarHistorico('diadesorte')" style="background: #cb831d;"><i class="fa-solid fa-download"></i> Dia de Sorte</button>
-                <button class="btn-lottery" onclick="baixarHistorico('supersete')" style="background: #a8cf45; color: #222;"><i class="fa-solid fa-download"></i> Super Sete</button>
-                <button class="btn-lottery" onclick="baixarHistorico('maismilionaria')" style="background: #1b3582;"><i class="fa-solid fa-download"></i> +Milionária</button>
+                <button class="btn-lottery" id="btn_megasena" onclick="carregarLoteria('megasena')" style="background: #209869;">Mega-Sena</button>
+                <button class="btn-lottery" id="btn_lotofacil" onclick="carregarLoteria('lotofacil')" style="background: #930089;">Lotofácil</button>
+                <button class="btn-lottery" id="btn_quina" onclick="carregarLoteria('quina')" style="background: #260085;">Quina</button>
+                <button class="btn-lottery" id="btn_lotomania" onclick="carregarLoteria('lotomania')" style="background: #f78100;">Lotomania</button>
+                <button class="btn-lottery" id="btn_timemania" onclick="carregarLoteria('timemania')" style="background: #008822;">Timemania</button>
+                <button class="btn-lottery" id="btn_duplasena" onclick="carregarLoteria('duplasena')" style="background: #a61324;">Dupla Sena</button>
+                <button class="btn-lottery" id="btn_diadesorte" onclick="carregarLoteria('diadesorte')" style="background: #cb831d;">Dia de Sorte</button>
+                <button class="btn-lottery" id="btn_supersete" onclick="carregarLoteria('supersete')" style="background: #7ba818;">Super Sete</button>
+                <button class="btn-lottery" id="btn_maismilionaria" onclick="carregarLoteria('maismilionaria')" style="background: #1b3582;">+Milionária</button>
             </div>
 
-            <div id="download_status" class="status-box" style="display: none;"></div>
-            <div id="progress_container" class="progress-bar-container">
-                <div id="progress_bar" class="progress-bar"></div>
-            </div>
+            <div id="status_msg" class="status-box" style="display: none;"></div>
         </div>
 
-        <!-- Tabela de Histórico Exibida no Site -->
+        <!-- TABELA DE RESULTADOS -->
         <div id="history_display" class="history-table-container" style="display: none;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h3 id="table_title" style="margin: 0;">Histórico Carregado</h3>
-                <button onclick="exportarJSON()" style="background: #34495e; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold;">
-                    <i class="fa-solid fa-file-code"></i> Baixar JSON
-                </button>
+                <h3 id="table_title" style="margin: 0; color: #333;">Resultados</h3>
+                <span id="badge_origem" style="background: #28a745; color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: bold;">Arquivo Local Carregado</span>
             </div>
+            
             <table class="history-table">
                 <thead>
                     <tr>
                         <th>Concurso</th>
                         <th>Data</th>
-                        <th>Dezenas Sorteadas</th>
+                        <th>Dezenas / Sorteio</th>
                         <th>Acumulado</th>
                     </tr>
                 </thead>
@@ -83,85 +73,72 @@
     </main>
 
     <script>
-        let ultimoHistoricoBaixado = [];
-        let nomeLoteriaAtual = '';
+        let loteriaAtual = 'megasena';
 
-        async function baixarHistorico(loteria) {
-            const statusEl = document.getElementById('download_status');
-            const progressContainer = document.getElementById('progress_container');
-            const progressBar = document.getElementById('progress_bar');
-            const limit = parseInt(document.getElementById('limit_concursos').value, 10);
+        // Assim que a página abre, carrega a Mega-Sena automaticamente dos arquivos locais
+        window.addEventListener('DOMContentLoaded', () => {
+            carregarLoteria('megasena');
+        });
 
+        async function carregarLoteria(loteria) {
+            loteriaAtual = loteria;
+            destacarBotaoAtivo(loteria);
+
+            const statusEl = document.getElementById('status_msg');
             statusEl.style.display = 'block';
             statusEl.style.background = '#e8f4fd';
             statusEl.style.color = '#0056b3';
-            statusEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Consultando concurso mais recente...';
-            
-            progressContainer.style.display = 'block';
-            progressBar.style.width = '0%';
+            statusEl.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Lendo arquivo local historico_${loteria}.json...`;
 
-            try {
-                // 1. Obtém o número do último concurso
-                const respRecente = await fetch(`https://servicebus2.caixa.gov.br/portaldeloterias/api/${loteria}`);
-                if (!respRecente.ok) throw new Error('Falha ao conectar com a API');
-                const dataRecente = await respRecente.json();
-                
-                const ultimoConcursoNum = dataRecente.numero;
-                const concursoInicial = Math.max(1, ultimoConcursoNum - limit + 1);
-
-                statusEl.innerHTML = `<i class="fa-solid fa-sync fa-spin"></i> Baixando históricos do concurso ${concursoInicial} ao ${ultimoConcursoNum}...`;
-
-                const historicoList = [];
-                nomeLoteriaAtual = loteria;
-
-                // 2. Loop para buscar o histórico de concursos
-                for (let num = ultimoConcursoNum; num >= concursoInicial; num--) {
-                    try {
-                        const res = await fetch(`https://servicebus2.caixa.gov.br/portaldeloterias/api/${loteria}/${num}`);
-                        if (res.ok) {
-                            const cData = await res.json();
-                            historicoList.push({
-                                concurso: cData.numero,
-                                dataApuracao: cData.dataApuracao,
-                                dezenas: cData.listaDezenas || cData.dezenasSorteadasOrdemSorteio || [],
-                                acumulado: cData.acumulado || false
-                            });
-                        }
-                    } catch (e) {
-                        console.warn(`Erro no concurso ${num}`, e);
-                    }
-
-                    // Atualiza a barra de progresso
-                    const totalParaBaixar = (ultimoConcursoNum - concursoInicial + 1);
-                    const baixados = historicoList.length;
-                    const percent = Math.round((baixados / totalParaBaixar) * 100);
-                    progressBar.style.width = percent + '%';
+            // Tenta 1: Primeiro verifica se já existe salvo na memória do navegador (localStorage)
+            const salvosMemoria = localStorage.getItem(`historico_${loteria}`);
+            if (salvosMemoria) {
+                try {
+                    const dados = JSON.parse(salvosMemoria);
+                    exibirDadosNaTabela(loteria, dados, 'Memória / Local');
+                    statusEl.style.display = 'none';
+                    return;
+                } catch (e) {
+                    console.warn('Erro ao ler memória local:', e);
                 }
+            }
 
-                // 3. Salva no localStorage para uso do site
-                localStorage.setItem(`historico_${loteria}`, JSON.stringify(historicoList));
-                ultimoHistoricoBaixado = historicoList;
+            // Tenta 2: Lê o arquivo JSON direto da pasta do projeto (historico_megasena.json)
+            try {
+                const response = await fetch(`./historico_${loteria}.json`);
+                if (!response.ok) throw new Error('Arquivo não encontrado na pasta');
 
-                statusEl.style.background = '#d4edda';
-                statusEl.style.color = '#155724';
-                statusEl.innerHTML = `<i class="fa-solid fa-circle-check"></i> Histórico com ${historicoList.length} concursos atualizado com sucesso no site!`;
-
-                // Renderiza na tabela do site
-                renderizarTabelaHistórico(loteria, historicoList);
+                const dados = await response.json();
+                
+                // Salva também na memória para carregamentos futuros mais rápidos
+                localStorage.setItem(`historico_${loteria}`, JSON.stringify(dados));
+                
+                exibirDadosNaTabela(loteria, dados, 'Arquivo JSON da Pasta');
+                statusEl.style.display = 'none';
 
             } catch (err) {
-                statusEl.style.background = '#f8d7da';
-                statusEl.style.color = '#721c24';
-                statusEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Erro ao baixar histórico. Verifique sua conexão ou se a API da Caixa está acessível.';
+                console.error(err);
+                statusEl.style.background = '#fff3cd';
+                statusEl.style.color = '#856404';
+                statusEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> O arquivo <strong>historico_${loteria}.json</strong> não foi encontrado na pasta ou a página precisa ser aberta via servidor local (Live Server no VS Code).`;
+                document.getElementById('history_display').style.display = 'none';
             }
         }
 
-        function renderizarTabelaHistórico(loteria, lista) {
+        function destacarBotaoAtivo(loteria) {
+            document.querySelectorAll('.btn-lottery').forEach(btn => btn.classList.remove('active'));
+            const btnAtivo = document.getElementById(`btn_${loteria}`);
+            if (btnAtivo) btnAtivo.classList.add('active');
+        }
+
+        function exibirDadosNaTabela(loteria, lista, fonte) {
             const container = document.getElementById('history_display');
             const tbody = document.getElementById('table_body');
             const title = document.getElementById('table_title');
+            const badge = document.getElementById('badge_origem');
 
-            title.textContent = `Histórico: ${loteria.toUpperCase()} (${lista.length} concursos)`;
+            title.textContent = `Histórico: ${loteria.toUpperCase()} (${lista.length} concursos carregados)`;
+            badge.textContent = `Origem: ${fonte}`;
             tbody.innerHTML = '';
 
             lista.forEach(item => {
@@ -169,30 +146,38 @@
                 
                 let dezenasHtml = '';
                 if (Array.isArray(item.dezenas)) {
-                    dezenasHtml = item.dezenas.map(d => `<span class="ball">${d}</span>`).join('');
+                    if (loteria.toLowerCase() === 'supersete') {
+                        dezenasHtml = item.dezenas.map((d, colIdx) => `
+                            <span style="display: inline-flex; flex-direction: column; align-items: center; margin-right: 6px;">
+                                <span style="font-size: 10px; color: #7f8c8d; font-weight: bold;">C${colIdx + 1}</span>
+                                <span class="ball" style="background: #a8cf45; color: #222;">${d}</span>
+                            </span>
+                        `).join('');
+                    } else {
+                        dezenasHtml = item.dezenas.map(d => `<span class="ball">${d}</span>`).join('');
+                    }
+                }
+
+                let extrasHtml = '';
+                if (loteria === 'diadesorte' && item.mesSorte) {
+                    extrasHtml = `<br><span class="badge-extra" style="background: #fff3cd; color: #856404; border: 1px solid #ffeeba;">🗓️ Mês da Sorte: <strong>${item.mesSorte}</strong></span>`;
+                } else if (loteria === 'timemania' && item.timeCoracao) {
+                    extrasHtml = `<br><span class="badge-extra" style="background: #d4edda; color: #155724; border: 1px solid #c3e6cb;">⚽ Time do Coração: <strong>${item.timeCoracao}</strong></span>`;
+                } else if (loteria === 'maismilionaria' && item.trevos && item.trevos.length > 0) {
+                    const trevosTxt = Array.isArray(item.trevos) ? item.trevos.join(', ') : item.trevos;
+                    extrasHtml = `<br><span class="badge-extra" style="background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb;">🍀 Trevos: <strong>${trevosTxt}</strong></span>`;
                 }
 
                 tr.innerHTML = `
                     <td><strong>#${item.concurso}</strong></td>
                     <td>${item.dataApuracao || '-'}</td>
-                    <td>${dezenasHtml}</td>
+                    <td><div>${dezenasHtml}</div>${extrasHtml}</td>
                     <td>${item.acumulado ? '<span style="color: #e74c3c; font-weight: bold;">Sim</span>' : 'Não'}</td>
                 `;
                 tbody.appendChild(tr);
             });
 
             container.style.display = 'block';
-        }
-
-        function exportarJSON() {
-            if (!ultimoHistoricoBaixado.length) return;
-            const blob = new Blob([JSON.stringify(ultimoHistoricoBaixado, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `historico_${nomeLoteriaAtual}.json`;
-            a.click();
-            URL.revokeObjectURL(url);
         }
     </script>
 </body>
