@@ -1,21 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // ===== DADOS E CONFIGURAÇÕES =====
-    let selectedStrategyId = null;
-    const strategies = PREMIUM_STRATEGIES;
-
-    // ===== DOM =====
-    const grid = document.getElementById('strategiesGrid');
-    const lotterySelect = document.getElementById('lotterySelect');
-    const gameCountInput = document.getElementById('gameCount');
-    const numbersPerGameInput = document.getElementById('numbersPerGame');
-    const filterEven = document.getElementById('filterEven');
-    const filterOdd = document.getElementById('filterOdd');
-    const filterPrime = document.getElementById('filterPrime');
-    const generateBtn = document.getElementById('generateBtn');
-    const resultsArea = document.getElementById('resultsArea');
-    const gamesList = document.getElementById('gamesList');
-    const saveAllBtn = document.getElementById('saveAllBtn');
-
     // ===== CONFIGURAÇÕES DAS LOTERIAS =====
     const LOTTERY_CONFIGS = {
         'Mega-Sena':       { max: 60, defaultNumbers: 6,  min: 6, maxNums: 20 },
@@ -40,9 +23,24 @@ document.addEventListener('DOMContentLoaded', () => {
         return Array.from({ length: end - start + 1 }, (_, i) => i + start);
     }
 
-    // ===== RENDERIZAR CARDS =====
+    // ===== DOM =====
+    const grid = document.getElementById('strategiesGrid');
+    const lotterySelect = document.getElementById('lotterySelect');
+    const gameCountInput = document.getElementById('gameCount');
+    const numbersPerGameInput = document.getElementById('numbersPerGame');
+    const filterEven = document.getElementById('filterEven');
+    const filterOdd = document.getElementById('filterOdd');
+    const filterPrime = document.getElementById('filterPrime');
+    const generateBtn = document.getElementById('generateBtn');
+    const resultsArea = document.getElementById('resultsArea');
+    const gamesList = document.getElementById('gamesList');
+    const saveAllBtn = document.getElementById('saveAllBtn');
+
+    let selectedStrategyId = null;
+
+    // ===== RENDERIZAR CARDS DAS ESTRATÉGIAS =====
     function renderStrategies() {
-        grid.innerHTML = strategies.map((strat, index) => {
+        grid.innerHTML = PREMIUM_STRATEGIES.map((strat, index) => {
             const selected = (index === 0 && !selectedStrategyId) || strat.id === selectedStrategyId;
             return `
                 <div class="strategy-card ${selected ? 'selected' : ''}" data-id="${strat.id}" style="border-left-color: ${strat.color}">
@@ -56,7 +54,6 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
         }).join('');
 
-        // Eventos de clique
         document.querySelectorAll('.strategy-card').forEach(card => {
             card.addEventListener('click', function() {
                 document.querySelectorAll('.strategy-card').forEach(c => c.classList.remove('selected'));
@@ -65,7 +62,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
-        // Seleciona o primeiro se nenhum estiver selecionado
         if (!selectedStrategyId) {
             const first = document.querySelector('.strategy-card');
             if (first) {
@@ -75,7 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // ===== AJUSTAR NÚMEROS POR JOGO AUTOMATICAMENTE =====
+    // ===== ATUALIZAR NÚMEROS POR JOGO AO TROCAR LOTERIA =====
     function updateNumbersPerGame() {
         const lottery = lotterySelect.value;
         const config = getLotteryConfig(lottery);
@@ -87,12 +83,10 @@ document.addEventListener('DOMContentLoaded', () => {
     lotterySelect.addEventListener('change', updateNumbersPerGame);
     updateNumbersPerGame();
 
-    // ===== FUNÇÃO DE GERAÇÃO SIMPLIFICADA =====
-    // (Aqui você pode substituir pela lógica real de cada estratégia depois)
+    // ===== GERADOR SIMULADO (usando aleatório com viés - você pode implementar estratégias reais depois) =====
     function generateGame(strategyId, lotteryName, numbersCount) {
         const range = getRange(lotteryName);
-        // Simulação: gera números aleatórios (apenas para demonstração)
-        // Você deve implementar a lógica de cada estratégia baseada no histórico
+        // Simples: escolhe aleatoriamente. Para implementar as estratégias reais, você precisaria carregar os históricos.
         const shuffled = [...range].sort(() => Math.random() - 0.5);
         return shuffled.slice(0, numbersCount).sort((a, b) => a - b);
     }
@@ -111,26 +105,23 @@ document.addEventListener('DOMContentLoaded', () => {
         numbersPerGame = Math.min(Math.max(numbersPerGame, config.min), config.maxNums);
         numbersPerGameInput.value = numbersPerGame;
 
-        // Filtros (apenas para validação, você pode integrar)
         const evenFilter = filterEven.value ? parseInt(filterEven.value) : null;
         const oddFilter = filterOdd.value ? parseInt(filterOdd.value) : null;
         const primeFilter = filterPrime.value ? parseInt(filterPrime.value) : null;
 
-        // Validar soma de pares + ímpares se ambos forem definidos
         if (evenFilter !== null && oddFilter !== null && (evenFilter + oddFilter !== numbersPerGame)) {
             alert('A soma de Pares + Ímpares deve ser igual ao número de dezenas por jogo.');
             return;
         }
 
-        // Geração dos jogos
         const games = [];
         for (let i = 0; i < gameCount; i++) {
             let game = generateGame(selectedStrategyId, lottery, numbersPerGame);
-            // Aqui você pode aplicar filtros (excluídos, etc.) e rejeitar jogos duplicados
+            // Aqui você pode aplicar filtros se desejar
             games.push(game);
         }
 
-        // Exibir resultados
+        // Exibir
         resultsArea.classList.add('visible');
         gamesList.innerHTML = games.map((game, idx) => {
             const sum = game.reduce((a, b) => a + b, 0);
@@ -143,7 +134,6 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
         }).join('');
 
-        // Armazenar os jogos gerados para salvar depois
         window._lastGeneratedGames = games;
         window._lastLottery = lottery;
     }
@@ -158,10 +148,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Recupera salvos anteriores
         let saved = JSON.parse(localStorage.getItem('saved_games_list') || '[]');
-
-        // Adiciona os novos jogos
         games.forEach(game => {
             saved.push({
                 loteria: window._lastLottery || lotterySelect.value,

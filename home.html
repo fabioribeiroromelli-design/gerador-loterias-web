@@ -9,17 +9,39 @@
 </head>
 <body>
     <header class="toolbar">
-        <h1 id="home_title">Loterias Disponíveis</h1>
-        <!-- Os botões foram removidos daqui – agora são gerados pela barra de atalhos -->
+        <h1 id="home_title"><i class="fa-solid fa-dice"></i> Loterias Disponíveis</h1>
     </header>
 
-    <!-- A barra de atalhos será inserida aqui pelo JavaScript -->
-    <!-- O grid de cards será inserido aqui também -->
+    <!-- BARRA DE ATALHOS FIXA -->
+    <div class="shortcuts-bar">
+        <button onclick="window.location.href='gerar_jogos.html'">
+            <i class="fa-solid fa-wand-magic-sparkles"></i> Gerar Jogos
+        </button>
+        <button onclick="window.location.href='saved_games.html'">
+            <i class="fa-solid fa-bookmark"></i> Jogos Salvos
+        </button>
+        <button onclick="window.location.href='download_results.html'">
+            <i class="fa-solid fa-download"></i> Downloads
+        </button>
+        <button onclick="window.location.href='historico.html'">
+            <i class="fa-solid fa-chart-pie"></i> Estatísticas
+        </button>
+        <button onclick="window.location.href='generator.html'">
+            <i class="fa-solid fa-filter"></i> Filtrar Números
+        </button>
+        <button onclick="window.open('https://www.youtube.com/channel/UCPbhr02AfVb2nd5pm12BxTw/live', '_blank')">
+            <i class="fa-solid fa-tv"></i> Sorteio ao Vivo
+        </button>
+    </div>
 
     <main class="container">
         <div id="lottery_grid" class="lottery-grid"></div>
     </main>
 
+    <!-- 1. Carrega primeiro os dados dos últimos concursos -->
+    <script src="dados_loteria.js"></script>
+    
+    <!-- 2. Carrega a lógica da tela inicial -->
     <script src="script_home.js"></script>
 </body>
 </html>

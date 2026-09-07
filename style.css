@@ -1,44 +1,19 @@
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+body { background-color: #f4f5f7; color: #333; }
 
-body {
-    background-color: #f4f5f7;
-    color: #333;
-}
-
-/* ===== HEADER / TOOLBAR ===== */
-.toolbar,
-.header-bar {
+.toolbar {
     background-color: #7b1fa2;
     color: white;
     padding: 14px 20px;
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 12px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
     flex-wrap: wrap;
+    gap: 10px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
 }
+.toolbar h1 { font-size: 1.3rem; font-weight: 600; margin: 0; }
 
-.toolbar h1,
-.header-bar h1 {
-    font-size: 1.3rem;
-    font-weight: 600;
-    margin: 0;
-}
-
-.btn-back {
-    background: none;
-    border: none;
-    color: white;
-    font-size: 1.4rem;
-    cursor: pointer;
-}
-
-/* ===== BARRA DE ATALHOS (shortcuts) ===== */
 .shortcuts-bar {
     display: flex;
     flex-wrap: wrap;
@@ -48,538 +23,104 @@ body {
     margin: 15px auto;
     padding: 0 10px;
 }
-
 .shortcuts-bar button {
     display: flex;
     align-items: center;
     gap: 8px;
-    background: #ffffff;
+    background: #fff;
     border: 1px solid #e0e0e0;
     border-radius: 8px;
     padding: 10px 14px;
     font-weight: 600;
     color: #444;
     cursor: pointer;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    transition: all 0.2s ease;
+    transition: 0.2s;
 }
+.shortcuts-bar button:hover { background: #f5f5f5; }
+.shortcuts-bar button i { color: #001489; font-size: 1.1rem; }
 
-.shortcuts-bar button:hover {
-    background: #f5f5f5;
-}
+.container { max-width: 1200px; margin: 20px auto; padding: 0 16px; }
 
-.shortcuts-bar button i {
-    color: #001489;
-    font-size: 1.1rem;
-}
-
-/* ===== CONTAINERS ===== */
-.container {
-    max-width: 1200px;
-    margin: 20px auto;
-    padding: 0 16px;
-}
-
-/* ===== HOME: GRID DE CARDS ===== */
 .lottery-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 14px;
 }
-
 .lottery-card {
-    background: #ffffff;
-    border-radius: 12px;
-    padding: 16px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    background: #fff;
+    border-radius: 10px;
+    padding: 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    cursor: pointer;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
-    border-top: 6px solid #ccc;
+    border-top: 4px solid #ccc;
+    transition: 0.2s;
+    min-height: 140px;
 }
-
-.lottery-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 16px rgba(0,0,0,0.12);
-}
-
-.lottery-card .card-header {
+.lottery-card:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+.card-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
 }
-
-.lottery-card .card-header h3 {
-    margin: 0;
-    font-size: 1.2rem;
-}
-
-.lottery-card .badge-conc {
-    font-size: 0.75rem;
-    color: #666;
-    background: #eee;
-    padding: 2px 8px;
-    border-radius: 10px;
-}
-
-.lottery-card .drawn-numbers {
-    font-weight: 600;
-    font-size: 0.9rem;
-    color: #444;
-    margin: 8px 0;
-    word-break: break-all;
-}
-
-.lottery-card .badge-accumulated {
-    display: inline-block;
-    background-color: #dc3545;
-    color: #fff;
-    font-size: 0.75rem;
-    padding: 2px 8px;
+.card-header h3 { font-size: 1rem; margin: 0; display: flex; align-items: center; gap: 4px; }
+.badge-conc { font-size: 0.65rem; color: #666; background: #eee; padding: 2px 6px; border-radius: 10px; }
+.drawn-numbers { font-weight: 600; font-size: 0.8rem; color: #444; margin: 4px 0; word-break: break-word; line-height: 1.3; }
+.estimate-prize { font-size: 0.75rem; color: #2e7d32; margin: 2px 0; }
+.btn-generate {
+    margin-top: 6px;
+    border: none;
+    padding: 6px;
     border-radius: 4px;
     font-weight: bold;
-}
-
-.lottery-card .estimate-prize {
-    font-size: 0.85rem;
-    color: #2e7d32;
-    margin: 6px 0;
-}
-
-.lottery-card .btn-generate {
-    margin-top: 15px;
-    border: none;
-    padding: 10px;
-    border-radius: 6px;
-    font-weight: bold;
+    font-size: 0.75rem;
     cursor: pointer;
     width: 100%;
     color: white;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    transition: opacity 0.2s;
+    gap: 4px;
+    transition: 0.2s;
 }
+.btn-generate:hover { opacity: 0.85; }
+.badge-accumulated { display: inline-block; background: #dc3545; color: #fff; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
+.badge-winners { display: inline-block; background: #28a745; color: #fff; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
 
-.lottery-card .btn-generate:hover {
-    opacity: 0.85;
-}
-
-/* ===== CARD PREMIUM (destaque) ===== */
 .premium-card {
     background: linear-gradient(145deg, #1e1e1e, #2a2a2a) !important;
     border: 2px solid #FFD700 !important;
     border-radius: 16px !important;
-    box-shadow: 0 8px 20px rgba(255, 215, 0, 0.15) !important;
-    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 8px 20px rgba(255,215,0,0.15) !important;
+    transition: 0.2s;
     cursor: pointer;
-    min-height: 220px;
+    min-height: 160px !important;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     text-align: center;
-    padding: 20px;
+    padding: 16px !important;
 }
+.premium-card:hover { transform: translateY(-4px) scale(1.02); box-shadow: 0 12px 30px rgba(255,215,0,0.25) !important; }
+.premium-card h3 { color: #FFD700; margin: 0 0 4px 0; font-size: 1.2rem; }
+.premium-card p { color: #ccc; margin: 0 0 8px 0; font-size: 0.85rem; }
+.premium-card .explore-btn { background: #FFD700; color: #222; padding: 4px 16px; border-radius: 30px; font-weight: bold; font-size: 0.8rem; display: inline-block; }
+.premium-card .lock-badge { margin-top: 8px; font-size: 0.65rem; color: #FFD700; opacity: 0.6; }
 
-.premium-card:hover {
-    transform: translateY(-4px) scale(1.02);
-    box-shadow: 0 12px 30px rgba(255, 215, 0, 0.25) !important;
-}
-
-.premium-card h3 {
-    color: #FFD700;
-    margin: 0 0 8px 0;
-    font-size: 1.6rem;
-}
-
-.premium-card p {
-    color: #ccc;
-    margin: 0 0 12px 0;
-    font-size: 0.95rem;
-}
-
-.premium-card .explore-btn {
-    background: #FFD700;
-    color: #222;
-    padding: 6px 20px;
-    border-radius: 30px;
-    font-weight: bold;
-    font-size: 0.9rem;
+/* Badges extras */
+.badge-extra {
     display: inline-block;
-}
-
-.premium-card .lock-badge {
-    margin-top: 12px;
-    font-size: 0.7rem;
-    color: #FFD700;
-    opacity: 0.6;
-}
-
-/* ===== TELA DE ESTRATÉGIAS ===== */
-.estrategias-container {
-    max-width: 1200px;
-    margin: 20px auto;
-    padding: 0 20px;
-}
-
-.estrategias-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 15px;
-    margin-bottom: 25px;
-    border-bottom: 2px solid #f0f0f0;
-    padding-bottom: 15px;
-}
-
-.estrategias-header h1 {
-    margin: 0;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    color: #7b1fa2;
-}
-
-/* Cards de loterias (na página de estratégias) */
-.lottery-select-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 12px;
-    margin-bottom: 25px;
-}
-
-.lottery-select-card {
-    background: #fff;
-    border-radius: 10px;
-    padding: 12px 8px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
-    text-align: center;
-    cursor: pointer;
-    border: 2px solid #e0e0e0;
-    transition: 0.2s;
-    font-weight: 600;
-    font-size: 0.9rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-}
-
-.lottery-select-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-}
-
-.lottery-select-card.selected {
-    border-color: #7b1fa2;
-    background: #f3e8f7;
-}
-
-.lottery-select-card i {
-    font-size: 1.8rem;
-}
-
-.lottery-select-card .lottery-name {
-    font-size: 0.8rem;
-    color: #333;
-}
-
-/* Grid de estratégias */
-.strategies-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 18px;
-    margin: 20px 0;
-}
-
-.strategy-card {
-    background: white;
-    border-radius: 12px;
-    padding: 16px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-    border-left: 6px solid #ccc;
-    cursor: pointer;
-    transition: 0.2s;
-    display: flex;
-    flex-direction: column;
-}
-
-.strategy-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 16px rgba(0,0,0,0.1);
-}
-
-.strategy-card.selected {
-    border-left-color: #FFD700;
-    background: #fefce8;
-}
-
-.strategy-card .emoji {
-    font-size: 2rem;
-    margin-right: 8px;
-}
-
-.strategy-card .name {
-    font-weight: 700;
-    font-size: 1.1rem;
-}
-
-.strategy-card .desc {
-    color: #555;
-    font-size: 0.9rem;
-    margin: 6px 0 10px 0;
-    flex: 1;
-}
-
-.strategy-card .example {
-    font-size: 0.8rem;
-    background: #f1f5f9;
-    padding: 4px 12px;
-    border-radius: 20px;
-    align-self: flex-start;
-    color: #333;
-}
-
-/* Painel de parâmetros */
-.params-panel {
-    background: white;
-    border-radius: 12px;
-    padding: 20px 24px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-    margin: 25px 0;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-end;
-    gap: 20px 30px;
-}
-
-.params-panel .field {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.params-panel .field label {
-    font-weight: 600;
-    font-size: 0.8rem;
-    color: #666;
-}
-
-.params-panel .field input,
-.params-panel .field select {
-    padding: 6px 10px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    font-size: 1rem;
-    background: #fafafa;
-    min-width: 80px;
-}
-
-.params-panel .field input[type="number"] {
-    width: 70px;
-}
-
-.btn-generate {
-    background: #7b1fa2;
-    color: white;
-    border: none;
-    padding: 10px 28px;
-    border-radius: 40px;
-    font-weight: 700;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: 0.2s;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-left: auto;
-}
-
-.btn-generate:hover {
-    background: #6a1b8e;
-    transform: scale(1.02);
-}
-
-/* Resultados */
-#resultsArea {
-    margin-top: 30px;
-    background: white;
-    border-radius: 12px;
-    padding: 20px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-    display: none;
-}
-
-#resultsArea.visible {
-    display: block;
-}
-
-.game-row {
-    background: #f8fafc;
-    padding: 10px 16px;
-    border-radius: 6px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
-    border-left: 4px solid #7b1fa2;
-}
-
-.game-numbers {
-    font-weight: 600;
-    letter-spacing: 1px;
-    color: #222;
-}
-
-.btn-save {
-    background: #28a745;
-    color: white;
-    border: none;
-    padding: 8px 20px;
-    border-radius: 40px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: 0.2s;
-}
-
-.btn-save:hover {
-    background: #218838;
-}
-
-.back-home {
-    display: inline-block;
-    margin-top: 20px;
-    color: #7b1fa2;
-    text-decoration: none;
-    font-weight: 600;
-}
-
-/* ===== VOLANTE (index.html) ===== */
-.volante-card {
-    background: white;
-    border-radius: 12px;
-    padding: 20px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    max-width: 580px;
-    margin: 0 auto;
-}
-
-.volante-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 12px;
-    margin-bottom: 12px;
-}
-
-.mode-selector {
-    display: flex;
-    gap: 12px;
-    font-size: 0.9rem;
-}
-
-.summary-info {
-    font-size: 0.85rem;
-    color: #555;
-    margin-bottom: 16px;
-}
-
-.numbers-grid {
-    display: grid;
-    grid-template-columns: repeat(10, 1fr);
-    gap: 6px;
-    justify-items: center;
-    margin: 16px 0;
-}
-
-.num-ball {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    border: 1px solid #ccc;
-    background-color: #fafafa;
-    color: #333;
-    font-size: 0.85rem;
-    font-weight: bold;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    user-select: none;
-    transition: background 0.2s, color 0.2s;
-}
-
-.num-ball:hover {
-    border-color: #7b1fa2;
-    background-color: #f0e5f5;
-}
-
-.num-ball.fixed {
-    background-color: #2e7d32;
-    color: white;
-    border-color: #1b5e20;
-}
-
-.num-ball.excluded {
-    background-color: #c62828;
-    color: white;
-    border-color: #b71c1c;
-    text-decoration: line-through;
-}
-
-.actions-panel {
-    display: flex;
-    gap: 10px;
-    margin-top: 16px;
-    flex-wrap: wrap;
-}
-
-.btn-primary {
-    background-color: #7b1fa2;
-    color: white;
-    border: none;
-    padding: 10px 14px;
-    border-radius: 6px;
-    font-weight: bold;
-    cursor: pointer;
-    flex: 1;
-}
-
-.btn-secondary {
     background-color: #6c757d;
-    color: white;
-    border: none;
-    padding: 10px 14px;
-    border-radius: 6px;
-    font-weight: bold;
-    cursor: pointer;
-    flex: 1;
+    color: #fff;
+    font-size: 0.65rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: normal;
 }
 
-.games-container {
-    max-width: 580px;
-    margin: 20px auto 0 auto;
-}
-
-.games-container h3 {
-    font-size: 1rem;
-    margin-bottom: 10px;
-}
-
-.game-row {
-    background: white;
-    border-left: 4px solid #7b1fa2;
-    padding: 10px 14px;
-    margin-bottom: 8px;
-    border-radius: 6px;
-    font-weight: bold;
-    font-size: 0.9rem;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+.badge-extra i {
+    margin-right: 2px;
 }
