@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lotomania - Estratégia</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .lotomania-container { max-width: 900px; margin: 20px auto; padding: 0 16px; }
+        .toolbar-lotomania { background: #F78100; }
+        .card-analise { background: #1e1e2e; border-radius: 12px; padding: 16px; color: #e0e0e0; margin-bottom: 20px; border-left: 4px solid #F78100; }
+        .card-analise h3 { color: #F78100; margin: 0 0 8px 0; }
+        
+        /* SEÇÃO DO COMPARATIVO COM QUADRADINHOS */
+        .section-title { font-size: 1.1rem; color: #F78100; margin: 16px 0 8px 0; font-weight: bold; }
+        .comparativo-grid { display: flex; gap: 16px; margin-bottom: 12px; flex-wrap: wrap; }
+        .concurso-box { flex: 1; min-width: 280px; background: #1e1e2e; border-radius: 12px; padding: 14px; border-top: 3px solid #F78100; }
+        .concurso-box h4 { margin: 0 0 10px 0; font-size: 0.9rem; color: #fff; }
+        
+        /* GRID DE QUADRADINHOS DA LOTOMANIA (10 COLUNAS) */
+        .balls-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; }
+        .ball { background: #2a2a3e; color: #aaa; border-radius: 6px; padding: 6px 0; text-align: center; font-weight: bold; font-size: 0.75rem; }
+        .ball.sorteada { background: #555; color: #fff; }
+        .ball.repetida { background: #F78100; color: #fff; box-shadow: 0 0 8px rgba(247, 129, 0, 0.7); }
+        .stats-text { font-size: 0.8rem; color: #aaa; text-align: center; margin: 6px 0 16px 0; }
+
+        .controls { display: flex; flex-wrap: wrap; gap: 16px; background: white; padding: 16px; border-radius: 12px; margin: 16px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+        .controls .group { display: flex; align-items: center; gap: 8px; }
+        .controls .group label { font-weight: 600; font-size: 0.85rem; color: #333; }
+        .controls .group input[type="number"] { width: 50px; padding: 4px 6px; border: 1px solid #ccc; border-radius: 4px; text-align: center; background: #f8f8f8; }
+        .controls .group button { background: #F78100; color: white; border: none; border-radius: 4px; padding: 4px 10px; font-weight: bold; cursor: pointer; }
+        .controls .group button:hover { opacity: 0.8; }
+        .btn-gerar { background: #F78100; color: white; border: none; padding: 12px 24px; border-radius: 40px; font-weight: bold; font-size: 1rem; cursor: pointer; margin: 8px 0; width: 100%; }
+        .btn-gerar:hover { opacity: 0.85; }
+        .game-card { background: #1e1e2e; border-radius: 12px; padding: 12px; margin-bottom: 12px; border-left: 4px solid #F78100; }
+        .game-card .header { display: flex; justify-content: space-between; align-items: center; }
+        .game-card .header .title { color: #F78100; font-weight: bold; }
+        .game-card .dezenas { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; margin: 8px 0; }
+        .game-card .dezenas span { background: #F78100; color: white; border-radius: 6px; padding: 4px 0; text-align: center; font-weight: bold; font-size: 0.75rem; }
+        .game-card .info { font-size: 0.75rem; color: #aaa; }
+        .game-card .actions { display: flex; gap: 8px; margin-top: 6px; }
+        .game-card .actions button { background: #3DD68C; border: none; color: white; padding: 4px 12px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 0.75rem; }
+        .game-card .actions button:hover { opacity: 0.8; }
+        .btn-salvar-todos { background: #3DD68C; color: white; border: none; padding: 10px; border-radius: 40px; font-weight: bold; width: 100%; margin: 12px 0; cursor: pointer; }
+        .btn-salvar-todos:hover { opacity: 0.85; }
+        #progress { display: none; text-align: center; padding: 20px; }
+        
+        @media (max-width: 600px) {
+            .game-card .dezenas, .balls-grid { grid-template-columns: repeat(5, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <header class="toolbar toolbar-lotomania">
+        <h1><i class="fa-solid fa-chart-simple" style="color: #FFD700;"></i> Lotomania - Estratégia</h1>
+        <button onclick="window.location.href='home.html'" style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: bold;">
+            <i class="fa-solid fa-arrow-left"></i> Voltar
+        </button>
+    </header>
+
+    <div class="lotomania-container">
+        <div id="analise" class="card-analise">
+            <h3><i class="fa-solid fa-chart-line"></i> Análise</h3>
+            <div id="analise-texto">Carregando...</div>
+        </div>
+
+        <div id="comparativo" style="display: none;">
+            <div class="section-title">Comparativo Últimos Concursos</div>
+            <div class="comparativo-grid">
+                <div class="concurso-box">
+                    <h4 id="titulo-anterior">Anterior</h4>
+                    <div id="grid-anterior" class="balls-grid"></div>
+                </div>
+                <div class="concurso-box">
+                    <h4 id="titulo-ultimo">Último • Repetidas em destaque</h4>
+                    <div id="grid-ultimo" class="balls-grid"></div>
+                </div>
+            </div>
+            <div id="stats-ultimo" class="stats-text"></div>
+        </div>
+
+        <div class="controls">
+            <div class="group">
+                <label>Repetidas:</label>
+                <button id="rep-men">-</button>
+                <input type="number" id="qtd-repetidas" value="10" min="0" max="20">
+                <button id="rep-mais">+</button>
+            </div>
+            <div class="group">
+                <label>Jogos:</label>
+                <button id="jog-men">-</button>
+                <input type="number" id="qtd-jogos" value="10" min="1" max="50">
+                <button id="jog-mais">+</button>
+            </div>
+        </div>
+
+        <button id="btn-gerar" class="btn-gerar"><i class="fa-solid fa-bolt"></i> Gerar Jogos</button>
+        <div id="progress"><i class="fa-solid fa-spinner fa-spin"></i> Gerando...</div>
+
+        <div id="resultados">
+            <button id="btn-salvar-todos" class="btn-salvar-todos" style="display:none;"><i class="fa-solid fa-save"></i> Salvar Todos</button>
+            <div id="container-jogos"></div>
+        </div>
+    </div>
+
+    <!-- 1. Carrega o banco de dados dos concursos da Lotomania -->
+    <script src="historico_lotomania.js"></script>
+
+    <!-- 2. Carrega a lógica da tela da Lotomania -->
+    <script src="lotomania-estrategia.js"></script>
+</body>
+</html>

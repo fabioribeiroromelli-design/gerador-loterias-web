@@ -8,7 +8,48 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.head.appendChild(fa);
     }
 
-    // ===== 2. CORES E ÍCONES DAS LOTERIAS =====
+    // ===== 2. BARRA DE ATALHOS =====
+    function createShortcuts() {
+        let container = document.querySelector('.shortcuts-bar');
+        if (container) return container;
+
+        container = document.createElement('div');
+        container.className = 'shortcuts-bar';
+
+        const shortcuts = [
+            { label: 'Gerar Jogos', icon: 'fa-wand-magic-sparkles', url: 'gerar_jogos.html' },
+            { label: 'Jogos Salvos', icon: 'fa-bookmark', url: 'saved_games.html' },
+            { label: 'Downloads', icon: 'fa-download', url: 'download_results.html' },
+            { label: 'Estatísticas', icon: 'fa-chart-pie', url: 'historico.html' },
+            { label: 'Filtrar Números', icon: 'fa-filter', url: 'generator.html' },
+            { label: 'Sorteio ao Vivo', icon: 'fa-tv', externalUrl: 'https://www.youtube.com/channel/UCPbhr02AfVb2nd5pm12BxTw/live' }
+        ];
+
+        shortcuts.forEach(item => {
+            const btn = document.createElement('button');
+            btn.innerHTML = `<i class="fa-solid ${item.icon}"></i> <span>${item.label}</span>`;
+            btn.addEventListener('click', () => {
+                if (item.externalUrl) {
+                    window.open(item.externalUrl, '_blank');
+                } else if (item.url) {
+                    window.location.href = item.url;
+                }
+            });
+            container.appendChild(btn);
+        });
+
+        // Insere após o header (toolbar)
+        const header = document.querySelector('.toolbar');
+        if (header && header.parentNode) {
+            header.parentNode.insertBefore(container, header.nextSibling);
+        } else {
+            document.body.prepend(container);
+        }
+        return container;
+    }
+    createShortcuts();
+
+    // ===== 3. CORES E ÍCONES DAS LOTERIAS =====
     const COLORS = {
         'Dia de Sorte': '#cb8322', 'Dupla Sena': '#a61324', 'Federal': '#002f6c',
         'Loteca': '#ca1518', 'Lotofácil': '#930089', 'Lotomania': '#F78100',
@@ -39,9 +80,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const CACHE_KEY = 'loterias_cache_data';
     const CACHE_TIME_KEY = 'loterias_cache_time';
-    const CACHE_DURATION_MS = 30 * 60 * 1000; // 30 minutos
+    const CACHE_DURATION_MS = 30 * 60 * 1000;
 
-    // ===== 3. FUNÇÃO PARA BUSCAR ÚLTIMO CONCURSO =====
+    // ===== 4. FUNÇÃO PARA BUSCAR ÚLTIMO CONCURSO =====
     async function fetchUltimoConcurso(endpoint, lotteryName) {
         let data = null;
         try {
@@ -65,7 +106,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         return data;
     }
 
-    // ===== 4. RENDERIZAÇÃO DOS CARDS DE LOTERIAS =====
+    // ===== 5. RENDERIZAÇÃO DOS CARDS DE LOTERIAS =====
     function renderCard(lotteryName, data) {
         const color = COLORS[lotteryName] || '#6c757d';
         const icon = ICONS[lotteryName] || 'fa-hashtag';
@@ -216,7 +257,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         `;
     }
 
-    // ===== 5. CARDS ESPECIAIS =====
+    // ===== 6. CARDS ESPECIAIS =====
     function renderPremiumCard() {
         return `
             <div class="lottery-card premium-card" onclick="window.location.href='estrategias.html'">
@@ -244,7 +285,33 @@ document.addEventListener('DOMContentLoaded', async () => {
         `;
     }
 
-    // ===== 6. FUNÇÃO PARA TOGGLE DA PREMIAÇÃO =====
+    function renderLotofacilRepeticaoCard() {
+        return `
+            <div class="lottery-card card-lotofacil-rep" onclick="window.location.href='lotofacil-repeticao.html'">
+                <i class="fa-solid fa-rotate" style="font-size: 2rem; color: #930089; margin-bottom: 6px;"></i>
+                <h3 style="color: #930089; margin: 0 0 4px 0;">Lotofácil - Repetição</h3>
+                <p style="color: #555; font-size: 0.8rem; margin: 0 0 8px 0;">Estratégia baseada na repetição do último concurso</p>
+                <span class="access-btn" style="background: #930089; color: white; padding: 4px 14px; border-radius: 30px; font-weight: bold; font-size: 0.75rem;">
+                    <i class="fa-solid fa-arrow-right"></i> Acessar
+                </span>
+            </div>
+        `;
+    }
+
+    function renderLotomaniaEstrategiaCard() {
+        return `
+            <div class="lottery-card card-lotomania-est" onclick="window.location.href='lotomania-estrategia.html'">
+                <i class="fa-solid fa-chart-simple" style="font-size: 2rem; color: #F78100; margin-bottom: 6px;"></i>
+                <h3 style="color: #F78100; margin: 0 0 4px 0;">Lotomania - Estratégia</h3>
+                <p style="color: #555; font-size: 0.8rem; margin: 0 0 8px 0;">Distribuição equilibrada por linhas (5 por linha)</p>
+                <span class="access-btn" style="background: #F78100; color: white; padding: 4px 14px; border-radius: 30px; font-weight: bold; font-size: 0.75rem;">
+                    <i class="fa-solid fa-arrow-right"></i> Acessar
+                </span>
+            </div>
+        `;
+    }
+
+    // ===== 7. FUNÇÃO PARA TOGGLE DA PREMIAÇÃO =====
     window.togglePrizes = function(id) {
         const el = document.getElementById(id);
         const icon = document.getElementById(`icon_${id}`);
@@ -258,7 +325,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
-    // ===== 7. CARREGAMENTO PRINCIPAL =====
+    // ===== 8. CARREGAMENTO PRINCIPAL =====
     const grid = document.getElementById('lottery_grid');
     if (!grid) return;
 
@@ -288,8 +355,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Monta o grid: cards especiais + loterias
-    let html = renderPremiumCard();      // Redireciona para estrategias.html
-    html += renderAvancadoCard();        // Redireciona para gerador-avancado.html
+    let html = renderPremiumCard();
+    html += renderAvancadoCard();
+    html += renderLotofacilRepeticaoCard();
+    html += renderLotomaniaEstrategiaCard();
 
     LOTTERIES.forEach((lot, index) => {
         html += renderCard(lot.name, results[index]);
