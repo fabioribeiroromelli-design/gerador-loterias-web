@@ -1,4 +1,4 @@
-[
+window.HISTORICO_DIADESORTE = [
   {
     "concurso": 1290,
     "dataApuracao": "04/09/2026",

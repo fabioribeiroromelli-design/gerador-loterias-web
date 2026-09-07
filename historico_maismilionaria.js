@@ -1,4 +1,4 @@
-[
+const HISTORICO_MAISMILIONARIA = [
   {
     "concurso": 386,
     "dataApuracao": "02/09/2026",
@@ -6561,4 +6561,4 @@
       "4"
     ]
   }
-]
+];

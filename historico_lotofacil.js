@@ -1,4 +1,4 @@
-[
+window.HISTORICO_LOTOFACIL = [
   {
     "concurso": 3779,
     "dataApuracao": "03/09/2026",

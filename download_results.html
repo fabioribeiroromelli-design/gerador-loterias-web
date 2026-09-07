@@ -22,6 +22,10 @@
         
         .ball { display: inline-block; background: #27ae60; color: white; width: 26px; height: 26px; line-height: 26px; border-radius: 50%; text-align: center; font-weight: bold; font-size: 12px; margin-right: 4px; }
         .badge-extra { display: inline-block; margin-top: 4px; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
+
+        /* Botão de Download */
+        .btn-download { background: #27ae60; color: white; border: none; padding: 8px 14px; border-radius: 6px; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem; }
+        .btn-download:hover { background: #219150; }
     </style>
 </head>
 <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f6f9;">
@@ -53,9 +57,12 @@
 
         <!-- TABELA DE RESULTADOS -->
         <div id="history_display" class="history-table-container" style="display: none;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
                 <h3 id="table_title" style="margin: 0; color: #333;">Resultados</h3>
-                <span id="badge_origem" style="background: #28a745; color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: bold;">Arquivo Local Carregado</span>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <span id="badge_origem" style="background: #28a745; color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: bold;">Arquivo Local Carregado</span>
+                    <button class="btn-download" onclick="baixarArquivoJs()"><i class="fa-solid fa-download"></i> Baixar Arquivo JS</button>
+                </div>
             </div>
             
             <table class="history-table">
@@ -74,8 +81,8 @@
 
     <script>
         let loteriaAtual = 'megasena';
+        let dadosAtuais = [];
 
-        // Assim que a página abre, carrega a Mega-Sena automaticamente dos arquivos locais
         window.addEventListener('DOMContentLoaded', () => {
             carregarLoteria('megasena');
         });
@@ -88,14 +95,14 @@
             statusEl.style.display = 'block';
             statusEl.style.background = '#e8f4fd';
             statusEl.style.color = '#0056b3';
-            statusEl.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Lendo arquivo local historico_${loteria}.json...`;
+            statusEl.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Lendo dados da loteria...`;
 
-            // Tenta 1: Primeiro verifica se já existe salvo na memória do navegador (localStorage)
-            const salvosMemoria = localStorage.getItem(`historico_${loteria}`);
+            // Tenta 1: Verifica se já existe salvo na memória (localStorage)
+            const salvosMemoria = localStorage.getItem(`historico_${loteria}`) || localStorage.getItem(loteria.toUpperCase());
             if (salvosMemoria) {
                 try {
-                    const dados = JSON.parse(salvosMemoria);
-                    exibirDadosNaTabela(loteria, dados, 'Memória / Local');
+                    dadosAtuais = JSON.parse(salvosMemoria);
+                    exibirDadosNaTabela(loteria, dadosAtuais, 'Memória / Local');
                     statusEl.style.display = 'none';
                     return;
                 } catch (e) {
@@ -103,24 +110,23 @@
                 }
             }
 
-            // Tenta 2: Lê o arquivo JSON direto da pasta do projeto (historico_megasena.json)
+            // Tenta 2: Lê o arquivo JSON direto da pasta do projeto
             try {
                 const response = await fetch(`./historico_${loteria}.json`);
                 if (!response.ok) throw new Error('Arquivo não encontrado na pasta');
 
-                const dados = await response.json();
+                dadosAtuais = await response.json();
                 
-                // Salva também na memória para carregamentos futuros mais rápidos
-                localStorage.setItem(`historico_${loteria}`, JSON.stringify(dados));
+                localStorage.setItem(`historico_${loteria}`, JSON.stringify(dadosAtuais));
                 
-                exibirDadosNaTabela(loteria, dados, 'Arquivo JSON da Pasta');
+                exibirDadosNaTabela(loteria, dadosAtuais, 'Arquivo JSON da Pasta');
                 statusEl.style.display = 'none';
 
             } catch (err) {
                 console.error(err);
                 statusEl.style.background = '#fff3cd';
                 statusEl.style.color = '#856404';
-                statusEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> O arquivo <strong>historico_${loteria}.json</strong> não foi encontrado na pasta ou a página precisa ser aberta via servidor local (Live Server no VS Code).`;
+                statusEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> O arquivo <strong>historico_${loteria}.json</strong> não foi encontrado na pasta ou a página precisa ser aberta via servidor local (Live Server).`;
                 document.getElementById('history_display').style.display = 'none';
             }
         }
@@ -178,6 +184,28 @@
             });
 
             container.style.display = 'block';
+        }
+
+        // Função para gerar e baixar o arquivo .js corrigido
+        function baixarArquivoJs() {
+            if (!dadosAtuais || dadosAtuais.length === 0) {
+                alert('Nenhum dado encontrado para exportar!');
+                return;
+            }
+
+            const varName = `HISTORICO_${loteriaAtual.toUpperCase()}`;
+            const conteudo = `const ${varName} = ${JSON.stringify(dadosAtuais, null, 2)};\n`;
+
+            const blob = new Blob([conteudo], { type: 'application/javascript;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `historico_${loteriaAtual}.js`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
         }
     </script>
 </body>

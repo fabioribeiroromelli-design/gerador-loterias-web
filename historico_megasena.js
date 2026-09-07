@@ -1,4 +1,4 @@
-[
+const HISTORICO_MEGASENA = [
   {
     "concurso": 3053,
     "dataApuracao": "03/09/2026",
@@ -39688,4 +39688,4 @@
     ],
     "acumulado": true
   }
-]
+];

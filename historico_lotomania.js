@@ -1,4 +1,4 @@
-[
+window.HISTORICO_LOTOMANIA = [
   {
     "concurso": 2972,
     "dataApuracao": "04/09/2026",

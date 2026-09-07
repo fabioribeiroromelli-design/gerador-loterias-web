@@ -1,4 +1,4 @@
-[
+window.HISTORICO_TIMEMANIA = [
   {
     "concurso": 2437,
     "dataApuracao": "03/09/2026",

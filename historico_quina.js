@@ -1,4 +1,4 @@
-[
+window.HISTORICO_QUINA = [
   {
     "concurso": 7110,
     "dataApuracao": "04/09/2026",

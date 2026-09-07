@@ -1,4 +1,4 @@
-[
+window.HISTORICO_SUPERSETE = [
   {
     "concurso": 895,
     "dataApuracao": "04/09/2026",

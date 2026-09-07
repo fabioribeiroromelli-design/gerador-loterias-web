@@ -1,4 +1,4 @@
-[
+window.HISTORICO_DUPLASENA = [
   {
     "concurso": 3005,
     "dataApuracao": "04/09/2026",
