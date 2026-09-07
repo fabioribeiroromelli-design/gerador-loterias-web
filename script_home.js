@@ -23,11 +23,12 @@ document.addEventListener('DOMContentLoaded', () => {
             padding: 0 10px;
         `);
 
+        // MAPEAMENTO INVERTIDO CONFORME SOLICITADO:
         const shortcuts = [
-            { label: 'Gerar Jogos', icon: 'fa-wand-magic-sparkles', url: 'generator.html' },
+            { label: 'Gerar Jogos', icon: 'fa-wand-magic-sparkles', url: 'gerar_jogos.html' },
             { label: 'Jogos Salvos', icon: 'fa-bookmark', url: 'saved_games.html' },
             { label: 'Downloads', icon: 'fa-download', url: 'download_results.html' },
-            { label: 'Estatísticas', icon: 'fa-chart-pie', url: 'statistics.html' },
+            { label: 'Estatísticas', icon: 'fa-chart-pie', url: 'historico.html' },
             { label: 'Filtrar Números', icon: 'fa-filter', url: 'generator.html' },
             { label: 'Sorteio ao Vivo', icon: 'fa-tv', externalUrl: 'https://www.youtube.com/channel/UCPbhr02AfVb2nd5pm12BxTw/live' }
         ];
@@ -88,7 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     container.setAttribute('style', 'display: grid !important; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)) !important; gap: 20px !important; padding: 10px 20px 20px 20px !important; max-width: 1200px !important; margin: 0 auto !important;');
 
-    // 4. Renderização sincronizada com o localStorage e redirecionamento para generator.html
+    // 4. Renderização sincronizada com o localStorage
     container.innerHTML = lotteries.map(lot => {
         let lotData = { ...lot };
         const savedData = localStorage.getItem('ultimo_resultado_' + lot.id);
@@ -111,6 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
+        // REDIRECIONAMENTO DOS CARDS PARA A TELA DE FILTROS (generator.html)
         return `
             <div style="background: #fff; border-radius: 12px; border-top: 6px solid ${lotData.color}; box-shadow: 0 4px 10px rgba(0,0,0,0.08); padding: 16px; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box;">
                 <div>

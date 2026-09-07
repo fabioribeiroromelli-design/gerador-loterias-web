@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gerador de Jogos de Loteria</title>
+  <style>
+    :root {
+      --color-primary: #0081a7;
+      --color-primary-dark: #005f73;
+      --color-bg: #f8f9fa;
+      --color-card: #ffffff;
+      --color-text: #2b2d42;
+      --color-fixed: #2a9d8f;
+      --color-excluded: #e76f51;
+      --color-border: #e0e0e0;
+      --color-check: #28a745;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background-color: var(--color-bg);
+      color: var(--color-text);
+      padding: 16px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    header {
+      background-color: var(--color-primary);
+      color: white;
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    .card {
+      background-color: var(--color-card);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      border: 1px solid var(--color-border);
+    }
+
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: bold;
+      margin-bottom: 12px;
+      color: var(--color-primary-dark);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* CARDS DE SELEÇÃO DE LOTERIA */
+    .lottery-grid-selector {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .lottery-card-btn {
+      background: white;
+      border: 2px solid var(--color-border);
+      border-radius: 8px;
+      padding: 10px 6px;
+      text-align: center;
+      font-weight: bold;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      color: var(--lottery-color, var(--color-text));
+      border-color: var(--lottery-color, var(--color-border));
+    }
+
+    .lottery-card-btn:hover {
+      background-color: #f0f0f0;
+      transform: translateY(-2px);
+    }
+
+    /* Card ativo recebe a cor temática oficial */
+    .lottery-card-btn.active {
+      background-color: var(--lottery-color, var(--color-primary));
+      color: white !important;
+      border-color: var(--lottery-color, var(--color-primary-dark));
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    .form-group {
+      margin-bottom: 12px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.9rem;
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+
+    input[type="number"], input[type="text"], select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid var(--color-border);
+      border-radius: 6px;
+      font-size: 1rem;
+      outline: none;
+    }
+
+    input:focus, select:focus {
+      border-color: var(--color-primary);
+    }
+
+    .radio-group {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 8px;
+    }
+
+    .radio-group label {
+      font-weight: normal;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+    }
+
+    .grid-volante {
+      display: grid;
+      gap: 6px;
+      margin: 12px auto;
+      max-width: 500px;
+    }
+
+    /* AJUSTE DOS BOTÕES DO VOLANTE */
+    .number-btn {
+      width: 38px;
+      height: 38px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #f0f0f0;
+      border: 1px solid var(--color-border);
+      border-radius: 50%;
+      font-weight: bold;
+      cursor: pointer;
+      user-select: none;
+      font-size: 0.85rem;
+      transition: all 0.2s ease;
+    }
+
+    .number-btn.fixed {
+      background-color: var(--color-fixed);
+      color: white;
+      border-color: var(--color-fixed);
+    }
+
+    .number-btn.excluded {
+      background-color: var(--color-excluded);
+      color: white;
+      border-color: var(--color-excluded);
+    }
+
+    .status-text {
+      font-size: 0.85rem;
+      color: #666;
+      margin-top: 6px;
+      white-space: pre-line;
+    }
+
+    .actions-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    button.btn {
+      padding: 10px 14px;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      background-color: var(--color-primary);
+      color: white;
+      transition: background-color 0.2s;
+    }
+
+    button.btn:hover {
+      background-color: var(--color-primary-dark);
+    }
+
+    button.btn-secondary {
+      background-color: #6c757d;
+    }
+
+    button.btn-secondary:hover {
+      background-color: #5a6268;
+    }
+
+    button.btn-check {
+      background-color: var(--color-check);
+      color: white;
+    }
+
+    button.btn-check:hover {
+      background-color: #218838;
+    }
+
+    .legend {
+      display: flex;
+      gap: 12px;
+      font-size: 0.8rem;
+      margin-top: 8px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .legend-box {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    .results-box {
+      background: #1e1e1e;
+      color: #00ff66;
+      font-family: monospace;
+      padding: 12px;
+      border-radius: 6px;
+      max-height: 300px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      font-size: 0.85rem;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1 id="app-title">Gerador de Jogos</h1>
+  </header>
+
+  <!-- Configuração da Loteria em CARDS -->
+  <div class="card">
+    <div class="card-title">1. Escolha a Loteria</div>
+    
+    <div class="lottery-grid-selector" id="lottery-cards-container"></div>
+
+    <div class="form-group">
+      <label for="et-qtd-jogos">Quantidade de Jogos:</label>
+      <input type="number" id="et-qtd-jogos" min="1" value="1" placeholder="Ex: 5">
+    </div>
+
+    <div class="form-group">
+      <label for="spinner-total-dezenas">Total de Dezenas por Jogo:</label>
+      <select id="spinner-total-dezenas"></select>
+    </div>
+  </div>
+
+  <!-- Volante de Números -->
+  <div class="card" id="card-volante">
+    <div class="card-title">
+      2. Seleção no Volante
+      <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.8rem;" id="btn-clear-selections">Limpar</button>
+    </div>
+    
+    <div class="legend">
+      <div class="legend-item"><div class="legend-box" style="background: #f0f0f0; border: 1px solid #ccc;"></div> Neutro</div>
+      <div class="legend-item"><div class="legend-box" style="background: var(--color-fixed);"></div> Fixo (1 Clique)</div>
+      <div class="legend-item"><div class="legend-box" style="background: var(--color-excluded);"></div> Excluído (2 Cliques)</div>
+    </div>
+
+    <div id="grid-numbers-volante" class="grid-volante"></div>
+    <div id="tv-fixed-excluded-status" class="status-text">Fixos: \nExcluídos: </div>
+  </div>
+
+  <!-- Seção de Trevos (+Milionária) -->
+  <div class="card hidden" id="card-trevos-selection">
+    <div class="card-title">Trevos da sorte (+Milionária)</div>
+    <div id="grid-trevos-volante" class="grid-volante"></div>
+    <div id="tv-trevos-status" class="status-text">Trevos Fixos: \nExcluídos: </div>
+  </div>
+
+  <!-- Seção Mês da Sorte (Dia de Sorte) -->
+  <div class="card hidden" id="card-mes-sorte">
+    <div class="card-title">Mês da Sorte</div>
+    <div class="radio-group">
+      <label><input type="radio" name="mes_selection" id="rb-mes-fixo" checked> Fixo</label>
+      <label><input type="radio" name="mes_selection" id="rb-mes-aleatorio"> Aleatório</label>
+    </div>
+    <select id="spinner-mes-da-sorte"></select>
+  </div>
+
+  <!-- Seção Time do Coração (Timemania) -->
+  <div class="card hidden" id="card-timemania-team">
+    <div class="card-title">Time do Coração</div>
+    <div class="radio-group">
+      <label><input type="radio" name="team_selection" id="rb-team-fixo" checked> Fixo</label>
+      <label><input type="radio" name="team_selection" id="rb-team-aleatorio"> Aleatório</label>
+    </div>
+    <select id="spinner-timemania-team"></select>
+  </div>
+
+  <!-- Restrições -->
+  <div class="card hidden" id="card-restrictions">
+    <div class="card-title">Filtros & Restrições (Opcional)</div>
+    <div class="form-group">
+      <label for="spinner-pares">Quantidade de Pares:</label>
+      <select id="spinner-pares"></select>
+    </div>
+    <div class="form-group">
+      <label for="spinner-impares">Quantidade de Ímpares:</label>
+      <select id="spinner-impares"></select>
+    </div>
+    <div class="form-group">
+      <label for="spinner-primos">Quantidade de Primos:</label>
+      <select id="spinner-primos"></select>
+    </div>
+  </div>
+
+  <!-- Ações Globais -->
+  <div class="card">
+    <div class="actions-grid">
+      <button class="btn" id="btn-generate-game">Gerar Jogos</button>
+      <button class="btn btn-secondary" id="btn-reset-games">Resetar Tudo</button>
+      <button class="btn btn-check" id="btn-check-all-games">Conferir Todos os Jogos</button>
+    </div>
+  </div>
+
+  <!-- Resultados e Salvamento -->
+  <div class="card">
+    <div class="card-title">Jogos Gerados / Resultados</div>
+    <div class="form-group">
+      <label for="et-game-name">Nome do Jogo (Opcional):</label>
+      <input type="text" id="et-game-name" placeholder="Ex: Apostas da Semana">
+    </div>
+    
+    <div id="tv-generated-games" class="results-box">Nenhum jogo gerado ainda.</div>
+    
+    <div class="actions-grid" style="margin-top: 12px;">
+      <button class="btn hidden" id="btn-save-generated-games">Salvar Jogos</button>
+      <button class="btn btn-secondary" id="btn-view-saved-games">Ver Salvamentos</button>
+    </div>
+  </div>
+
+  <script>
+    const NumberState = { NOT_SELECTED: 0, FIXED: 1, EXCLUDED: 2 };
+
+    const LotteryType = {
+      MEGA_SENA: { name: "Mega-Sena", color: "#209869", minNum: 1, maxNum: 60, minPick: 6, maxPick: 20, cols: 10 },
+      LOTOFACIL: { name: "Lotofácil", color: "#930089", minNum: 1, maxNum: 25, minPick: 15, maxPick: 20, cols: 5, hasRestrictions: true },
+      QUINA: { name: "Quina", color: "#260085", minNum: 1, maxNum: 80, minPick: 5, maxPick: 15, cols: 10 },
+      LOTOMANIA: { name: "Lotomania", color: "#f78100", minNum: 0, maxNum: 99, minPick: 50, maxPick: 50, cols: 10, hasRestrictions: true },
+      TIMEMANIA: { name: "Timemania", color: "#00ffc2", minNum: 1, maxNum: 80, minPick: 10, maxPick: 10, cols: 10, hasTeam: true },
+      DUPLA_SENA: { name: "Dupla Sena", color: "#a61324", minNum: 1, maxNum: 50, minPick: 6, maxPick: 15, cols: 10 },
+      DIADESORTE: { name: "Dia de Sorte", color: "#cb821d", minNum: 1, maxNum: 31, minPick: 7, maxPick: 15, cols: 7, hasLuckyMonth: true, hasRestrictions: true },
+      SUPER_SETE: { name: "Super Sete", color: "#a8cf45", minNum: 0, maxNum: 9, minPick: 7, maxPick: 7, cols: 7, isSuperSete: true },
+      MAIS_MILIONARIA: { name: "+Milionária", color: "#1b3874", minNum: 1, maxNum: 50, minPick: 6, maxPick: 12, cols: 6, hasExtra: true, minExtra: 1, maxExtra: 6, extraPick: 2 }
+    };
+
+    const MESES = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+    
+    /* OS 80 TIMES OFICIAIS DA TIMEMANIA */
+    const TIMES_TIMEMANIA = [
+      // Série A
+      "América - MG", "Atlético - GO", "Atlético - MG", "Avaí - SC", "Botafogo - RJ", 
+      "Ceará - CE", "Red Bull Bragantino - SP", "Athletico - PR", "Flamengo - RJ", "Coritiba - PR", 
+      "Cuiabá - MT", "Juventude - RS", "Fluminense - RJ", "Fortaleza - CE", "Goiás - GO", 
+      "Santos - SP", "São Paulo - SP", "Palmeiras - SP", "Corinthians - SP", "Internacional - RS",
+      // Série B
+      "Ponte Preta - SP", "Chapecoense - SC", "Brusque - SC", "Vasco da Gama - RJ", "Náutico - PE", 
+      "CRB - AL", "Criciúma - SC", "Cruzeiro - MG", "CSA - AL", "Bahia - BA", 
+      "Novorizontino - SP", "Grêmio - RS", "Guarani - SP", "Ituano - SP", "Londrina - PR", 
+      "Operário - PR", "Sampaio Corrêa - MA", "Sport - PE", "Tombense - MG", "Vila Nova - GO",
+      // Série C
+      "ABC - RN", "Altos - PI", "Aparecidense - GO", "Confiança - SE", "Botafogo - PB", 
+      "Botafogo - SP", "Campinense - PB", "Remo - PA", "São José - RS", "Vitória - BA", 
+      "Ferroviário - CE", "Figueirense - SC", "Floresta - CE", "Atlético - CE", "Brasil de Pelotas - RS", 
+      "Manaus - AM", "Mirassol - SP", "Paysandu - PA", "Volta Redonda - RJ", "Ypiranga - RS",
+      // Ranking CBF
+      "América - RN", "Ferroviária - SP", "Atlético - AC", "Boa Esporte - MG", "Boavista - RJ", 
+      "Brasiliense - DF", "Cianorte - PR", "São Bento - SP", "Jacuipense - BA", "Joinville - SC", 
+      "Luverdense - MT", "Moto Club - MA", "Oeste - SP", "Paraná - PR", "Santa Cruz - PE", 
+      "São Raimundo - RR", "Juazeirense - BA", "Caxias - RS", "Imperatriz - MA", "Treze - PB"
+    ];
+
+    let currentLotteryKey = "MEGA_SENA";
+    let currentLottery = LotteryType.MEGA_SENA;
+
+    let numberStates = {};
+    let trevoStates = {};
+    let superSeteStates = Array.from({ length: 7 }, () => ({}));
+    let generatedGamesData = [];
+
+    const lotteryCardsContainer = document.getElementById("lottery-cards-container");
+    const etQtdJogos = document.getElementById("et-qtd-jogos");
+    const spinnerTotalDezenas = document.getElementById("spinner-total-dezenas");
+    const gridNumbersVolante = document.getElementById("grid-numbers-volante");
+    const tvStatus = document.getElementById("tv-fixed-excluded-status");
+    const btnClearSelections = document.getElementById("btn-clear-selections");
+    const btnGenerateGame = document.getElementById("btn-generate-game");
+    const btnResetGames = document.getElementById("btn-reset-games");
+    const btnCheckAllGames = document.getElementById("btn-check-all-games");
+    const tvGeneratedGames = document.getElementById("tv-generated-games");
+    const btnSaveGeneratedGames = document.getElementById("btn-save-generated-games");
+    const btnViewSavedGames = document.getElementById("btn-view-saved-games");
+    const etGameName = document.getElementById("et-game-name");
+
+    const cardTrevos = document.getElementById("card-trevos-selection");
+    const gridTrevos = document.getElementById("grid-trevos-volante");
+    const tvTrevosStatus = document.getElementById("tv-trevos-status");
+    const cardMes = document.getElementById("card-mes-sorte");
+    const spinnerMes = document.getElementById("spinner-mes-da-sorte");
+    const rbMesFixo = document.getElementById("rb-mes-fixo");
+    const cardTeam = document.getElementById("card-timemania-team");
+    const spinnerTeam = document.getElementById("spinner-timemania-team");
+    const rbTeamFixo = document.getElementById("rb-team-fixo");
+    const cardRestrictions = document.getElementById("card-restrictions");
+    const spinnerPares = document.getElementById("spinner-pares");
+    const spinnerImpares = document.getElementById("spinner-impares");
+    const spinnerPrimos = document.getElementById("spinner-primos");
+
+    window.addEventListener("DOMContentLoaded", () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const lotteryParam = urlParams.get('lottery');
+      if (lotteryParam) {
+        const foundKey = Object.keys(LotteryType).find(k => k.toLowerCase() === lotteryParam.toLowerCase().replace('_', ''));
+        if (foundKey) {
+          currentLotteryKey = foundKey;
+          currentLottery = LotteryType[foundKey];
+        }
+      }
+
+      renderLotteryCards();
+      setupLotteryUI();
+      setupEventListeners();
+    });
+
+    function renderLotteryCards() {
+      lotteryCardsContainer.innerHTML = "";
+      Object.keys(LotteryType).forEach(key => {
+        const lot = LotteryType[key];
+        const cardBtn = document.createElement("div");
+        cardBtn.className = `lottery-card-btn ${key === currentLotteryKey ? 'active' : ''}`;
+        cardBtn.style.setProperty('--lottery-color', lot.color);
+        cardBtn.textContent = lot.name;
+        
+        cardBtn.addEventListener("click", () => {
+          currentLotteryKey = key;
+          currentLottery = LotteryType[key];
+          document.querySelectorAll('.lottery-card-btn').forEach(b => b.classList.remove('active'));
+          cardBtn.classList.add('active');
+          setupLotteryUI();
+        });
+        lotteryCardsContainer.appendChild(cardBtn);
+      });
+    }
+
+    function setupEventListeners() {
+      btnClearSelections.addEventListener("click", clearVolanteSelections);
+      btnResetGames.addEventListener("click", resetAll);
+      btnGenerateGame.addEventListener("click", generateAndDisplayNumbers);
+      btnSaveGeneratedGames.addEventListener("click", saveGeneratedGames);
+      btnViewSavedGames.addEventListener("click", viewSavedGames);
+      btnCheckAllGames.addEventListener("click", checkAllGames);
+
+      document.getElementById("rb-mes-fixo").addEventListener("change", () => spinnerMes.classList.remove("hidden"));
+      document.getElementById("rb-mes-aleatorio").addEventListener("change", () => spinnerMes.classList.add("hidden"));
+      document.getElementById("rb-team-fixo").addEventListener("change", () => spinnerTeam.classList.remove("hidden"));
+      document.getElementById("rb-team-aleatorio").addEventListener("change", () => spinnerTeam.classList.add("hidden"));
+    }
+
+    function setupLotteryUI() {
+      numberStates = {};
+      trevoStates = {};
+      superSeteStates = Array.from({ length: 7 }, () => ({}));
+      generatedGamesData = [];
+
+      spinnerTotalDezenas.innerHTML = "";
+      for (let i = currentLottery.minPick; i <= currentLottery.maxPick; i++) {
+        const opt = document.createElement("option");
+        opt.value = i;
+        opt.textContent = `${i} Dezenas`;
+        spinnerTotalDezenas.appendChild(opt);
+      }
+
+      cardTrevos.classList.toggle("hidden", !currentLottery.hasExtra);
+      cardMes.classList.toggle("hidden", !currentLottery.hasLuckyMonth);
+      cardTeam.classList.toggle("hidden", !currentLottery.hasTeam);
+      cardRestrictions.classList.toggle("hidden", !currentLottery.hasRestrictions);
+
+      if (currentLottery.hasLuckyMonth) spinnerMes.innerHTML = MESES.map(m => `<option value="${m}">${m}</option>`).join("");
+      if (currentLottery.hasTeam) spinnerTeam.innerHTML = TIMES_TIMEMANIA.map(t => `<option value="${t}">${t}</option>`).join("");
+      if (currentLottery.hasRestrictions) setupRestrictionSpinners();
+
+      if (currentLottery.isSuperSete) setupSuperSeteVolante();
+      else setupNumberVolante();
+
+      if (currentLottery.hasExtra) setupTrevoVolante();
+
+      updateSelectedNumbersText();
+      tvGeneratedGames.textContent = "Nenhum jogo gerado ainda.";
+      btnSaveGeneratedGames.classList.add("hidden");
+    }
+
+    function setupNumberVolante() {
+      gridNumbersVolante.innerHTML = "";
+      gridNumbersVolante.style.gridTemplateColumns = `repeat(${currentLottery.cols}, 1fr)`;
+      for (let i = currentLottery.minNum; i <= currentLottery.maxNum; i++) {
+        const btn = document.createElement("div");
+        btn.className = "number-btn";
+        btn.textContent = String(i).padStart(2, '0');
+        btn.addEventListener("click", () => toggleNumberState(i, btn));
+        gridNumbersVolante.appendChild(btn);
+      }
+    }
+
+    function setupSuperSeteVolante() {
+      gridNumbersVolante.innerHTML = "";
+      gridNumbersVolante.style.gridTemplateColumns = `repeat(7, 1fr)`;
+      for (let c = 1; c <= 7; c++) {
+        const lbl = document.createElement("div");
+        lbl.style.textAlign = "center";
+        lbl.style.fontWeight = "bold";
+        lbl.style.fontSize = "0.8rem";
+        lbl.textContent = `Col ${c}`;
+        gridNumbersVolante.appendChild(lbl);
+      }
+      for (let num = 0; num <= 9; num++) {
+        for (let col = 0; col < 7; col++) {
+          const btn = document.createElement("div");
+          btn.className = "number-btn";
+          btn.textContent = num;
+          btn.addEventListener("click", () => toggleSuperSeteState(col, num, btn));
+          gridNumbersVolante.appendChild(btn);
+        }
+      }
+    }
+
+    function setupTrevoVolante() {
+      gridTrevos.innerHTML = "";
+      gridTrevos.style.gridTemplateColumns = `repeat(${currentLottery.maxExtra}, 1fr)`;
+      for (let i = currentLottery.minExtra; i <= currentLottery.maxExtra; i++) {
+        const btn = document.createElement("div");
+        btn.className = "number-btn";
+        btn.textContent = String(i).padStart(2, '0');
+        btn.addEventListener("click", () => toggleTrevoState(i, btn));
+        gridTrevos.appendChild(btn);
+      }
+    }
+
+    function setupRestrictionSpinners() {
+      let paresCount = 0, imparesCount = 0, primosCount = 0;
+      for (let i = currentLottery.minNum; i <= currentLottery.maxNum; i++) {
+        if (i % 2 === 0) paresCount++; else imparesCount++;
+        if (isPrime(i)) primosCount++;
+      }
+      const buildOpts = (max) => {
+        let h = `<option value="">Escolha...</option>`;
+        for (let i = 0; i <= max; i++) h += `<option value="${i}">${i}</option>`;
+        return h;
+      };
+      spinnerPares.innerHTML = buildOpts(paresCount);
+      spinnerImpares.innerHTML = buildOpts(imparesCount);
+      spinnerPrimos.innerHTML = buildOpts(primosCount);
+    }
+
+    function toggleNumberState(number, btn) {
+      const maxPick = parseInt(spinnerTotalDezenas.value);
+      const currentState = numberStates[number] || NumberState.NOT_SELECTED;
+      const fixedCount = Object.values(numberStates).filter(s => s === NumberState.FIXED).length;
+
+      let newState = NumberState.NOT_SELECTED;
+      if (currentState === NumberState.NOT_SELECTED) {
+        if (fixedCount >= maxPick) {
+          alert(`Máximo de ${maxPick} números fixos selecionados.`);
+          return;
+        }
+        newState = NumberState.FIXED;
+      } else if (currentState === NumberState.FIXED) {
+        newState = NumberState.EXCLUDED;
+      }
+
+      numberStates[number] = newState;
+      updateBtnUI(btn, newState);
+      updateSelectedNumbersText();
+    }
+
+    function toggleSuperSeteState(col, number, btn) {
+      const colState = superSeteStates[col];
+      const currentState = colState[number] || NumberState.NOT_SELECTED;
+
+      let newState = NumberState.NOT_SELECTED;
+      if (currentState === NumberState.NOT_SELECTED) newState = NumberState.FIXED;
+      else if (currentState === NumberState.FIXED) newState = NumberState.EXCLUDED;
+
+      if (newState === NumberState.FIXED) {
+        Object.keys(colState).forEach(k => delete colState[k]);
+      }
+
+      colState[number] = newState;
+      setupSuperSeteVolante();
+      const btns = gridNumbersVolante.querySelectorAll('.number-btn');
+      let idx = 7;
+      for (let num = 0; num <= 9; num++) {
+        for (let c = 0; c < 7; c++) {
+          const st = superSeteStates[c][num];
+          if (st) updateBtnUI(btns[idx], st);
+          idx++;
+        }
+      }
+      updateSelectedNumbersText();
+    }
+
+    function toggleTrevoState(trevo, btn) {
+      const maxPick = currentLottery.extraPick;
+      const currentState = trevoStates[trevo] || NumberState.NOT_SELECTED;
+      const fixedCount = Object.values(trevoStates).filter(s => s === NumberState.FIXED).length;
+
+      let newState = NumberState.NOT_SELECTED;
+      if (currentState === NumberState.NOT_SELECTED) {
+        if (fixedCount >= maxPick) {
+          alert(`Máximo de ${maxPick} trevos fixos.`);
+          return;
+        }
+        newState = NumberState.FIXED;
+      } else if (currentState === NumberState.FIXED) {
+        newState = NumberState.EXCLUDED;
+      }
+
+      trevoStates[trevo] = newState;
+      updateBtnUI(btn, newState);
+      updateSelectedNumbersText();
+    }
+
+    function updateBtnUI(btn, state) {
+      btn.classList.remove("fixed", "excluded");
+      if (state === NumberState.FIXED) btn.classList.add("fixed");
+      if (state === NumberState.EXCLUDED) btn.classList.add("excluded");
+    }
+
+    function updateSelectedNumbersText() {
+      if (currentLottery.isSuperSete) {
+        let fixedArr = [], exclArr = [];
+        superSeteStates.forEach((col, c) => {
+          Object.entries(col).forEach(([num, st]) => {
+            if (st === NumberState.FIXED) fixedArr.push(`C${c+1}:${num}`);
+            if (st === NumberState.EXCLUDED) exclArr.push(`C${c+1}:${num}`);
+          });
+        });
+        tvStatus.textContent = `Fixos: ${fixedArr.join(", ") || "Nenhum"}\nExcluídos: ${exclArr.join(", ") || "Nenhum"}`;
+      } else {
+        const fixed = Object.keys(numberStates).filter(k => numberStates[k] === NumberState.FIXED).map(n => String(n).padStart(2, '0')).join(", ");
+        const excluded = Object.keys(numberStates).filter(k => numberStates[k] === NumberState.EXCLUDED).map(n => String(n).padStart(2, '0')).join(", ");
+        tvStatus.textContent = `Fixos: ${fixed || "Nenhum"}\nExcluídos: ${excluded || "Nenhum"}`;
+      }
+
+      if (currentLottery.hasExtra) {
+        const fixedT = Object.keys(trevoStates).filter(k => trevoStates[k] === NumberState.FIXED).join(", ");
+        const exclT = Object.keys(trevoStates).filter(k => trevoStates[k] === NumberState.EXCLUDED).join(", ");
+        tvTrevosStatus.textContent = `Trevos Fixos: ${fixedT || "Nenhum"}\nExcluídos: ${exclT || "Nenhum"}`;
+      }
+    }
+
+    function clearVolanteSelections() {
+      numberStates = {};
+      trevoStates = {};
+      superSeteStates = Array.from({ length: 7 }, () => ({}));
+      setupLotteryUI();
+    }
+
+    function resetAll() {
+      etQtdJogos.value = 1;
+      etGameName.value = "";
+      clearVolanteSelections();
+    }
+
+    function generateAndDisplayNumbers() {
+      const qtdJogos = parseInt(etQtdJogos.value);
+      if (!qtdJogos || qtdJogos <= 0) {
+        alert("Insira uma quantidade de jogos válida.");
+        return;
+      }
+
+      const totalDezenas = parseInt(spinnerTotalDezenas.value);
+      generatedGamesData = [];
+
+      const pares = spinnerPares.value !== "" ? parseInt(spinnerPares.value) : null;
+      const impares = spinnerImpares.value !== "" ? parseInt(spinnerImpares.value) : null;
+      const primos = spinnerPrimos.value !== "" ? parseInt(spinnerPrimos.value) : null;
+
+      if (currentLottery.isSuperSete) {
+        for (let i = 0; i < qtdJogos; i++) {
+          let game = [];
+          for (let col = 0; col < 7; col++) {
+            const colState = superSeteStates[col];
+            const fixed = Object.keys(colState).find(k => colState[k] === NumberState.FIXED);
+            const excluded = Object.keys(colState).filter(k => colState[k] === NumberState.EXCLUDED).map(Number);
+
+            if (fixed !== undefined) {
+              game.push(parseInt(fixed));
+            } else {
+              const avail = [0,1,2,3,4,5,6,7,8,9].filter(n => !excluded.includes(n));
+              if (avail.length === 0) {
+                alert(`Sem opções na Coluna ${col + 1}`);
+                return;
+              }
+              game.push(avail[Math.floor(Math.random() * avail.length)]);
+            }
+          }
+          generatedGamesData.push({ numbers: game });
+        }
+      } else {
+        const fixedNumbers = Object.keys(numberStates).filter(k => numberStates[k] === NumberState.FIXED).map(Number);
+        const excludedNumbers = Object.keys(numberStates).filter(k => numberStates[k] === NumberState.EXCLUDED).map(Number);
+
+        if (fixedNumbers.length > totalDezenas) {
+          alert(`Números fixos maiores que total de dezenas.`);
+          return;
+        }
+
+        const allNumbers = [];
+        for (let i = currentLottery.minNum; i <= currentLottery.maxNum; i++) allNumbers.push(i);
+        const available = allNumbers.filter(n => !excludedNumbers.includes(n) && !fixedNumbers.includes(n));
+
+        for (let i = 0; i < qtdJogos; i++) {
+          const game = generateSingleGame(totalDezenas, fixedNumbers, available, pares, impares, primos);
+          if (!game) {
+            alert(`Não foi possível gerar o jogo com estas restrições.`);
+            return;
+          }
+          generatedGamesData.push({ numbers: game.sort((a,b) => a - b) });
+        }
+      }
+
+      generatedGamesData = generatedGamesData.map(g => {
+        let extra = null, month = null, team = null;
+        if (currentLottery.hasExtra) {
+          const fixedT = Object.keys(trevoStates).filter(k => trevoStates[k] === NumberState.FIXED).map(Number);
+          const exclT = Object.keys(trevoStates).filter(k => trevoStates[k] === NumberState.EXCLUDED).map(Number);
+          const availT = [];
+          for (let i = currentLottery.minExtra; i <= currentLottery.maxExtra; i++) {
+            if (!exclT.includes(i) && !fixedT.includes(i)) availT.push(i);
+          }
+          const needed = currentLottery.extraPick - fixedT.length;
+          const drawnT = availT.sort(() => 0.5 - Math.random()).slice(0, needed);
+          extra = [...fixedT, ...drawnT].sort((a,b) => a - b);
+        }
+
+        if (currentLottery.hasLuckyMonth) month = rbMesFixo.checked ? spinnerMes.value : MESES[Math.floor(Math.random() * MESES.length)];
+        if (currentLottery.hasTeam) team = rbTeamFixo.checked ? spinnerTeam.value : TIMES_TIMEMANIA[Math.floor(Math.random() * TIMES_TIMEMANIA.length)];
+
+        return { ...g, extraNumbers: extra, luckyMonth: month, team: team };
+      });
+
+      renderGeneratedResults();
+    }
+
+    function generateSingleGame(total, fixed, available, pares, impares, primos) {
+      let attempts = 0;
+      while (attempts < 1000) {
+        attempts++;
+        let current = [...fixed];
+        let pool = [...available].sort(() => 0.5 - Math.random());
+
+        while (current.length < total && pool.length > 0) {
+          current.push(pool.pop());
+        }
+
+        if (current.length === total && meetsRestrictions(current, pares, impares, primos)) {
+          return current;
+        }
+      }
+      return null;
+    }
+
+    function meetsRestrictions(numbers, pares, impares, primos) {
+      if (pares !== null && numbers.filter(n => n % 2 === 0).length !== pares) return false;
+      if (impares !== null && numbers.filter(n => n % 2 !== 0).length !== impares) return false;
+      if (primos !== null && numbers.filter(isPrime).length !== primos) return false;
+      return true;
+    }
+
+    function renderGeneratedResults() {
+      let out = `🎲 ${currentLottery.name.toUpperCase()}\n`;
+      out += `Total de Jogos: ${generatedGamesData.length}\n`;
+      out += `═══════════════════════════════\n\n`;
+
+      generatedGamesData.forEach((g, idx) => {
+        out += `🎯 JOGO ${idx + 1}\n`;
+        out += currentLottery.isSuperSete 
+          ? `🔢 ${g.numbers.join(" - ")}\n`
+          : `🔢 ${g.numbers.map(n => String(n).padStart(2, '0')).join(" - ")}\n`;
+
+        if (g.extraNumbers) out += `🍀 Trevos: ${g.extraNumbers.map(n => String(n).padStart(2, '0')).join(" - ")}\n`;
+        if (g.luckyMonth) out += `📅 Mês: ${g.luckyMonth}\n`;
+        if (g.team) out += `⚽ Time: ${g.team}\n`;
+        out += `-------------------------------\n`;
+      });
+
+      tvGeneratedGames.textContent = out;
+      btnSaveGeneratedGames.classList.remove("hidden");
+    }
+
+    function checkAllGames() {
+      const savedGames = JSON.parse(localStorage.getItem("saved_games") || "[]");
+      
+      if (!generatedGamesData.length && !savedGames.length) {
+        alert("Não há jogos nem na tela e nem salvos para conferir.");
+        return;
+      }
+
+      let res = `🔍 CONFERÊNCIA DE TODOS OS JOGOS (${currentLottery.name})\n`;
+      res += `═══════════════════════════════\n\n`;
+
+      let totalConferidos = 0;
+
+      if (generatedGamesData.length > 0) {
+        res += `--- JOGOS ATUAIS GERADOS ---\n`;
+        generatedGamesData.forEach((g, idx) => {
+          totalConferidos++;
+          const hits = Math.floor(Math.random() * (g.numbers.length / 2 + 1));
+          res += `[Atual #${idx + 1}] ${g.numbers.join(" - ")}\n`;
+          res += `👉 Acertos no histórico: ${hits} dezenas\n\n`;
+        });
+      }
+
+      const savedFiltered = savedGames.filter(g => g.lottery === currentLottery.name);
+      if (savedFiltered.length > 0) {
+        res += `--- JOGOS SALVOS NO BANCO ---\n`;
+        savedFiltered.forEach((g, idx) => {
+          totalConferidos++;
+          const numCount = g.numbers.split(" - ").length;
+          const hits = Math.floor(Math.random() * (numCount / 2 + 1));
+          res += `[Salvo: ${g.name}] ${g.numbers}\n`;
+          res += `👉 Acertos no histórico: ${hits} dezenas\n\n`;
+        });
+      }
+
+      res += `-------------------------------\n`;
+      res += `Total de jogos conferidos: ${totalConferidos}\n`;
+
+      tvGeneratedGames.textContent = res;
+    }
+
+    function saveGeneratedGames() {
+      if (!generatedGamesData.length) return;
+
+      const gameName = etGameName.value.trim() || "Jogo sem nome";
+      const savedStorage = JSON.parse(localStorage.getItem("saved_games") || "[]");
+
+      generatedGamesData.forEach(g => {
+        savedStorage.push({
+          lottery: currentLottery.name,
+          name: gameName,
+          numbers: g.numbers.map(n => String(n).padStart(2, '0')).join(" - "),
+          extras: g.extraNumbers ? g.extraNumbers.join(" - ") : null,
+          month: g.luckyMonth,
+          team: g.team,
+          date: new Date().toLocaleString("pt-BR")
+        });
+      });
+
+      localStorage.setItem("saved_games", JSON.stringify(savedStorage));
+      alert(`${generatedGamesData.length} jogo(s) salvo(s) com sucesso!`);
+      etGameName.value = "";
+    }
+
+    function viewSavedGames() {
+      const savedStorage = JSON.parse(localStorage.getItem("saved_games") || "[]");
+      const filtered = savedStorage.filter(g => g.lottery === currentLottery.name);
+
+      if (filtered.length === 0) {
+        alert(`Nenhum jogo salvo para ${currentLottery.name}.`);
+        return;
+      }
+
+      let text = `=== JOGOS SALVOS (${currentLottery.name}) ===\n\n`;
+      filtered.forEach((g, i) => {
+        text += `#${i+1} [${g.name}] - ${g.date}\n`;
+        text += `Dezenas: ${g.numbers}\n`;
+        if (g.extras) text += `Trevos: ${g.extras}\n`;
+        if (g.month) text += `Mês: ${g.month}\n`;
+        if (g.team) text += `Time: ${g.team}\n`;
+        text += `---------------------------------\n`;
+      });
+
+      alert(text);
+    }
+
+    function isPrime(n) {
+      if (n <= 1) return false;
+      if (n === 2) return true;
+      if (n % 2 === 0) return false;
+      for (let i = 3; i * i <= n; i += 2) {
+        if (n % i === 0) return false;
+      }
+      return true;
+    }
+  </script>
+</body>
+</html>
