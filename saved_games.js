@@ -13,13 +13,14 @@ const LOTTERY_NAMES = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    garantirBotaoConferir();
+    garantirBotoesAcao();
     initEvents();
     renderSavedGames();
 });
 
-function garantirBotaoConferir() {
+function garantirBotoesAcao() {
     let btnConferir = document.getElementById('btn-conferir');
+    let btnDeleteAll = document.getElementById('btn_clear_everything');
     const btnClear = document.getElementById('btn_clear_all_saved');
 
     if (!btnConferir && btnClear) {
@@ -29,6 +30,15 @@ function garantirBotaoConferir() {
         btnConferir.style.cssText = "background: #27ae60; color: #fff; border: none; padding: 10px 18px; border-radius: 8px; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-size: 0.95rem; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-right: 10px;";
         
         btnClear.parentNode.insertBefore(btnConferir, btnClear);
+    }
+
+    if (!btnDeleteAll && btnClear) {
+        btnDeleteAll = document.createElement('button');
+        btnDeleteAll.id = 'btn_clear_everything';
+        btnDeleteAll.innerHTML = '<i class="fa-solid fa-dumpster"></i> Apagar TUDO (Reset)';
+        btnDeleteAll.style.cssText = "background: #7f1d1d; color: #fff; border: none; padding: 10px 18px; border-radius: 8px; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-size: 0.95rem; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-left: 10px;";
+        
+        btnClear.parentNode.appendChild(btnDeleteAll);
     }
 }
 
@@ -45,57 +55,71 @@ function initEvents() {
             if (titleElement) {
                 titleElement.textContent = `Exibindo: ${LOTTERY_NAMES[currentFilter] || currentFilter}`;
             }
+            
+            // Remove o painel do concurso anterior ao trocar de aba
+            const painelAntigo = document.getElementById('painel-ultimo-concurso');
+            if (painelAntigo) painelAntigo.remove();
+
             renderSavedGames();
         });
     });
 
     const btnClear = document.getElementById('btn_clear_all_saved');
-    if (btnClear) {
-        btnClear.addEventListener('click', clearCurrentLotteryGames);
-    }
+    if (btnClear) btnClear.addEventListener('click', clearCurrentLotteryGames);
+
+    const btnDeleteAll = document.getElementById('btn_clear_everything');
+    if (btnDeleteAll) btnDeleteAll.addEventListener('click', clearAllGamesGlobally);
 
     const btnConferir = document.getElementById('btn-conferir');
-    if (btnConferir) {
-        btnConferir.addEventListener('click', conferirJogosSalvos);
-    }
+    if (btnConferir) btnConferir.addEventListener('click', conferirJogosSalvos);
 }
 
 function normalizarNomeLoteria(nome) {
     if (!nome) return '';
-    return nome.toString()
+    let limpo = nome.toString()
         .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
         .toUpperCase()
-        .replace(/\s+/g, '_')
-        .replace(/[^A-Z0-9_]/g, '');
+        .replace(/[^A-Z0-9]/g, '');
+
+    if (limpo.includes('MEGA') || limpo.includes('SENA')) return 'MEGASENA';
+    if (limpo.includes('LOTOFACIL')) return 'LOTOFACIL';
+    if (limpo.includes('QUINA')) return 'QUINA';
+    if (limpo.includes('LOTOMANIA')) return 'LOTOMANIA';
+    if (limpo.includes('TIMEMANIA')) return 'TIMEMANIA';
+    if (limpo.includes('DUPLA')) return 'DUPLASENA';
+    if (limpo.includes('DIA') || limpo.includes('SORTE')) return 'DIADESORTE';
+    if (limpo.includes('SUPER') || limpo.includes('SETE')) return 'SUPERSETE';
+    if (limpo.includes('MILIONARIA')) return 'MAISMILIONARIA';
+
+    return limpo;
 }
 
 function ObterTodosJogosSalvos() {
-    const listaGeral = JSON.parse(localStorage.getItem('saved_games_list') || '[]');
-    const listaLotomania = JSON.parse(localStorage.getItem('jogos_salvos_lotomania') || '[]');
-    const listaLotofacil = JSON.parse(localStorage.getItem('jogos_salvos_lotofacil') || '[]');
+    const chaves = ['saved_games_list', 'jogos_salvos', 'jogos_salvos_megasena'];
+    let todos = [];
 
-    const lotofacilNormalizada = listaLotofacil.map(item => ({
-        id: item.id || Date.now() + Math.random(),
-        loteria: 'Lotofácil',
-        data: item.data || new Date().toLocaleDateString('pt-BR'),
-        numeros: item.numeros || item.dezenas || []
-    }));
+    chaves.forEach(chave => {
+        const raw = localStorage.getItem(chave);
+        if (raw) {
+            try {
+                const parsed = JSON.parse(raw);
+                if (Array.isArray(parsed)) {
+                    parsed.forEach(item => {
+                        todos.push({
+                            id: item.id || (Date.now() + Math.random()),
+                            loteria: item.loteria || item.modalidade || 'MEGASENA',
+                            data: item.data || new Date().toLocaleDateString('pt-BR'),
+                            numeros: item.numeros || item.dezenas || item.jogo || []
+                        });
+                    });
+                }
+            } catch (e) {}
+        }
+    });
 
-    const lotomaniaNormalizada = listaLotomania.map(item => ({
-        id: item.id || Date.now() + Math.random(),
-        loteria: 'Lotomania',
-        data: item.data || new Date().toLocaleDateString('pt-BR'),
-        numeros: item.numeros || item.dezenas || []
-    }));
-
-    const geralNormalizada = listaGeral.map(item => ({
-        id: item.id || Date.now() + Math.random(),
-        loteria: item.loteria || item.modalidade || 'Lotofácil',
-        data: item.data || new Date().toLocaleDateString('pt-BR'),
-        numeros: item.numeros || item.dezenas || []
-    }));
-
-    return [...geralNormalizada, ...lotomaniaNormalizada, ...lotofacilNormalizada];
+    const unicos = new Map();
+    todos.forEach(item => unicos.set(String(item.id), item));
+    return Array.from(unicos.values());
 }
 
 function renderSavedGames() {
@@ -106,10 +130,7 @@ function renderSavedGames() {
     const allSaved = ObterTodosJogosSalvos();
     const filterKey = normalizarNomeLoteria(currentFilter);
 
-    const filtered = allSaved.filter(item => {
-        const lotKey = normalizarNomeLoteria(item.loteria);
-        return lotKey === filterKey || lotKey.includes(filterKey) || filterKey.includes(lotKey);
-    });
+    const filtered = allSaved.filter(item => normalizarNomeLoteria(item.loteria) === filterKey);
 
     if (filtered.length === 0) {
         container.innerHTML = `
@@ -123,16 +144,9 @@ function renderSavedGames() {
 
     filtered.forEach((item, index) => {
         const numerosArray = item.numeros || [];
-
-        let htmlDezenas = '';
-        
-        if (filterKey === 'SUPER_SETE' && Array.isArray(numerosArray)) {
-            htmlDezenas = numerosArray.map((val, idx) => `<span style="background:#e0f2fe; color:#0369a1; padding:6px 10px; border-radius:6px; font-weight:bold; font-size:0.9rem;">C${idx + 1}:${val}</span>`).join(' ');
-        } else if (Array.isArray(numerosArray)) {
-            htmlDezenas = numerosArray.map(n => 
-                `<span style="background:#f1f5f9; color:#1e293b; border: 1px solid #cbd5e1; border-radius:50%; width: 38px; height: 38px; display: inline-flex; align-items: center; justify-content: center; font-weight:bold; font-size:0.95rem; box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);">${String(n).padStart(2, '0')}</span>`
-            ).join('');
-        }
+        let htmlDezenas = numerosArray.map(n => 
+            `<span style="background:#f1f5f9; color:#1e293b; border: 1px solid #cbd5e1; border-radius:50%; width: 38px; height: 38px; display: inline-flex; align-items: center; justify-content: center; font-weight:bold; font-size:0.95rem; box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);">${String(n).padStart(2, '0')}</span>`
+        ).join('');
 
         const card = document.createElement('div');
         card.className = 'game-item-card';
@@ -163,20 +177,15 @@ function removeSingleGame(gameId) {
     const updated = allSaved.filter(item => String(item.id) !== String(gameId));
 
     localStorage.setItem('saved_games_list', JSON.stringify(updated));
-    localStorage.removeItem('jogos_salvos_lotomania');
-    localStorage.removeItem('jogos_salvos_lotofacil');
-
+    localStorage.removeItem('jogos_salvos');
+    localStorage.removeItem('jogos_salvos_megasena');
     renderSavedGames();
 }
 
 function clearCurrentLotteryGames() {
     let allSaved = ObterTodosJogosSalvos();
     const filterKey = normalizarNomeLoteria(currentFilter);
-    
-    const remaining = allSaved.filter(item => {
-        const lotKey = normalizarNomeLoteria(item.loteria);
-        return lotKey !== filterKey && !lotKey.includes(filterKey);
-    });
+    const remaining = allSaved.filter(item => normalizarNomeLoteria(item.loteria) !== filterKey);
 
     if (allSaved.length === remaining.length) {
         alert("Não há jogos salvos para apagar nesta loteria.");
@@ -185,63 +194,128 @@ function clearCurrentLotteryGames() {
 
     if (confirm(`Tem certeza que deseja apagar todos os jogos salvos de ${LOTTERY_NAMES[currentFilter] || currentFilter}?`)) {
         localStorage.setItem('saved_games_list', JSON.stringify(remaining));
-        localStorage.removeItem('jogos_salvos_lotomania');
-        localStorage.removeItem('jogos_salvos_lotofacil');
+        localStorage.removeItem('jogos_salvos');
+        localStorage.removeItem('jogos_salvos_megasena');
         renderSavedGames();
     }
 }
 
+function clearAllGamesGlobally() {
+    const allSaved = ObterTodosJogosSalvos();
+    if (allSaved.length === 0) {
+        alert("Não há nenhum jogo salvo no navegador para deletar.");
+        return;
+    }
+
+    if (confirm("⚠️ ATENÇÃO: Deseja apagar TODOS os jogos salvos de TODAS as loterias do seu computador? Esta ação não pode ser desfeita.")) {
+        localStorage.removeItem('saved_games_list');
+        localStorage.removeItem('jogos_salvos');
+        localStorage.removeItem('jogos_salvos_megasena');
+
+        Object.keys(localStorage).forEach(key => {
+            if (key.includes('jogo') || key.includes('saved')) {
+                localStorage.removeItem(key);
+            }
+        });
+
+        alert("Todos os jogos foram excluídos com sucesso do seu PC!");
+        renderSavedGames();
+    }
+}
+
+function exibirPainelUltimoConcurso(numConcurso, dezenasArray) {
+    const container = document.getElementById('saved_games_list') || document.getElementById('container-salvos');
+    if (!container) return;
+
+    let painel = document.getElementById('painel-ultimo-concurso');
+    if (!painel) {
+        painel = document.createElement('div');
+        painel.id = 'painel-ultimo-concurso';
+        container.parentNode.insertBefore(painel, container);
+    }
+
+    const htmlResultado = dezenasArray.map(d => 
+        `<span style="background: #1e293b; color: #f8fafc; border-radius: 50%; width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.85rem;">${String(d).padStart(2, '0')}</span>`
+    ).join('');
+
+    painel.style.cssText = "background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 14px 18px; margin-bottom: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.04);";
+    painel.innerHTML = `
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+            <div>
+                <strong style="color: #166534; font-size: 1rem;"><i class="fa-solid fa-trophy" style="color: #eab308;"></i> ${LOTTERY_NAMES[currentFilter] || currentFilter} - ${numConcurso}</strong>
+                <div style="font-size: 0.8rem; color: #15803d; margin-top: 2px;">Dezenas sorteadas para conferência:</div>
+            </div>
+            <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                ${htmlResultado}
+            </div>
+        </div>
+    `;
+}
+
 function conferirJogosSalvos() {
     const filterKey = normalizarNomeLoteria(currentFilter);
-    
-    const historicosGlobais = {
-        LOTOFACIL: window.HISTORICO_LOTOFACIL || window.historicoLotofacil || window.lotofacilData,
-        LOTOMANIA: window.HISTORICO_LOTOMANIA || window.historicoLotomania || window.lotomaniaData,
-        MEGA_SENA: window.HISTORICO_MEGASENA || window.historicoMegasena || window.megasenaData,
-        QUINA: window.HISTORICO_QUINA || window.historicoQuina || window.quinaData,
-        TIMEMANIA: window.HISTORICO_TIMEMANIA || window.historicoTimemania,
-        DUPLA_SENA: window.HISTORICO_DUPLASENA || window.historicoDuplasena,
-        DIA_DE_SORTE: window.HISTORICO_DIADESORTE || window.historicoDiadesorte,
-        SUPER_SETE: window.HISTORICO_SUPERSETE || window.historicoSupersete,
-        MAIS_MILIONARIA: window.HISTORICO_MILIONARIA || window.historicoMilionaria
-    };
+    let historico = null;
 
-    let historico = historicosGlobais[filterKey];
+    const buscas = [
+        window[`HISTORICO_${filterKey}`],
+        window[`historico_${filterKey.toLowerCase()}`],
+        window[`${filterKey.toLowerCase()}Data`],
+        window.HISTORICO_MEGASENA,
+        window.HISTORICO_DUPLASENA,
+        window.HISTORICO_DIADESORTE,
+        window.HISTORICO_SUPERSETE,
+        window.HISTORICO_MILIONARIA,
+        window.HISTORICO_MAISMILIONARIA
+    ];
 
-    if (!historico || !Array.isArray(historico) || historico.length === 0) {
-        const chaveStorage = `historico_${filterKey.toLowerCase()}`;
-        const dadosStorage = localStorage.getItem(chaveStorage) || localStorage.getItem('historico_loterias') || localStorage.getItem('ultimos_resultados');
-        if (dadosStorage) {
-            try {
-                const parsed = JSON.parse(dadosStorage);
-                historico = Array.isArray(parsed) ? parsed : (parsed[filterKey] || parsed[filterKey.toLowerCase()]);
-            } catch (e) {
-                console.warn('Erro ao ler histórico do localStorage:', e);
+    for (let h of buscas) {
+        if (h && Array.isArray(h) && h.length > 0) {
+            historico = h;
+            break;
+        }
+    }
+
+    if (!historico) {
+        const localKeys = [`historico_${filterKey.toLowerCase()}`, `historico_${filterKey}`, 'historico_loterias'];
+        for (let key of localKeys) {
+            const raw = localStorage.getItem(key);
+            if (raw) {
+                try {
+                    const parsed = JSON.parse(raw);
+                    if (Array.isArray(parsed)) {
+                        historico = parsed;
+                        break;
+                    }
+                } catch (e) {}
             }
         }
     }
 
     let dezenasSorteadas = new Set();
+    let dezenasArraySorteio = [];
     let numConcurso = '';
 
     if (historico && Array.isArray(historico) && historico.length > 0) {
-        const ultimoConcurso = [...historico].sort((a, b) => Number(b.concurso || b.numero) - Number(a.concurso || a.numero))[0];
+        const ultimoConcurso = [...historico].sort((a, b) => Number(b.concurso || b.numero || 0) - Number(a.concurso || a.numero || 0))[0];
         
-        const dezenasRaw = ultimoConcurso.dezenas || ultimoConcurso.dezenasSorteadas || ultimoConcurso.numeros || [];
-        // Converte tudo para número para comparação limpa
-        dezenasSorteadas = new Set(dezenasRaw.map(n => Number(n)));
+        const dezenasRaw = ultimoConcurso.dezenas || ultimoConcurso.dezenasSorteadas || ultimoConcurso.numeros || ultimoConcurso.resultado || [];
+        dezenasArraySorteio = dezenasRaw.map(n => Number(n)).sort((a, b) => a - b);
+        dezenasSorteadas = new Set(dezenasArraySorteio);
         numConcurso = `Concurso ${ultimoConcurso.concurso || ultimoConcurso.numero || 'Último Salvo'}`;
     } else {
-        alert(`Não foi encontrado nenhum histórico salvo para ${LOTTERY_NAMES[currentFilter] || currentFilter}. Carregue os resultados na tela principal primeiro.`);
+        alert(`Não foi encontrado nenhum histórico salvo para ${LOTTERY_NAMES[currentFilter] || currentFilter}. Abra a tela de resultados/histórico desta loteria primeiro para carregar os dados no navegador.`);
         return;
     }
+
+    // Exibe o painel visual com o último concurso sorteado
+    exibirPainelUltimoConcurso(numConcurso, dezenasArraySorteio);
 
     const allSaved = ObterTodosJogosSalvos();
     let jogosConferidos = 0;
 
+    // Renderiza primeiro na tela
     allSaved.forEach(item => {
-        const lotKey = normalizarNomeLoteria(item.loteria);
-        if (lotKey !== filterKey && !lotKey.includes(filterKey)) return;
+        if (normalizarNomeLoteria(item.loteria) !== filterKey) return;
 
         jogosConferidos++;
         const dezenasJogo = item.numeros || [];
@@ -259,10 +333,8 @@ function conferirJogosSalvos() {
             
             if (ehAcerto) {
                 acertosCount++;
-                // Bola VERDE para acerto
                 htmlDezenas += `<span style="background: #22c55e; color: #ffffff; border-radius: 50%; width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1rem; box-shadow: 0 3px 8px rgba(34,197,94,0.5); border: 2px solid #16a34a;">${String(dez).padStart(2, '0')}</span>`;
             } else {
-                // Bola CINZA apagada para erro
                 htmlDezenas += `<span style="background: #f8fafc; color: #cbd5e1; border: 1px dashed #e2e8f0; border-radius: 50%; width: 38px; height: 38px; display: inline-flex; align-items: center; justify-content: center; font-weight: normal; font-size: 0.85rem;">${String(dez).padStart(2, '0')}</span>`;
             }
         });
@@ -278,10 +350,10 @@ function conferirJogosSalvos() {
         }
     });
 
-    // Renderiza primeiro os elementos na tela antes de disparar a mensagem final
-    setTimeout(() => {
-        if (jogosConferidos > 0) {
-            alert(`Conferência realizada com sucesso com base no ${numConcurso}! Os acertos estão destacados em verde.`);
-        }
-    }, 100);
+    // O setTimeout de 50ms garante que o navegador renderize as cores e o painel na tela ANTES de bloquear a tela com o alert
+    if (jogosConferidos > 0) {
+        setTimeout(() => {
+            alert(`Conferência realizada com sucesso para ${numConcurso}! Os acertos estão destacados em verde.`);
+        }, 50);
+    }
 }
