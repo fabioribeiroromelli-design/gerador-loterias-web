@@ -1,6 +1,16 @@
-* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-body { background-color: #f4f5f7; color: #333; }
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
 
+body {
+    background-color: #f4f5f7;
+    color: #333;
+}
+
+/* ===== HEADER ===== */
 .toolbar {
     background-color: #7b1fa2;
     color: white;
@@ -12,8 +22,14 @@ body { background-color: #f4f5f7; color: #333; }
     gap: 10px;
     box-shadow: 0 2px 6px rgba(0,0,0,0.15);
 }
-.toolbar h1 { font-size: 1.3rem; font-weight: 600; margin: 0; }
 
+.toolbar h1 {
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+/* ===== BARRA DE ATALHOS ===== */
 .shortcuts-bar {
     display: flex;
     flex-wrap: wrap;
@@ -23,6 +39,7 @@ body { background-color: #f4f5f7; color: #333; }
     margin: 15px auto;
     padding: 0 10px;
 }
+
 .shortcuts-bar button {
     display: flex;
     align-items: center;
@@ -36,16 +53,30 @@ body { background-color: #f4f5f7; color: #333; }
     cursor: pointer;
     transition: 0.2s;
 }
-.shortcuts-bar button:hover { background: #f5f5f5; }
-.shortcuts-bar button i { color: #001489; font-size: 1.1rem; }
 
-.container { max-width: 1200px; margin: 20px auto; padding: 0 16px; }
+.shortcuts-bar button:hover {
+    background: #f5f5f5;
+}
 
+.shortcuts-bar button i {
+    color: #001489;
+    font-size: 1.1rem;
+}
+
+/* ===== CONTAINER ===== */
+.container {
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 0 16px;
+}
+
+/* ===== GRID DE CARDS ===== */
 .lottery-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
     gap: 14px;
 }
+
 .lottery-card {
     background: #fff;
     border-radius: 10px;
@@ -58,17 +89,53 @@ body { background-color: #f4f5f7; color: #333; }
     transition: 0.2s;
     min-height: 140px;
 }
-.lottery-card:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+
+.lottery-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+/* ===== CARD HEADER ===== */
 .card-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 4px;
 }
-.card-header h3 { font-size: 1rem; margin: 0; display: flex; align-items: center; gap: 4px; }
-.badge-conc { font-size: 0.65rem; color: #666; background: #eee; padding: 2px 6px; border-radius: 10px; }
-.drawn-numbers { font-weight: 600; font-size: 0.8rem; color: #444; margin: 4px 0; word-break: break-word; line-height: 1.3; }
-.estimate-prize { font-size: 0.75rem; color: #2e7d32; margin: 2px 0; }
+
+.card-header h3 {
+    font-size: 1rem;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.badge-conc {
+    font-size: 0.65rem;
+    color: #666;
+    background: #eee;
+    padding: 2px 6px;
+    border-radius: 10px;
+}
+
+/* ===== NÚMEROS E ESTIMATIVA ===== */
+.drawn-numbers {
+    font-weight: 600;
+    font-size: 0.8rem;
+    color: #444;
+    margin: 4px 0;
+    word-break: break-word;
+    line-height: 1.3;
+}
+
+.estimate-prize {
+    font-size: 0.75rem;
+    color: #2e7d32;
+    margin: 2px 0;
+}
+
+/* ===== BOTÃO GERAR ===== */
 .btn-generate {
     margin-top: 6px;
     border: none;
@@ -85,15 +152,52 @@ body { background-color: #f4f5f7; color: #333; }
     gap: 4px;
     transition: 0.2s;
 }
-.btn-generate:hover { opacity: 0.85; }
-.badge-accumulated { display: inline-block; background: #dc3545; color: #fff; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
-.badge-winners { display: inline-block; background: #28a745; color: #fff; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
 
+.btn-generate:hover {
+    opacity: 0.85;
+}
+
+/* ===== BADGES ===== */
+.badge-accumulated {
+    display: inline-block;
+    background: #dc3545;
+    color: #fff;
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: bold;
+}
+
+.badge-winners {
+    display: inline-block;
+    background: #28a745;
+    color: #fff;
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: bold;
+}
+
+.badge-extra {
+    display: inline-block;
+    background: #6c757d;
+    color: #fff;
+    font-size: 0.65rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: normal;
+}
+
+.badge-extra i {
+    margin-right: 2px;
+}
+
+/* ===== CARD PREMIUM (destaque principal) ===== */
 .premium-card {
     background: linear-gradient(145deg, #1e1e1e, #2a2a2a) !important;
     border: 2px solid #FFD700 !important;
     border-radius: 16px !important;
-    box-shadow: 0 8px 20px rgba(255,215,0,0.15) !important;
+    box-shadow: 0 8px 20px rgba(255, 215, 0, 0.15) !important;
     transition: 0.2s;
     cursor: pointer;
     min-height: 160px !important;
@@ -104,23 +208,167 @@ body { background-color: #f4f5f7; color: #333; }
     text-align: center;
     padding: 16px !important;
 }
-.premium-card:hover { transform: translateY(-4px) scale(1.02); box-shadow: 0 12px 30px rgba(255,215,0,0.25) !important; }
-.premium-card h3 { color: #FFD700; margin: 0 0 4px 0; font-size: 1.2rem; }
-.premium-card p { color: #ccc; margin: 0 0 8px 0; font-size: 0.85rem; }
-.premium-card .explore-btn { background: #FFD700; color: #222; padding: 4px 16px; border-radius: 30px; font-weight: bold; font-size: 0.8rem; display: inline-block; }
-.premium-card .lock-badge { margin-top: 8px; font-size: 0.65rem; color: #FFD700; opacity: 0.6; }
 
-/* Badges extras */
-.badge-extra {
-    display: inline-block;
-    background-color: #6c757d;
-    color: #fff;
-    font-size: 0.65rem;
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-weight: normal;
+.premium-card:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 12px 30px rgba(255, 215, 0, 0.25) !important;
 }
 
-.badge-extra i {
-    margin-right: 2px;
+.premium-card h3 {
+    color: #FFD700;
+    margin: 0 0 4px 0;
+    font-size: 1.2rem;
+}
+
+.premium-card p {
+    color: #ccc;
+    margin: 0 0 8px 0;
+    font-size: 0.85rem;
+}
+
+.premium-card .explore-btn {
+    background: #FFD700;
+    color: #222;
+    padding: 4px 16px;
+    border-radius: 30px;
+    font-weight: bold;
+    font-size: 0.8rem;
+    display: inline-block;
+}
+
+.premium-card .lock-badge {
+    margin-top: 8px;
+    font-size: 0.65rem;
+    color: #FFD700;
+    opacity: 0.6;
+}
+
+/* ===== CARD AVANÇADO ===== */
+.card-avancado {
+    background: linear-gradient(135deg, #f0f9ff, #e0f2fe) !important;
+    border-top: 4px solid #2563eb !important;
+    border-radius: 10px;
+    padding: 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    cursor: pointer;
+    transition: 0.2s;
+    min-height: 140px;
+}
+
+.card-avancado:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.card-avancado h3 {
+    color: #1e40af;
+    margin: 0;
+    font-size: 1rem;
+}
+
+.card-avancado p {
+    color: #1e3a5f;
+    font-size: 0.8rem;
+    margin: 6px 0;
+}
+
+.card-avancado .access-btn {
+    background: #2563eb;
+    color: white;
+    padding: 4px 14px;
+    border-radius: 30px;
+    font-weight: bold;
+    font-size: 0.75rem;
+    display: inline-block;
+}
+
+/* ===== CARD INTELIGENTE (volante) ===== */
+.card-inteligente {
+    background: linear-gradient(135deg, #f5f3ff, #ede9fe) !important;
+    border-top: 4px solid #7c3aed !important;
+    border-radius: 10px;
+    padding: 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    cursor: pointer;
+    transition: 0.2s;
+    min-height: 140px;
+}
+
+.card-inteligente:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.card-inteligente h3 {
+    color: #5b21b6;
+    margin: 0;
+    font-size: 1rem;
+}
+
+.card-inteligente p {
+    color: #3b0764;
+    font-size: 0.8rem;
+    margin: 6px 0;
+}
+
+.card-inteligente .access-btn {
+    background: #7c3aed;
+    color: white;
+    padding: 4px 14px;
+    border-radius: 30px;
+    font-weight: bold;
+    font-size: 0.75rem;
+    display: inline-block;
+}
+
+/* ===== RESPONSIVIDADE ===== */
+@media (max-width: 600px) {
+    .lottery-grid {
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 10px;
+    }
+
+    .lottery-card {
+        padding: 10px;
+        min-height: 120px;
+    }
+
+    .card-header h3 {
+        font-size: 0.85rem;
+    }
+
+    .drawn-numbers {
+        font-size: 0.7rem;
+    }
+
+    .btn-generate {
+        font-size: 0.65rem;
+        padding: 4px;
+    }
+
+    .premium-card,
+    .card-avancado,
+    .card-inteligente {
+        min-height: 120px !important;
+        padding: 12px !important;
+    }
+
+    .premium-card h3 {
+        font-size: 1rem;
+    }
+
+    .card-avancado h3,
+    .card-inteligente h3 {
+        font-size: 0.9rem;
+    }
 }

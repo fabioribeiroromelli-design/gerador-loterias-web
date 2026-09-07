@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', async () => {
+    // ===== 1. INJETAR FONTAWESOME =====
     if (!document.getElementById('fa-icons')) {
         const fa = document.createElement('link');
         fa.id = 'fa-icons';
@@ -7,6 +8,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.head.appendChild(fa);
     }
 
+    // ===== 2. CORES E ÍCONES DAS LOTERIAS =====
     const COLORS = {
         'Dia de Sorte': '#cb8322', 'Dupla Sena': '#a61324', 'Federal': '#002f6c',
         'Loteca': '#ca1518', 'Lotofácil': '#930089', 'Lotomania': '#F78100',
@@ -21,7 +23,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         'Super Sete': 'fa-seven', 'Timemania': 'fa-clock'
     };
 
-    // Ordenação alfabética tratando +Milionária como "Milionária" (letra M)
     const LOTTERIES = [
         { name: 'Dia de Sorte', endpoint: 'diadesorte' },
         { name: 'Dupla Sena', endpoint: 'duplasena' },
@@ -40,6 +41,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const CACHE_TIME_KEY = 'loterias_cache_time';
     const CACHE_DURATION_MS = 30 * 60 * 1000; // 30 minutos
 
+    // ===== 3. FUNÇÃO PARA BUSCAR ÚLTIMO CONCURSO =====
     async function fetchUltimoConcurso(endpoint, lotteryName) {
         let data = null;
         try {
@@ -63,6 +65,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         return data;
     }
 
+    // ===== 4. RENDERIZAÇÃO DOS CARDS DE LOTERIAS =====
     function renderCard(lotteryName, data) {
         const color = COLORS[lotteryName] || '#6c757d';
         const icon = ICONS[lotteryName] || 'fa-hashtag';
@@ -213,9 +216,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         `;
     }
 
+    // ===== 5. CARDS ESPECIAIS =====
     function renderPremiumCard() {
         return `
-            <div class="lottery-card premium-card" onclick="window.location.href='premium-strategies.html'">
+            <div class="lottery-card premium-card" onclick="window.location.href='estrategias.html'">
                 <i class="fa-solid fa-crown" style="font-size: 2.8rem; color: #FFD700; margin-bottom: 6px;"></i>
                 <h3 style="color: #FFD700; margin: 0 0 4px 0;">Estratégias Premium</h3>
                 <p style="color: #ccc; margin: 0 0 8px 0; font-size: 0.85rem;">12 algoritmos avançados</p>
@@ -225,6 +229,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         `;
     }
 
+    function renderAvancadoCard() {
+        return `
+            <div class="lottery-card card-avancado" onclick="window.location.href='gerador-avancado.html'">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-microchip" style="font-size: 2rem; color: #2563eb;"></i>
+                    <h3 style="color: #1e40af; margin: 0;">Gerador Avançado</h3>
+                </div>
+                <p style="color: #1e3a5f; font-size: 0.85rem; margin: 8px 0;">12 estratégias estatísticas e matemáticas</p>
+                <span class="access-btn" style="background: #2563eb; color: white; padding: 4px 14px; border-radius: 30px; font-weight: bold; font-size: 0.8rem;">
+                    <i class="fa-solid fa-arrow-right"></i> Acessar
+                </span>
+            </div>
+        `;
+    }
+
+    // ===== 6. FUNÇÃO PARA TOGGLE DA PREMIAÇÃO =====
     window.togglePrizes = function(id) {
         const el = document.getElementById(id);
         const icon = document.getElementById(`icon_${id}`);
@@ -238,6 +258,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
+    // ===== 7. CARREGAMENTO PRINCIPAL =====
     const grid = document.getElementById('lottery_grid');
     if (!grid) return;
 
@@ -266,7 +287,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         } catch (e) {}
     }
 
-    let html = renderPremiumCard();
+    // Monta o grid: cards especiais + loterias
+    let html = renderPremiumCard();      // Redireciona para estrategias.html
+    html += renderAvancadoCard();        // Redireciona para gerador-avancado.html
 
     LOTTERIES.forEach((lot, index) => {
         html += renderCard(lot.name, results[index]);
