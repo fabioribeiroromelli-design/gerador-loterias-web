@@ -24,11 +24,11 @@ document.addEventListener('DOMContentLoaded', () => {
         `);
 
         const shortcuts = [
-            { label: 'Gerar Jogos', icon: 'fa-wand-magic-sparkles', url: 'index.html' },
+            { label: 'Gerar Jogos', icon: 'fa-wand-magic-sparkles', url: 'generator.html' },
             { label: 'Jogos Salvos', icon: 'fa-bookmark', url: 'saved_games.html' },
             { label: 'Downloads', icon: 'fa-download', url: 'download_results.html' },
             { label: 'Estatísticas', icon: 'fa-chart-pie', url: 'statistics.html' },
-            { label: 'Filtrar Números', icon: 'fa-filter', url: 'filters.html' },
+            { label: 'Filtrar Números', icon: 'fa-filter', url: 'generator.html' },
             { label: 'Sorteio ao Vivo', icon: 'fa-tv', externalUrl: 'https://www.youtube.com/channel/UCPbhr02AfVb2nd5pm12BxTw/live' }
         ];
 
@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 box-shadow: 0 2px 4px rgba(0,0,0,0.05);
                 transition: all 0.2s ease;
             `);
-            btn.innerHTML = `<i class="fa-solid ${item.icon}" style="color: #8e44ad; font-size: 1.1rem;"></i> <span>${item.label}</span>`;
+            btn.innerHTML = `<i class="fa-solid ${item.icon}" style="color: #001489; font-size: 1.1rem;"></i> <span>${item.label}</span>`;
             
             btn.addEventListener('mouseover', () => btn.style.background = '#f5f5f5');
             btn.addEventListener('mouseout', () => btn.style.background = '#ffffff');
@@ -66,20 +66,20 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.insertBefore(shortcutsContainer, document.body.children[1] || document.body.firstChild);
     }
 
-    // 3. Definição base das loterias
+    // 3. Definição base das loterias COM AS CORES OFICIAIS DA CAIXA
     const lotteries = [
-        { id: 'megasena', name: 'Mega-Sena', type: 'MEGA_SENA', concurso: '2810', numbers: '05 - 12 - 24 - 33 - 41 - 58', estimativa: 'R$ 45.000.000', acumulo: true, color: '#27ae60' },
-        { id: 'lotofacil', name: 'Lotofácil', type: 'LOTOFACIL', concurso: '3100', numbers: '01 - 03 - 05 - 08 - 09 - 10 - 12 - 15...', estimativa: 'R$ 1.700.000', acumulo: false, color: '#9b59b6' },
-        { id: 'quina', name: 'Quina', type: 'QUINA', concurso: '6450', numbers: '14 - 28 - 39 - 52 - 71', estimativa: 'R$ 12.500.000', acumulo: true, color: '#2c3e50' },
-        { id: 'lotomania', name: 'Lotomania', type: 'LOTOMANIA', concurso: '2620', numbers: '02 - 11 - 18 - 25 - 33 - 42...', estimativa: 'R$ 8.000.000', acumulo: true, color: '#e67e22' },
-        { id: 'timemania', name: 'Timemania', type: 'TIMEMANIA', concurso: '2090', numbers: '07 - 19 - 22 - 45 - 61 - 70 - 79', estimativa: 'R$ 5.200.000', acumulo: false, color: '#2ecc71' },
-        { id: 'duplasena', name: 'Dupla Sena', type: 'DUPLA_SENA', concurso: '2665', numbers: '08 - 14 - 27 - 31 - 40 - 49', estimativa: 'R$ 3.800.000', acumulo: true, color: '#a00037' },
-        { id: 'diadesorte', name: 'Dia de Sorte', type: 'DIA_DE_SORTE', concurso: '0915', numbers: '03 - 09 - 14 - 18 - 21 - 25 - 30', estimativa: 'R$ 1.200.000', acumulo: false, color: '#d35400' },
-        { id: 'supersete', name: 'Super Sete', type: 'SUPER_SETE', concurso: '0540', numbers: '3 - 7 - 1 - 9 - 4 - 0 - 8', estimativa: 'R$ 2.100.000', acumulo: true, color: '#a2b700' },
+        { id: 'megasena', name: 'Mega-Sena', type: 'MEGA_SENA', concurso: '2810', numbers: '05 - 12 - 24 - 33 - 41 - 58', estimativa: 'R$ 45.000.000', acumulo: true, color: '#209869' },
+        { id: 'lotofacil', name: 'Lotofácil', type: 'LOTOFACIL', concurso: '3100', numbers: '01 - 03 - 05 - 08 - 09 - 10 - 12 - 15...', estimativa: 'R$ 1.700.000', acumulo: false, color: '#930089' },
+        { id: 'quina', name: 'Quina', type: 'QUINA', concurso: '6450', numbers: '14 - 28 - 39 - 52 - 71', estimativa: 'R$ 12.500.000', acumulo: true, color: '#260085' },
+        { id: 'lotomania', name: 'Lotomania', type: 'LOTOMANIA', concurso: '2620', numbers: '02 - 11 - 18 - 25 - 33 - 42...', estimativa: 'R$ 8.000.000', acumulo: true, color: '#f78100' },
+        { id: 'timemania', name: 'Timemania', type: 'TIMEMANIA', concurso: '2090', numbers: '07 - 19 - 22 - 45 - 61 - 70 - 79', estimativa: 'R$ 5.200.000', acumulo: false, color: '#00ff2b' },
+        { id: 'duplasena', name: 'Dupla Sena', type: 'DUPLA_SENA', concurso: '2665', numbers: '08 - 14 - 27 - 31 - 40 - 49', estimativa: 'R$ 3.800.000', acumulo: true, color: '#a61324' },
+        { id: 'diadesorte', name: 'Dia de Sorte', type: 'DIA_DE_SORTE', concurso: '0915', numbers: '03 - 09 - 14 - 18 - 21 - 25 - 30', estimativa: 'R$ 1.200.000', acumulo: false, color: '#cb8322' },
+        { id: 'supersete', name: 'Super Sete', type: 'SUPER_SETE', concurso: '0540', numbers: '3 - 7 - 1 - 9 - 4 - 0 - 8', estimativa: 'R$ 2.100.000', acumulo: true, color: '#a8cf45' },
         { id: 'maismilionaria', name: '+Milionária', type: 'MAIS_MILIONARIA', concurso: '0145', numbers: '12 - 21 - 34 - 38 - 42 - 47', estimativa: 'R$ 185.000.000', acumulo: true, color: '#1b365d' }
     ];
 
-    let container = document.querySelector('.main-content, .grid-container, main');
+    let container = document.querySelector('.main-content, .grid-container, main, #lottery_grid');
 
     if (!container || container.tagName === 'BODY') {
         container = document.createElement('main');
@@ -88,7 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     container.setAttribute('style', 'display: grid !important; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)) !important; gap: 20px !important; padding: 10px 20px 20px 20px !important; max-width: 1200px !important; margin: 0 auto !important;');
 
-    // 4. Renderização sincronizada com o localStorage
+    // 4. Renderização sincronizada com o localStorage e redirecionamento para generator.html
     container.innerHTML = lotteries.map(lot => {
         let lotData = { ...lot };
         const savedData = localStorage.getItem('ultimo_resultado_' + lot.id);
@@ -122,7 +122,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     ${lotData.acumulo ? '<span style="background: #dc3545; color: #fff; font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; font-weight: bold;">Acumulou!</span>' : ''}
                     <div style="font-size: 0.85rem; color: #666; margin-top: 8px;">Estimativa: <strong style="color: ${lotData.color};">${lotData.estimativa}</strong></div>
                 </div>
-                <button onclick="window.location.href='index.html?type=${lotData.type}'" style="margin-top: 15px; background: #8e44ad; color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; width: 100%;">Gerar Jogo</button>
+                <button onclick="window.location.href='generator.html?lottery=${lotData.id}'" style="margin-top: 15px; background: ${lotData.color}; color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <i class="fa-solid fa-filter"></i> Gerar por Filtro
+                </button>
             </div>
         `;
     }).join('');

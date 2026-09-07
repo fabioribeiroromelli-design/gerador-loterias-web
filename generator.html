@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Jogos - Filtro Manual</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .container-generator { max-width: 900px; margin: 20px auto; padding: 0 15px; }
+        .card { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); margin-bottom: 20px; }
+        
+        /* Grid de Cards Selecionáveis das Loterias */
+        .lottery-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .lottery-card-btn {
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 12px 8px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 13px;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            color: #333;
+        }
+
+        .lottery-card-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .lottery-card-btn.active {
+            border-color: var(--lottery-color, #001489);
+            background-color: #ffffff;
+            color: var(--lottery-color, #001489);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+
+        .lottery-card-btn i {
+            font-size: 18px;
+            color: var(--lottery-color, #001489);
+        }
+
+        /* Grid do Volante */
+        .volante-grid { display: grid; gap: 8px; justify-content: center; margin: 20px 0; }
+        .volante-grid.normal { grid-template-columns: repeat(10, minmax(35px, 1fr)); max-width: 550px; margin: 20px auto; }
+        .volante-grid.megasena { grid-template-columns: repeat(10, minmax(35px, 1fr)); max-width: 550px; margin: 20px auto; }
+        .volante-grid.lotofacil { grid-template-columns: repeat(5, 1fr); max-width: 300px; margin: 20px auto; }
+        .volante-grid.lotomania { grid-template-columns: repeat(10, 1fr); max-width: 500px; margin: 20px auto; }
+        .volante-grid.supersete { grid-template-columns: repeat(8, 1fr); max-width: 450px; margin: 20px auto; }
+
+        .num-btn {
+            aspect-ratio: 1; border: 2px solid #ddd; background: #f8f9fa; border-radius: 50%;
+            font-weight: bold; font-size: 14px; cursor: pointer; display: flex; align-items: center;
+            justify-content: center; user-select: none; transition: all 0.15s;
+        }
+        .num-btn:hover { border-color: #001489; }
+        .num-btn.selected { background: #001489; color: white; border-color: #001489; }
+        .num-btn.col-header { border: none; background: transparent; color: #001489; font-size: 12px; }
+
+        /* Painel de Controles */
+        .controls-row { display: flex; gap: 15px; flex-wrap: wrap; align-items: center; justify-content: space-between; background: #f4f6f9; padding: 15px; border-radius: 6px; }
+        .control-group { display: flex; align-items: center; gap: 8px; }
+        .control-group input, .control-group select { padding: 8px; border-radius: 4px; border: 1px solid #ccc; font-size: 14px; }
+        
+        .btn-action { padding: 10px 18px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
+        .btn-primary { background: #27ae60; color: white; }
+        .btn-secondary { background: #e74c3c; color: white; }
+        .btn-outline { background: #fff; border: 1px solid #ccc; }
+
+        /* Lista de Jogos Gerados */
+        .game-card { background: #f8f9fa; border: 1px solid #e0e0e0; padding: 12px; border-radius: 6px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+        .balls-container { display: flex; flex-wrap: wrap; gap: 6px; }
+        .ball-result { background: #27ae60; color: white; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px; }
+    </style>
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f6f9;">
+
+    <header class="header-bar" style="background: #001489; color: white; padding: 15px 20px; display: flex; align-items: center; gap: 15px;">
+        <button onclick="window.history.back()" title="Voltar" style="background: white; color: #001489; border: none; width: 38px; height: 38px; border-radius: 6px; cursor: pointer; font-size: 1.1rem; display: flex; align-items: center; justify-content: center;">
+            <i class="fa-solid fa-arrow-left"></i>
+        </button>
+        <h1 style="margin: 0; font-size: 1.5rem;">Gerador por Filtro Manual</h1>
+    </header>
+
+    <main class="container-generator">
+        
+        <!-- SELEÇÃO DA LOTERIA EM CARDS -->
+        <div class="card">
+            <label><strong>Escolha a Loteria:</strong></label>
+            <div id="lottery_selector_cards" class="lottery-cards-grid"></div>
+        </div>
+
+        <!-- VOLANTE -->
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="margin: 0;" id="volante_title">Selecione os Números</h3>
+                <button class="btn-action btn-outline" onclick="limparSelecao()"><i class="fa-solid fa-eraser"></i> Limpar Volante</button>
+            </div>
+
+            <div id="volante_grid" class="volante-grid normal"></div>
+
+            <div id="preview_info" style="background: #e8f4fd; color: #0056b3; padding: 12px; border-radius: 6px; font-size: 14px;">
+                <strong>Dezenas Marcadas:</strong> 0 | <strong>Combinações possíveis:</strong> 0
+            </div>
+        </div>
+
+        <!-- CONFIGURAÇÕES DE GERAÇÃO -->
+        <div class="card">
+            <div class="controls-row">
+                <div class="control-group">
+                    <label><strong>Dezenas por jogo:</strong></label>
+                    <select id="select_dezenas_jogo" onchange="atualizarPreview()"></select>
+                </div>
+
+                <div class="control-group">
+                    <label><strong>Qtd. de Jogos:</strong></label>
+                    <input type="number" id="input_qtd_jogos" value="1" min="1" max="1000" style="width: 80px;" />
+                </div>
+
+                <button class="btn-action btn-primary" onclick="gerarJogos()"><i class="fa-solid fa-wand-magic-sparkles"></i> Gerar Jogos</button>
+            </div>
+        </div>
+
+        <!-- RESULTADOS GERADOS -->
+        <div id="results_card" class="card" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 style="margin: 0;">Jogos Gerados</h3>
+                <div>
+                    <button class="btn-action btn-primary" onclick="salvarTodos()"><i class="fa-solid fa-floppy-disk"></i> Salvar Todos</button>
+                    <button class="btn-action btn-secondary" onclick="limparResultados()"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            </div>
+            <div id="games_list"></div>
+        </div>
+
+    </main>
+
+    <script>
+        const CONFIG_LOTERIAS = {
+            megasena: { name: 'Mega-Sena', color: '#209869', icon: 'fa-clover', minNum: 1, maxNum: 60, minPick: 6, maxPick: 15, cols: 10 },
+            lotofacil: { name: 'Lotofácil', color: '#930089', icon: 'fa-cubes', minNum: 1, maxNum: 25, minPick: 15, maxPick: 20, cols: 5 },
+            quina: { name: 'Quina', color: '#260085', icon: 'fa-star', minNum: 1, maxNum: 80, minPick: 5, maxPick: 15, cols: 10 },
+            lotomania: { name: 'Lotomania', color: '#f78100', icon: 'fa-circle-dot', minNum: 0, maxNum: 99, minPick: 50, maxPick: 50, cols: 10 },
+            timemania: { name: 'Timemania', color: '#00ff2b', icon: 'fa-shield-halved', minNum: 1, maxNum: 80, minPick: 10, maxPick: 10, cols: 10 },
+            duplasena: { name: 'Dupla Sena', color: '#a61324', icon: 'fa-dice-two', minNum: 1, maxNum: 50, minPick: 6, maxPick: 15, cols: 10 },
+            diadesorte: { name: 'Dia de Sorte', color: '#cb8322', icon: 'fa-calendar-days', minNum: 1, maxNum: 31, minPick: 7, maxPick: 15, cols: 7 },
+            supersete: { name: 'Super Sete', color: '#a8cf45', icon: 'fa-table-cells', isSuperSete: true, minPick: 7, maxPick: 21 },
+            maismilionaria: { name: '+Milionária', color: '#1b365d', icon: 'fa-gem', minNum: 1, maxNum: 50, minPick: 6, maxPick: 12, cols: 10 }
+        };
+
+        let loteriaAtual = 'megasena';
+        let selecionados = new Set();
+        let jogosGerados = [];
+
+        window.addEventListener('DOMContentLoaded', () => {
+            renderizarCardsLoterias();
+            
+            const urlParams = new URLSearchParams(window.location.search);
+            const loteriaUrl = urlParams.get('lottery');
+            
+            if (loteriaUrl && CONFIG_LOTERIAS[loteriaUrl.toLowerCase()]) {
+                selecionarLoteria(loteriaUrl.toLowerCase());
+            } else {
+                selecionarLoteria('megasena');
+            }
+        });
+
+        function renderizarCardsLoterias() {
+            const container = document.getElementById('lottery_selector_cards');
+            container.innerHTML = '';
+
+            Object.keys(CONFIG_LOTERIAS).forEach(key => {
+                const lot = CONFIG_LOTERIAS[key];
+                const btn = document.createElement('div');
+                btn.className = `lottery-card-btn ${key === loteriaAtual ? 'active' : ''}`;
+                btn.id = `card_lot_${key}`;
+                btn.style.setProperty('--lottery-color', lot.color);
+                btn.onclick = () => selecionarLoteria(key);
+
+                btn.innerHTML = `
+                    <i class="fa-solid ${lot.icon}"></i>
+                    <span>${lot.name}</span>
+                `;
+                container.appendChild(btn);
+            });
+        }
+
+        function selecionarLoteria(key) {
+            loteriaAtual = key;
+            
+            document.querySelectorAll('.lottery-card-btn').forEach(card => card.classList.remove('active'));
+            const activeCard = document.getElementById(`card_lot_${key}`);
+            if (activeCard) activeCard.classList.add('active');
+
+            mudarLoteria();
+        }
+
+        function mudarLoteria() {
+            selecionados.clear();
+            jogosGerados = [];
+            document.getElementById('results_card').style.display = 'none';
+
+            configurarSpinnerDezenas();
+            desenharVolante();
+            atualizarPreview();
+        }
+
+        function configurarSpinnerDezenas() {
+            const config = CONFIG_LOTERIAS[loteriaAtual];
+            const select = document.getElementById('select_dezenas_jogo');
+            select.innerHTML = '';
+
+            for (let i = config.minPick; i <= config.maxPick; i++) {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.textContent = `${i} Dezenas`;
+                select.appendChild(opt);
+            }
+        }
+
+        function desenharVolante() {
+            const grid = document.getElementById('volante_grid');
+            grid.innerHTML = '';
+            const config = CONFIG_LOTERIAS[loteriaAtual];
+
+            if (config.isSuperSete) {
+                grid.className = 'volante-grid supersete';
+                grid.appendChild(criarHeader(''));
+                for (let c = 1; c <= 7; c++) grid.appendChild(criarHeader(`C${c}`));
+
+                for (let r = 0; r <= 9; r++) {
+                    grid.appendChild(criarHeader(`${r}`));
+                    for (let c = 0; c < 7; c++) {
+                        const pos = r * 7 + c;
+                        const btn = document.createElement('div');
+                        btn.className = 'num-btn';
+                        btn.textContent = r;
+                        btn.onclick = () => toggleSelecao(pos, btn);
+                        grid.appendChild(btn);
+                    }
+                }
+            } else {
+                grid.className = `volante-grid ${loteriaAtual} normal`;
+                for (let i = config.minNum; i <= config.maxNum; i++) {
+                    const btn = document.createElement('div');
+                    btn.className = 'num-btn';
+                    btn.textContent = String(i).padStart(2, '0');
+                    btn.onclick = () => toggleSelecao(i, btn);
+                    grid.appendChild(btn);
+                }
+            }
+        }
+
+        function criarHeader(txt) {
+            const div = document.createElement('div');
+            div.className = 'num-btn col-header';
+            div.textContent = txt;
+            return div;
+        }
+
+        function toggleSelecao(val, el) {
+            if (selecionados.has(val)) {
+                selecionados.delete(val);
+                el.classList.remove('selected');
+            } else {
+                selecionados.add(val);
+                el.classList.add('selected');
+            }
+            atualizarPreview();
+        }
+
+        function limparSelecao() {
+            selecionados.clear();
+            document.querySelectorAll('.num-btn').forEach(b => b.classList.remove('selected'));
+            atualizarPreview();
+        }
+
+        function calcularCombinacao(n, k) {
+            if (k > n) return 0;
+            if (k === 0 || k === n) return 1;
+            let res = 1;
+            const minK = Math.min(k, n - k);
+            for (let i = 1; i <= minK; i++) {
+                res = res * (n - i + 1) / i;
+            }
+            return Math.round(res);
+        }
+
+        function atualizarPreview() {
+            const preview = document.getElementById('preview_info');
+            const config = CONFIG_LOTERIAS[loteriaAtual];
+
+            if (config.isSuperSete) {
+                const colunas = Array.from({ length: 7 }, () => []);
+                selecionados.forEach(pos => colunas[pos % 7].push(Math.floor(pos / 7)));
+                let total = 1;
+                colunas.forEach(c => total *= Math.max(1, c.length));
+                if (colunas.some(c => c.length === 0)) total = 0;
+
+                preview.innerHTML = `<strong>Dezenas Marcadas:</strong> ${selecionados.size} | <strong>Combinações possíveis:</strong> ${total.toLocaleString('pt-BR')}`;
+            } else {
+                const n = selecionados.size;
+                const k = parseInt(document.getElementById('select_dezenas_jogo').value) || config.minPick;
+                const total = calcularCombinacao(n, k);
+
+                preview.innerHTML = `<strong>Dezenas Marcadas:</strong> ${n} | <strong>Combinações possíveis:</strong> ${total.toLocaleString('pt-BR')}`;
+            }
+        }
+
+        function gerarJogos() {
+            const qtd = parseInt(document.getElementById('input_qtd_jogos').value) || 1;
+            const config = CONFIG_LOTERIAS[loteriaAtual];
+            jogosGerados = [];
+
+            if (config.isSuperSete) {
+                const colunas = Array.from({ length: 7 }, () => []);
+                selecionados.forEach(pos => colunas[pos % 7].push(Math.floor(pos / 7)));
+
+                if (colunas.some(c => c.length === 0)) {
+                    alert('Selecione pelo menos um número em cada uma das 7 colunas do Super Sete!');
+                    return;
+                }
+
+                while (jogosGerados.length < qtd) {
+                    const jogo = colunas.map(col => col[Math.floor(Math.random() * col.length)]);
+                    if (!jogosGerados.some(g => g.join(',') === jogo.join(','))) {
+                        jogosGerados.push(jogo);
+                    }
+                }
+            } else {
+                const k = parseInt(document.getElementById('select_dezenas_jogo').value);
+                const pool = Array.from(selecionados).sort((a,b) => a - b);
+                const limite = calcularCombinacao(pool.length, k);
+
+                if (pool.length < k) {
+                    alert(`Selecione no mínimo ${k} dezenas no volante.`);
+                    return;
+                }
+
+                if (qtd > limite) {
+                    alert(`O limite máximo de jogos únicos com ${pool.length} dezenas é de ${limite} combinações.`);
+                    return;
+                }
+
+                while (jogosGerados.length < qtd) {
+                    const embaralhado = [...pool].sort(() => 0.5 - Math.random());
+                    const jogo = embaralhado.slice(0, k).sort((a,b) => a - b);
+                    if (!jogosGerados.some(g => g.join(',') === jogo.join(','))) {
+                        jogosGerados.push(jogo);
+                    }
+                }
+            }
+
+            exibirResultados();
+        }
+
+        function exibirResultados() {
+            const list = document.getElementById('games_list');
+            list.innerHTML = '';
+
+            jogosGerados.forEach((jogo, idx) => {
+                const card = document.createElement('div');
+                card.className = 'game-card';
+
+                const isSuperSete = CONFIG_LOTERIAS[loteriaAtual].isSuperSete;
+                const ballsHtml = jogo.map((num) => `
+                    <span class="ball-result" style="${isSuperSete ? 'background:#a8cf45; color:#222;' : ''}">
+                        ${String(num).padStart(2, '0')}
+                    </span>
+                `).join('');
+
+                card.innerHTML = `
+                    <div>
+                        <strong>Jogo #${idx + 1}</strong>
+                        <div class="balls-container" style="margin-top: 5px;">${ballsHtml}</div>
+                    </div>
+                `;
+                list.appendChild(card);
+            });
+
+            document.getElementById('results_card').style.display = 'block';
+        }
+
+        function limparResultados() {
+            jogosGerados = [];
+            document.getElementById('results_card').style.display = 'none';
+        }
+
+        function salvarTodos() {
+            if (jogosGerados.length === 0) return;
+            const salvos = JSON.parse(localStorage.getItem('meus_jogos_salvos') || '[]');
+            
+            jogosGerados.forEach(j => {
+                salvos.push({
+                    loteria: loteriaAtual,
+                    dezenas: j,
+                    data: new Date().toLocaleDateString('pt-BR')
+                });
+            });
+
+            localStorage.setItem('meus_jogos_salvos', JSON.stringify(salvos));
+            alert(`${jogosGerados.length} jogo(s) salvo(s) com sucesso!`);
+        }
+    </script>
+</body>
+</html>
