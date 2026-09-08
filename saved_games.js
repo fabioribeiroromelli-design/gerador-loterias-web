@@ -95,30 +95,54 @@ function normalizarNomeLoteria(nome) {
 }
 
 function ObterTodosJogosSalvos() {
-    const chaves = ['saved_games_list', 'jogos_salvos', 'jogos_salvos_megasena'];
     let todos = [];
 
-    chaves.forEach(chave => {
-        const raw = localStorage.getItem(chave);
-        if (raw) {
-            try {
-                const parsed = JSON.parse(raw);
-                if (Array.isArray(parsed)) {
-                    parsed.forEach(item => {
-                        todos.push({
-                            id: item.id || (Date.now() + Math.random()),
-                            loteria: item.loteria || item.modalidade || 'MEGASENA',
-                            data: item.data || new Date().toLocaleDateString('pt-BR'),
-                            numeros: item.numeros || item.dezenas || item.jogo || []
+    // 1. Varre o localStorage inteiro procurando por qualquer chave que pareça conter jogos salvos
+    for (let i = 0; i < localStorage.length; i++) {
+        const chave = localStorage.key(i);
+        
+        // Verifica chaves comuns de salvamento no seu projeto
+        if (chave && (chave.includes('saved') || chave.includes('jogo') || chave.includes('loter'))) {
+            const raw = localStorage.getItem(chave);
+            if (raw) {
+                try {
+                    const parsed = JSON.parse(raw);
+                    // Se for um array de jogos
+                    if (Array.isArray(parsed)) {
+                        parsed.forEach(item => {
+                            if (item) {
+                                todos.push({
+                                    id: item.id || (Date.now() + Math.random()),
+                                    loteria: item.loteria || item.modalidade || chave,
+                                    data: item.data || new Date().toLocaleDateString('pt-BR'),
+                                    numeros: item.numeros || item.dezenas || item.jogo || []
+                                });
+                            }
                         });
-                    });
+                    } else if (typeof parsed === 'object' && parsed !== null) {
+                        // Caso seja salvo como objeto único ou dicionário
+                        todos.push({
+                            id: parsed.id || (Date.now() + Math.random()),
+                            loteria: parsed.loteria || parsed.modalidade || chave,
+                            data: parsed.data || new Date().toLocaleDateString('pt-BR'),
+                            numeros: parsed.numeros || parsed.dezenas || parsed.jogo || []
+                        });
+                    }
+                } catch (e) {
+                    // Ignora se não for JSON válido
                 }
-            } catch (e) {}
+            }
+        }
+    }
+
+    // 2. Remove duplicatas baseadas no ID
+    const unicos = new Map();
+    todos.forEach(item => {
+        if (item.numeros && item.numeros.length > 0) {
+            unicos.set(String(item.id), item);
         }
     });
 
-    const unicos = new Map();
-    todos.forEach(item => unicos.set(String(item.id), item));
     return Array.from(unicos.values());
 }
 

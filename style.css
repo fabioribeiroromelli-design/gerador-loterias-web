@@ -935,6 +935,7 @@ img {
     justify-content: center;
     box-shadow: 0 0 60px rgba(37, 99, 235, 0.3), inset 0 -20px 40px rgba(0, 0, 0, 0.6);
     position: relative;
+    overflow: hidden; /* Mantém as bolas contidas no globo */
 }
 
 .globo .numero {
@@ -943,4 +944,79 @@ img {
     color: var(--accent-gold);
     text-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
     font-family: monospace;
+    z-index: 2;
+}
+
+/* ============================================================
+   ESTILOS ADICIONAIS: SUPER SETE & MOVIMENTO REALISTA DO GLOBO
+   ============================================================ */
+
+/* Container de Exclusão do Super Sete */
+.super-sete-container, 
+#superSeteContainer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 15px;
+    width: 100%;
+}
+
+.coluna-card {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    padding: 8px;
+    text-align: center;
+    min-width: 95px;
+}
+
+.coluna-title {
+    color: #e2e8f0;
+    font-size: 12px;
+    font-weight: bold;
+    margin-bottom: 6px;
+}
+
+.coluna-card .linha {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 4px;
+}
+
+.num-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 10px;
+    color: #94a3b8;
+}
+
+.num-item input[type="checkbox"] {
+    cursor: pointer;
+    accent-color: #a8cf45;
+    width: 14px;
+    height: 14px;
+}
+
+/* Efeito de Turbulência / Movimento Caótico das Bolas no Globo */
+.globo.girando .ball, 
+.globo.girando span,
+.globo.girando .bola-interna {
+    animation: misturarBolas 0.35s infinite alternate ease-in-out;
+}
+
+@keyframes misturarBolas {
+    0% {
+        transform: translate(0px, 0px) scale(0.9) rotate(0deg);
+    }
+    33% {
+        transform: translate(-18px, 14px) scale(1.1) rotate(15deg);
+    }
+    66% {
+        transform: translate(15px, -16px) scale(0.95) rotate(-12deg);
+    }
+    100% {
+        transform: translate(-10px, -12px) scale(1.05) rotate(22deg);
+    }
 }

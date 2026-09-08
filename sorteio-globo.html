@@ -1,530 +1,1018 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sorteio Globo</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        /* ===== ESTILOS DO SORTEIO GLOBO ===== */
-        .sorteio-container {
-            max-width: 1000px;
-            margin: 20px auto;
-            padding: 0 16px;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="dark">
+<title>Sorteio Globo — Simulador de Loterias</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;0,9..144,900;1,9..144,500&family=Manrope:wght@400;500;600;700;800&family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+  /* ===== TOKENS ===== */
+  :root {
+    --stage-950: #07080C;
+    --stage-900: #0D0F16;
+    --stage-850: #12141D;
+    --stage-800: #181B26;
+    --stage-700: #262A38;
+    --stage-600: #3A3F52;
+    --paper-100: #F5F1E7;
+    --paper-300: #B9B6AC;
+    --paper-500: #85826F;
+    --brass-300: #EFC888;
+    --brass-400: #E0AC5C;
+    --brass-600: #A87531;
+    --good: #3FBE7C;
+    --accent: #209869;
+    --font-display: 'Fraunces', Georgia, serif;
+    --font-body: 'Manrope', -apple-system, sans-serif;
+    --font-ball: 'Fredoka', sans-serif;
+  }
 
-        .sorteio-card {
-            background: #111827;
-            border-radius: 16px;
-            padding: 24px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-            border: 1px solid #1e293b;
-        }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    min-height: 100vh;
+    background: var(--stage-950);
+    color: var(--paper-100);
+    font-family: var(--font-body);
+    position: relative;
+  }
+  .noise {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    opacity: .035; mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  }
+  .app {
+    position: relative; z-index: 1;
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 0 1.1rem 3rem;
+  }
+  :focus-visible { outline: 2px solid var(--brass-400); outline-offset: 2px; }
+  h1, h2, h3 { margin: 0; }
+  p { margin: 0; }
 
-        /* ===== CARDS DE LOTERIAS ===== */
-        .lottery-selector {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            gap: 10px;
-            margin-bottom: 20px;
-        }
+  /* ===== TOPBAR ===== */
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 1rem;
+    padding-top: 1.8rem;
+  }
+  .brand { display: flex; align-items: center; gap: .8rem; }
+  .brand-mark {
+    flex: 0 0 auto;
+    width: 42px; height: 42px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, var(--brass-300), var(--brass-600));
+    color: #241505; font-size: 1.05rem;
+    box-shadow: 0 6px 14px -6px rgba(224,172,92,.6);
+  }
+  .topbar h1 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.5rem;
+    color: var(--paper-100);
+    letter-spacing: -.01em;
+  }
+  .tagline { font-size: .78rem; color: var(--paper-500); margin-top: .15rem; }
+  .lang-select {
+    background: var(--stage-800);
+    border: 1px solid var(--stage-700);
+    color: var(--paper-100);
+    padding: .3rem .5rem;
+    border-radius: 8px;
+    font-size: .8rem;
+    cursor: pointer;
+  }
+  .games-badge {
+    font-weight: 700; font-size: .72rem;
+    color: var(--paper-300);
+    background: var(--stage-800); border: 1px solid var(--stage-700);
+    padding: .4rem .8rem; border-radius: 999px;
+    white-space: nowrap;
+  }
 
-        .lottery-selector .lot-card {
-            background: #1e293b;
-            border: 2px solid transparent;
-            border-radius: 10px;
-            padding: 10px 8px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.2s;
-            color: #94a3b8;
-        }
+  /* ===== TICKET RAIL (ORGANIZADO EM GRADE) ===== */
+  .ticket-rail {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: .5rem;
+    margin: 1.3rem 0 .8rem;
+  }
+  @media(max-width: 540px) {
+    .ticket-rail {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+  .lot-card {
+    --lot-color: var(--accent);
+    position: relative;
+    width: 100%;
+    background: var(--stage-850);
+    border: 1px solid var(--stage-700);
+    border-radius: 12px;
+    padding: .75rem .3rem .5rem;
+    text-align: center;
+    cursor: pointer;
+    transition: transform .15s ease, border-color .15s ease, background .15s ease;
+  }
+  .lot-card::before {
+    content: '';
+    position: absolute; top: 0; left: 12%; right: 12%; height: 3px;
+    background: var(--lot-color);
+    border-radius: 0 0 3px 3px;
+  }
+  .lot-card .icon { font-size: 1.1rem; margin-bottom: .3rem; }
+  .lot-card .name {
+    font-weight: 700; font-size: .65rem; color: var(--paper-100); line-height: 1.15;
+    min-height: 2.2em; display: flex; align-items: center; justify-content: center;
+  }
+  .lot-card .badge-num {
+    display: inline-block; margin-top: .3rem;
+    font-family: var(--font-ball); font-size: .6rem; font-weight: 600;
+    color: var(--paper-500);
+    background: var(--stage-900); border-radius: 999px; padding: .08rem .4rem;
+  }
+  .lot-card:hover { transform: translateY(-2px); border-color: var(--lot-color); }
+  .lot-card.active {
+    border-color: var(--lot-color);
+    background: var(--stage-800);
+    box-shadow: 0 0 0 1px var(--lot-color), 0 8px 18px -8px var(--lot-color);
+  }
 
-        .lottery-selector .lot-card:hover {
-            background: #2d3a4f;
-            transform: translateY(-2px);
-        }
+  /* ===== STAGE / GLOBO ===== */
+  .stage {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem 1rem 1.7rem;
+    border-radius: 24px;
+    background: radial-gradient(ellipse at 50% -10%, var(--stage-800), var(--stage-950) 68%);
+    overflow: hidden;
+  }
+  .spotlight {
+    position: absolute;
+    top: -22%; left: 50%;
+    width: 140%; height: 68%;
+    transform: translateX(-50%);
+    background: radial-gradient(ellipse at top, color-mix(in srgb, var(--accent) 35%, white) 0%, transparent 65%);
+    opacity: .18;
+    filter: blur(10px);
+    pointer-events: none;
+  }
 
-        .lottery-selector .lot-card.active {
-            border-color: #60a5fa;
-            background: #1a2744;
-            color: white;
-        }
+  .now-drawing { text-align: center; margin-bottom: 1.1rem; position: relative; z-index: 2; }
+  .now-drawing h2 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(1.5rem, 5vw, 2rem);
+    color: var(--paper-100);
+  }
+  .pick-count { font-size: .85rem; color: var(--paper-300); margin-top: .25rem; }
 
-        .lottery-selector .lot-card .icon {
-            font-size: 1.8rem;
-            margin-bottom: 4px;
-        }
+  .rig { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; }
 
-        .lottery-selector .lot-card .name {
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
+  .globo {
+    width: clamp(200px, 48vw, 260px);
+    height: clamp(200px, 48vw, 260px);
+    border-radius: 50%;
+    position: relative;
+    overflow: hidden;
+    border: 2px solid rgba(255,255,255,.2);
+    background:
+      radial-gradient(circle at 30% 25%, rgba(255,255,255,.35), rgba(255,255,255,0) 40%),
+      radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--accent) 30%, var(--stage-900)) 0%, var(--stage-950) 80%);
+    box-shadow:
+      inset 0 0 20px rgba(0,0,0,.8),
+      0 15px 35px -10px rgba(0,0,0,.8),
+      0 0 50px -10px var(--accent);
+  }
+  
+  .globo.girando { animation: rumble .12s linear infinite; }
+  @keyframes rumble {
+    0%, 100% { transform: translate(0,0); }
+    25% { transform: translate(-1.5px, 1.5px); }
+    50% { transform: translate(1.5px, -1.5px); }
+    75% { transform: translate(-1.5px, -1.5px); }
+  }
 
-        .lottery-selector .lot-card .badge-num {
-            font-size: 0.6rem;
-            background: #334155;
-            padding: 1px 6px;
-            border-radius: 10px;
-            margin-top: 4px;
-            display: inline-block;
-        }
+  .globe-balls { 
+    position: absolute; 
+    inset: 10px;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 1;
+  }
+  
+  .mini-ball-anchor { 
+    position: absolute; 
+    width: 28px;
+    height: 28px;
+    margin-left: -14px;
+    margin-top: -14px;
+  }
 
-        /* ===== GLOBO ===== */
-        .globo-area {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px 0;
-        }
+  .mini-ball {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: radial-gradient(circle at 35% 30%, #ffffff, #f0ebd9 60%, #b8af96 100%);
+    color: #2b271d;
+    font-family: var(--font-ball);
+    font-weight: 700;
+    font-size: .7rem;
+    box-shadow: inset -2px -2px 4px rgba(0,0,0,.4), inset 2px 2px 3px rgba(255,255,255,1), 0 3px 6px rgba(0,0,0,.5);
+    animation: floatSmooth 3.5s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+  }
 
-        .globo {
-            width: 160px;
-            height: 160px;
-            border-radius: 50%;
-            background: radial-gradient(circle at 30% 30%, #1e3a5f, #0a1628);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 0 60px rgba(37, 99, 235, 0.3), inset 0 -20px 40px rgba(0, 0, 0, 0.6);
-            transition: transform 0.1s;
-            position: relative;
-            cursor: pointer;
-        }
+  .globo.girando .mini-ball { 
+    animation-duration: .45s !important; 
+  }
 
-        .globo::before {
-            content: '';
-            position: absolute;
-            top: -2px;
-            left: -2px;
-            right: -2px;
-            bottom: -2px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, rgba(255, 215, 0, 0.3), transparent 50%, rgba(37, 99, 235, 0.2));
-            z-index: 0;
-        }
+  @keyframes floatSmooth {
+    0% { transform: translate3d(0, 0, 0) rotate(0deg); }
+    25% { transform: translate3d(12px, -16px, 0) rotate(90deg); }
+    50% { transform: translate3d(-10px, 10px, 0) rotate(180deg); }
+    75% { transform: translate3d(-14px, -8px, 0) rotate(270deg); }
+    100% { transform: translate3d(0, 0, 0) rotate(360deg); }
+  }
 
-        .globo .numero {
-            font-size: 4rem;
-            font-weight: 800;
-            color: #FFD700;
-            text-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
-            z-index: 1;
-            font-family: 'Courier New', monospace;
-            transition: transform 0.3s;
-        }
+  .chute {
+    width: 18px; height: 24px;
+    background: linear-gradient(180deg, var(--stage-600), var(--stage-800));
+    clip-path: polygon(20% 0, 80% 0, 100% 100%, 0% 100%);
+    z-index: 2;
+  }
+  .tray {
+    position: relative;
+    z-index: 2;
+    background: linear-gradient(160deg, var(--stage-800), var(--stage-900));
+    border: 1px solid var(--stage-700);
+    border-radius: 20px;
+    padding: 1rem 1.4rem;
+    box-shadow: inset 0 2px 8px rgba(0,0,0,.5), 0 10px 24px -12px rgba(0,0,0,.6);
+  }
+  .tray.complete {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--brass-400) 65%, transparent), inset 0 2px 8px rgba(0,0,0,.5);
+  }
 
-        .globo .numero.girando {
-            transform: scale(1.3);
-            color: #60a5fa;
-        }
+  .numero {
+    width: clamp(84px, 22vw, 104px);
+    height: clamp(84px, 22vw, 104px);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-ball);
+    font-weight: 700;
+    font-size: clamp(1.7rem, 6vw, 2.3rem);
+    color: #fff;
+    background: radial-gradient(circle at 35% 28%, color-mix(in srgb, var(--accent) 55%, white), var(--accent) 55%, color-mix(in srgb, var(--accent) 65%, black));
+    border: 3px solid rgba(255,255,255,.35);
+    box-shadow: inset -6px -8px 14px rgba(0,0,0,.35), inset 4px 5px 9px rgba(255,255,255,.3), 0 10px 18px -8px rgba(0,0,0,.6);
+  }
+  .numero.girando { animation: shake .12s infinite; filter: blur(1px); }
+  @keyframes shake { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
 
-        .globo.girando {
-            animation: girarGlobo 0.8s ease-in-out infinite alternate;
-        }
+  .scoreboard {
+    margin-top: 1.3rem;
+    font-weight: 700;
+    font-size: .85rem;
+    color: var(--paper-300);
+    background: var(--stage-900);
+    border: 1px solid var(--stage-700);
+    padding: .5rem 1.1rem;
+    border-radius: 999px;
+    z-index: 2;
+  }
+  .scoreboard strong { color: var(--paper-100); font-weight: 800; }
 
-        @keyframes girarGlobo {
-            0% { transform: rotate(-5deg) scale(1); }
-            100% { transform: rotate(5deg) scale(1.02); }
-        }
+  .controls { display: flex; gap: .7rem; margin-top: 1.5rem; width: 100%; position: relative; z-index: 2; }
+  .controls .btn { flex: 1; }
 
-        .info-area {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;
-            margin-top: 16px;
-            padding: 12px 16px;
-            background: #1e293b;
-            border-radius: 8px;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
+  /* ===== BUTTONS ===== */
+  .btn {
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: .9rem;
+    border: none;
+    border-radius: 999px;
+    padding: .85rem 1.2rem;
+    display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
+    cursor: pointer;
+    transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease;
+    white-space: nowrap;
+  }
+  .btn:active { transform: scale(.97); }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--brass-300), var(--brass-600));
+    color: #211505;
+    box-shadow: 0 8px 20px -8px rgba(224,172,92,.6);
+  }
+  .btn-outline { background: transparent; border: 1.5px solid var(--stage-600); color: var(--paper-100); }
+  .btn-secondary { background: var(--stage-700); color: var(--paper-100); }
+  .btn-ghost { background: transparent; color: var(--paper-300); text-decoration: underline; text-underline-offset: 3px; padding: .85rem .4rem; }
+  .btn-save { background: var(--good); color: #06281a; }
 
-        .info-area .status {
-            color: #94a3b8;
-            font-size: 0.9rem;
-        }
+  /* ===== DRAWN NUMBERS ===== */
+  .drawn-area { margin-top: 2rem; display: none; }
+  .drawn-area.visible { display: block; }
+  .drawn-area h3 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: var(--paper-100);
+    margin-bottom: .8rem;
+  }
+  .balls-row { display: flex; flex-wrap: wrap; gap: .6rem; }
+  .ball {
+    width: 44px; height: 44px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-ball); font-weight: 700; font-size: .95rem; color: #fff;
+    box-shadow: inset -3px -4px 6px rgba(0,0,0,.3), inset 2px 3px 5px rgba(255,255,255,.25), 0 4px 10px -4px rgba(0,0,0,.5);
+    animation: ballIn .35s ease-out backwards;
+  }
+  @keyframes ballIn { from { transform: scale(.4); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
-        .info-area .status strong {
-            color: #e2e8f0;
-        }
+  .extra-chip {
+    display: none;
+    margin-top: 1rem;
+    align-items: center; gap: .6rem;
+    background: linear-gradient(135deg, color-mix(in srgb, var(--brass-400) 18%, var(--stage-900)), var(--stage-900));
+    border: 1px solid var(--brass-600);
+    border-radius: 14px;
+    padding: .7rem 1rem;
+  }
+  .extra-label { font-weight: 700; color: var(--brass-300); font-size: .8rem; }
+  .extra-value { color: var(--paper-100); font-weight: 600; }
 
-        /* ===== BOTÕES ===== */
-        .btn-group {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-            margin: 16px 0;
-        }
+  /* ===== EXCLUSÕES ===== */
+  .exclusion-section {
+    margin-top: 2.2rem;
+    padding-top: 1.6rem;
+    border-top: 1px solid var(--stage-700);
+  }
+  .exclusion-section h3 {
+    font-size: .92rem;
+    font-weight: 700;
+    color: var(--paper-300);
+    display: flex; align-items: center; gap: .5rem;
+    margin-bottom: .9rem;
+  }
+  .exclusion-form { display: flex; gap: .6rem; flex-wrap: wrap; }
+  #excludedInput {
+    flex: 1 1 180px;
+    background: var(--stage-900);
+    border: 1px solid var(--stage-700);
+    border-radius: 10px;
+    padding: .7rem .9rem;
+    color: var(--paper-100);
+    font-family: var(--font-body);
+    font-size: .9rem;
+  }
+  #excludedInput:focus { outline: none; border-color: var(--accent); }
+  .hint {
+    white-space: pre-line;
+    color: var(--paper-500);
+    font-size: .78rem;
+    margin-top: .7rem;
+    line-height: 1.5;
+  }
 
-        .btn-group .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.9rem;
-        }
+  /* ===== SUPER SETE ===== */
+  .supersete-wrap { margin-top: 1rem; overflow-x: auto; }
+  .ss-grid {
+    display: grid;
+    grid-template-columns: 2.3rem repeat(7, minmax(2.3rem, 1fr));
+    gap: 2px;
+    background: var(--stage-700);
+    border: 1px solid var(--stage-700);
+    border-radius: 12px;
+    overflow: hidden;
+    min-width: 380px;
+  }
+  .ss-corner, .ss-col-head, .ss-row-head {
+    background: var(--stage-800);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700;
+    font-size: .66rem;
+    color: var(--paper-300);
+    padding: .5rem 0;
+  }
+  .ss-corner { font-size: .6rem; color: var(--paper-500); }
+  .ss-col-head { color: var(--accent); }
+  .ss-row-head { font-family: var(--font-ball); font-size: .8rem; color: var(--paper-100); }
+  .ss-cell {
+    background: var(--stage-900);
+    display: flex; align-items: center; justify-content: center;
+    padding: .42rem 0;
+    cursor: pointer;
+  }
+  .ss-cell:hover { background: var(--stage-800); }
+  .ss-cell input { width: 15px; height: 15px; accent-color: var(--accent); cursor: pointer; }
 
-        .btn-group .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
+  /* ===== RODAPÉ ===== */
+  .bottom-actions {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 2.2rem;
+    gap: 1rem;
+  }
 
-        .btn-primary {
-            background: linear-gradient(135deg, #2563eb, #1d4ed8);
-            color: white;
-        }
-
-        .btn-primary:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
-        }
-
-        .btn-success {
-            background: linear-gradient(135deg, #22c55e, #16a34a);
-            color: white;
-        }
-
-        .btn-success:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4);
-        }
-
-        .btn-warning {
-            background: linear-gradient(135deg, #f59e0b, #d97706);
-            color: white;
-        }
-
-        .btn-warning:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
-        }
-
-        .btn-danger {
-            background: linear-gradient(135deg, #ef4444, #dc2626);
-            color: white;
-        }
-
-        .btn-danger:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
-        }
-
-        /* ===== NÚMEROS SORTEADOS ===== */
-        .drawn-numbers-area {
-            margin-top: 16px;
-            padding: 16px;
-            background: #0f172a;
-            border-radius: 12px;
-            border: 1px solid #1e293b;
-            display: none;
-        }
-
-        .drawn-numbers-area.visible {
-            display: block;
-        }
-
-        .drawn-numbers-area .title {
-            color: #94a3b8;
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 8px;
-        }
-
-        .drawn-numbers-area .numbers {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            padding: 8px 0;
-        }
-
-        .drawn-numbers-area .numbers .ball {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 0.9rem;
-            color: white;
-            animation: popIn 0.3s ease-out;
-        }
-
-        @keyframes popIn {
-            0% { transform: scale(0); opacity: 0; }
-            70% { transform: scale(1.2); }
-            100% { transform: scale(1); opacity: 1; }
-        }
-
-        .drawn-numbers-area .extra {
-            margin-top: 8px;
-            padding-top: 8px;
-            border-top: 1px solid #1e293b;
-        }
-
-        .drawn-numbers-area .extra .label {
-            color: #f59e0b;
-            font-size: 0.8rem;
-            font-weight: 600;
-        }
-
-        .drawn-numbers-area .extra .value {
-            color: #e2e8f0;
-            font-size: 1rem;
-            font-weight: 600;
-        }
-
-        /* ===== EXCLUSÕES ===== */
-        .exclusion-area {
-            margin-top: 16px;
-            padding: 16px;
-            background: #0f172a;
-            border-radius: 12px;
-            border: 1px solid #1e293b;
-        }
-
-        .exclusion-area .label {
-            color: #94a3b8;
-            font-size: 0.8rem;
-            margin-bottom: 6px;
-            display: block;
-        }
-
-        .exclusion-area input {
-            width: 100%;
-            padding: 8px 12px;
-            border-radius: 6px;
-            border: 1px solid #334155;
-            background: #1e293b;
-            color: #e2e8f0;
-            font-size: 0.9rem;
-        }
-
-        .exclusion-area input:focus {
-            outline: none;
-            border-color: #2563eb;
-        }
-
-        .exclusion-area .hint {
-            color: #64748b;
-            font-size: 0.7rem;
-            margin-top: 4px;
-        }
-
-        .exclusion-area .btn-apply {
-            margin-top: 8px;
-            padding: 6px 16px;
-            border: none;
-            border-radius: 6px;
-            background: #2563eb;
-            color: white;
-            font-weight: 600;
-            cursor: pointer;
-            font-size: 0.8rem;
-        }
-
-        .exclusion-area .btn-apply:hover {
-            background: #1d4ed8;
-        }
-
-        /* ===== SUPER SETE ===== */
-        .super-sete-exclusion {
-            margin-top: 16px;
-        }
-
-        .super-sete-exclusion .coluna-card {
-            background: #0f172a;
-            border-radius: 8px;
-            padding: 12px;
-            margin-bottom: 8px;
-            border: 1px solid #1e293b;
-        }
-
-        .super-sete-exclusion .coluna-card .coluna-title {
-            color: #f59e0b;
-            font-weight: bold;
-            font-size: 0.85rem;
-            margin-bottom: 6px;
-        }
-
-        .super-sete-exclusion .coluna-card .linha {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 4px;
-        }
-
-        .super-sete-exclusion .coluna-card .linha .num-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-width: 28px;
-        }
-
-        .super-sete-exclusion .coluna-card .linha .num-item label {
-            font-size: 0.7rem;
-            color: #94a3b8;
-        }
-
-        .super-sete-exclusion .coluna-card .linha .num-item input[type="checkbox"] {
-            accent-color: #f59e0b;
-            width: 16px;
-            height: 16px;
-            cursor: pointer;
-        }
-
-        /* ===== RESPONSIVIDADE ===== */
-        @media (max-width: 600px) {
-            .globo {
-                width: 120px;
-                height: 120px;
-            }
-            .globo .numero {
-                font-size: 3rem;
-            }
-            .btn-group .btn {
-                padding: 8px 14px;
-                font-size: 0.8rem;
-            }
-            .drawn-numbers-area .numbers .ball {
-                width: 32px;
-                height: 32px;
-                font-size: 0.75rem;
-            }
-            .sorteio-card {
-                padding: 16px;
-            }
-            .lottery-selector {
-                grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-            }
-            .lottery-selector .lot-card .icon {
-                font-size: 1.4rem;
-            }
-            .lottery-selector .lot-card .name {
-                font-size: 0.65rem;
-            }
-        }
-    </style>
+  /* ===== TOAST ===== */
+  .toast {
+    position: fixed;
+    bottom: 30px; left: 50%;
+    transform: translateX(-50%);
+    background: var(--stage-800);
+    color: var(--paper-100);
+    padding: 12px 24px;
+    border-radius: 10px;
+    border: 1px solid var(--stage-700);
+    box-shadow: 0 8px 24px rgba(0,0,0,.4);
+    z-index: 9999;
+    font-weight: 600;
+    max-width: 90%;
+    text-align: center;
+    animation: fadeInUp .3s ease-out;
+  }
+  .toast-out { opacity: 0; transition: opacity .3s; }
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+    to { opacity: 1; transform: translateX(-50%) translateY(0); }
+  }
+</style>
 </head>
 <body>
-    <!-- Header -->
-    <header class="toolbar" style="background: #0f172a; border-bottom: 1px solid #1e293b;">
-        <h1 style="display: flex; align-items: center; gap: 10px;">
-            <i class="fa-solid fa-globe" style="color: #60a5fa;"></i>
-            <span>Sorteio Globo</span>
-        </h1>
-        <button class="btn-voltar" onclick="window.location.href='home.html'">
-            <i class="fa-solid fa-arrow-left"></i> Voltar
-        </button>
+  <div class="noise" aria-hidden="true"></div>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true"><i class="fa-solid fa-circle-dot"></i></span>
+        <div>
+          <h1 id="txtTitle">Sorteio Globo</h1>
+          <p class="tagline" id="txtSubTitle">Gere combinações para sua aposta, número a número.</p>
+        </div>
+      </div>
+      <div style="display: flex; gap: 0.5rem; align-items: center;">
+        <select id="langSelect" class="lang-select">
+          <option value="pt" selected>PT</option>
+          <option value="en">EN</option>
+          <option value="es">ES</option>
+        </select>
+        <div class="games-badge" id="gamesCount">Jogos: 0</div>
+      </div>
     </header>
 
-    <div class="sorteio-container">
-        <div class="sorteio-card">
-            <!-- Seleção de Loterias Dinâmicas do Globo -->
-            <div class="lottery-selector" id="lotterySelector">
-                <div class="lot-card active" data-lottery="megasena">
-                    <div class="icon"><i class="fa-solid fa-clover"></i></div>
-                    <div class="name">Mega-Sena</div>
-                    <span class="badge-num">6/60</span>
-                </div>
-                <div class="lot-card" data-lottery="lotofacil">
-                    <div class="icon"><i class="fa-solid fa-star"></i></div>
-                    <div class="name">Lotofácil</div>
-                    <span class="badge-num">15/25</span>
-                </div>
-                <div class="lot-card" data-lottery="quina">
-                    <div class="icon"><i class="fa-solid fa-dice-five"></i></div>
-                    <div class="name">Quina</div>
-                    <span class="badge-num">5/80</span>
-                </div>
-                <div class="lot-card" data-lottery="lotomania">
-                    <div class="icon"><i class="fa-solid fa-border-all"></i></div>
-                    <div class="name">Lotomania</div>
-                    <span class="badge-num">50/100</span>
-                </div>
-                <div class="lot-card" data-lottery="timemania">
-                    <div class="icon"><i class="fa-solid fa-shield-halved"></i></div>
-                    <div class="name">Timemania</div>
-                    <span class="badge-num">10/80</span>
-                </div>
-                <div class="lot-card" data-lottery="duplasena">
-                    <div class="icon"><i class="fa-solid fa-clone"></i></div>
-                    <div class="name">Dupla Sena</div>
-                    <span class="badge-num">6/50</span>
-                </div>
-                <div class="lot-card" data-lottery="dia-de-sorte">
-                    <div class="icon"><i class="fa-solid fa-calendar-days"></i></div>
-                    <div class="name">Dia de Sorte</div>
-                    <span class="badge-num">7/31</span>
-                </div>
-                <div class="lot-card" data-lottery="super-sete">
-                    <div class="icon"><i class="fa-solid fa-list-ol"></i></div>
-                    <div class="name">Super Sete</div>
-                    <span class="badge-num">7 Colunas</span>
-                </div>
-                <div class="lot-card" data-lottery="mais-millionaria">
-                    <div class="icon"><i class="fa-solid fa-sack-dollar"></i></div>
-                    <div class="name">+Milionária</div>
-                    <span class="badge-num">6/50 + 2/6</span>
-                </div>
-            </div>
+    <nav class="ticket-rail" id="lotterySelector" aria-label="Escolher loteria"></nav>
 
-            <!-- Globo -->
-            <div class="globo-area">
-                <div class="globo" id="globo">
-                    <span class="numero" id="currentNumber">--</span>
-                </div>
-                <div class="info-area">
-                    <span class="status" id="statusInfo"><strong id="lotteryName">Mega-Sena</strong> (0/<span id="totalNumbers">6</span>)</span>
-                    <span class="status" id="gamesCount">Jogos: 0</span>
-                </div>
-            </div>
+    <main>
+      <section class="stage" aria-label="Área de sorteio">
+        <div class="spotlight" aria-hidden="true"></div>
 
-            <!-- Botões -->
-            <div class="btn-group">
-                <button class="btn btn-primary" id="btnDrawOne">
-                    <i class="fa-solid fa-circle-play"></i> Sortear
-                </button>
-                <button class="btn btn-success" id="btnDrawAll">
-                    <i class="fa-solid fa-forward-step"></i> Sortear Todos
-                </button>
-                <button class="btn btn-warning" id="btnSave">
-                    <i class="fa-solid fa-floppy-disk"></i> Salvar
-                </button>
-                <button class="btn btn-danger" id="btnClear">
-                    <i class="fa-solid fa-trash"></i> Limpar
-                </button>
-            </div>
-
-            <!-- Números Sorteados -->
-            <div class="drawn-numbers-area" id="drawnArea">
-                <div class="title"><i class="fa-solid fa-list"></i> Números Sorteados</div>
-                <div class="numbers" id="drawnNumbersContainer"></div>
-                <div class="extra" id="extraContainer" style="display:none;">
-                    <span class="label" id="extraLabel">Extra:</span>
-                    <span class="value" id="extraValue">--</span>
-                </div>
-            </div>
-
-            <!-- Exclusões -->
-            <div class="exclusion-area" id="exclusionArea">
-                <label class="label"><i class="fa-solid fa-ban"></i> Números Excluídos</label>
-                <input type="text" id="excludedInput" placeholder="Ex: 05.12.24">
-                <div class="hint" id="exclusionHint">Digite os números separados por ponto</div>
-                <button class="btn-apply" id="btnApplyExclusion">Aplicar Exclusões</button>
-                <div id="superSeteContainer" style="display:none; margin-top:12px;"></div>
-            </div>
+        <div class="now-drawing">
+          <h2 id="lotteryName">Mega-Sena</h2>
+          <p class="pick-count"><span id="txtPickLabel">escolha</span> <span id="totalNumbers">6</span> <span id="txtNumbersLabel">números</span></p>
         </div>
-    </div>
 
-    <script src="sorteio-globo.js"></script>
+        <div class="rig">
+          <div class="globo" id="globo">
+            <div class="globe-balls" id="globeBalls"></div>
+          </div>
+          <div class="chute" aria-hidden="true"></div>
+          <div class="tray" id="tray">
+            <div class="numero" id="currentNumber">--</div>
+          </div>
+        </div>
+
+        <div class="scoreboard" id="statusInfo" aria-live="polite"></div>
+
+        <div class="controls">
+          <button class="btn btn-primary" id="btnDrawOne"><i class="fa-solid fa-circle-play" aria-hidden="true"></i> <span id="lblDrawOne">Sortear</span></button>
+          <button class="btn btn-outline" id="btnDrawAll"><i class="fa-solid fa-forward-step" aria-hidden="true"></i> <span id="lblDrawAll">Sortear Todos</span></button>
+        </div>
+      </section>
+
+      <section class="drawn-area" id="drawnArea">
+        <h3 id="txtDrawnTitle">Números sorteados</h3>
+        <div class="balls-row" id="drawnNumbersContainer"></div>
+        <div class="extra-chip" id="extraContainer">
+          <span class="extra-label" id="extraLabel"></span>
+          <span class="extra-value" id="extraValue"></span>
+        </div>
+      </section>
+
+      <section class="exclusion-section" id="exclusionArea">
+        <h3 id="txtExclusionTitle"><i class="fa-solid fa-ban" aria-hidden="true"></i> Excluir números</h3>
+        <div class="exclusion-form">
+          <input type="text" id="excludedInput" placeholder="ex: 05.12.24" autocomplete="off">
+          <button class="btn btn-secondary" id="btnApplyExclusion">Aplicar Exclusões</button>
+        </div>
+        <p class="hint" id="exclusionHint"></p>
+        <div class="supersete-wrap" id="superSeteContainer"></div>
+      </section>
+
+      <section class="bottom-actions">
+        <button class="btn btn-ghost" id="btnClear"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i> <span id="lblClear">Limpar</span></button>
+        <button class="btn btn-save" id="btnSave"><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> <span id="lblSave">Salvar Jogo</span></button>
+      </section>
+    </main>
+  </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const I18N = {
+        pt: {
+            title: "Sorteio Globo",
+            subTitle: "Gere combinações para sua aposta, número a número.",
+            games: "Jogos",
+            pick: "escolha",
+            numbers: "números",
+            draw: "Sortear",
+            drawAll: "Sortear Todos",
+            newDraw: "Novo Sorteio",
+            drawnTitle: "Números sorteados",
+            excludeTitle: "Excluir números",
+            applyExclusions: "Aplicar Exclusões",
+            clearExclusions: "Limpar Exclusões",
+            clear: "Limpar",
+            saveGame: "Salvar Jogo",
+            drawnStatus: "Sorteados",
+            columnStatus: "Coluna",
+            finishedStatus: "Sorteio Concluído!",
+            toastSaved: "Jogo salvo com sucesso!",
+            toastCleared: "Exclusões limpas!",
+            toastNoAvailable: "Sem números disponíveis para sorteio.",
+            hintText: "Digite os números separados por ponto\nExemplo: "
+        },
+        en: {
+            title: "Globe Draw",
+            subTitle: "Generate combinations for your bet, number by number.",
+            games: "Games",
+            pick: "pick",
+            numbers: "numbers",
+            draw: "Draw",
+            drawAll: "Draw All",
+            newDraw: "New Draw",
+            drawnTitle: "Drawn Numbers",
+            excludeTitle: "Exclude Numbers",
+            applyExclusions: "Apply Exclusions",
+            clearExclusions: "Clear Exclusions",
+            clear: "Clear",
+            saveGame: "Save Game",
+            drawnStatus: "Drawn",
+            columnStatus: "Column",
+            finishedStatus: "Draw Completed!",
+            toastSaved: "Game saved successfully!",
+            toastCleared: "Exclusions cleared!",
+            toastNoAvailable: "No available numbers left to draw.",
+            hintText: "Enter dot-separated numbers\nExample: "
+        },
+        es: {
+            title: "Sorteo Globo",
+            subTitle: "Genera combinaciones para tu apuesta, número a número.",
+            games: "Juegos",
+            pick: "elige",
+            numbers: "números",
+            draw: "Sortear",
+            drawAll: "Sortear Todos",
+            newDraw: "Nuevo Sorteo",
+            drawnTitle: "Números sorteados",
+            excludeTitle: "Excluir números",
+            applyExclusions: "Aplicar Exclusiones",
+            clearExclusions: "Limpiar Exclusiones",
+            clear: "Limpiar",
+            saveGame: "Guardar Juego",
+            drawnStatus: "Sorteados",
+            columnStatus: "Columna",
+            finishedStatus: "¡Sorteo Concluido!",
+            toastSaved: "¡Juego guardado con éxito!",
+            toastCleared: "¡Exclusiones limpiadas!",
+            toastNoAvailable: "No hay números disponibles para sortear.",
+            hintText: "Ingresa números separados por puntos\nEjemplo: "
+        }
+    };
+
+    let currentLang = 'pt';
+
+    // Loterias em ordem alfabética exata
+    const LOTTERY_TYPES = {
+        DIA_DE_SORTE: { id: 'DIA_DE_SORTE', name: 'Dia de Sorte', minNumber: 1, maxNumber: 31, minNumbersToPick: 7, hasLuckyMonth: true, color: '#cb8322', icon: 'fa-sun', shortName: 'Dia Sorte' },
+        DUPLA_SENA: { id: 'DUPLA_SENA', name: 'Dupla Sena', minNumber: 1, maxNumber: 50, minNumbersToPick: 6, color: '#a61324', icon: 'fa-copy', shortName: 'Dupla' },
+        LOTOFACIL: { id: 'LOTOFACIL', name: 'Lotofácil', minNumber: 1, maxNumber: 25, minNumbersToPick: 15, color: '#930089', icon: 'fa-clover', shortName: 'Lotofácil' },
+        LOTOMANIA: { id: 'LOTOMANIA', name: 'Lotomania', minNumber: 0, maxNumber: 99, minNumbersToPick: 50, color: '#F78100', icon: 'fa-dice', shortName: 'Lotomania' },
+        MAIS_MILIONARIA: { id: 'MAIS_MILIONARIA', name: '+Milionária', minNumber: 1, maxNumber: 50, minNumbersToPick: 6, hasExtraNumbers: true, minExtraNumber: 1, maxExtraNumber: 6, totalExtraNumbersToPick: 2, color: '#1b365d', icon: 'fa-gem', shortName: '+Milionária' },
+        MEGA_SENA: { id: 'MEGA_SENA', name: 'Mega-Sena', minNumber: 1, maxNumber: 60, minNumbersToPick: 6, color: '#209869', icon: 'fa-trophy', shortName: 'Mega-Sena' },
+        QUINA: { id: 'QUINA', name: 'Quina', minNumber: 1, maxNumber: 80, minNumbersToPick: 5, color: '#260085', icon: 'fa-star', shortName: 'Quina' },
+        SUPER_SETE: { id: 'SUPER_SETE', name: 'Super Sete', minNumber: 0, maxNumber: 9, minNumbersToPick: 7, isSuperSete: true, color: '#a8cf45', icon: 'fa-table-cells', shortName: 'Super Sete' },
+        TIMEMANIA: { id: 'TIMEMANIA', name: 'Timemania', minNumber: 1, maxNumber: 80, minNumbersToPick: 10, hasTeam: true, color: '#2ecc71', icon: 'fa-futbol', shortName: 'Timemania' }
+    };
+
+    const MONTHS = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+    const TEAMS = ['Flamengo', 'Palmeiras', 'São Paulo', 'Corinthians', 'Santos', 'Grêmio', 'Internacional', 'Cruzeiro', 'Atlético-MG', 'Vasco', 'Fluminense', 'Botafogo'];
+
+    let currentLotteryId = 'MEGA_SENA';
+    let config = LOTTERY_TYPES.MEGA_SENA;
+    let availableNumbers = [];
+    let drawnNumbers = [];
+    let extraNumbers = [];
+    let luckyMonth = '';
+    let heartTeam = '';
+    let excludedNumbers = new Set();
+    let superSeteExclusions = {};
+    let isGameFinished = false;
+    let gamesCompleted = 0;
+    let isDrawing = false;
+    let isSuperSete = false;
+
+    const globo = document.getElementById('globo');
+    const currentNumber = document.getElementById('currentNumber');
+    const lotteryName = document.getElementById('lotteryName');
+    const totalNumbers = document.getElementById('totalNumbers');
+    const statusInfo = document.getElementById('statusInfo');
+    const gamesCount = document.getElementById('gamesCount');
+    const btnDrawOne = document.getElementById('btnDrawOne');
+    const btnDrawAll = document.getElementById('btnDrawAll');
+    const btnSave = document.getElementById('btnSave');
+    const btnClear = document.getElementById('btnClear');
+    const drawnArea = document.getElementById('drawnArea');
+    const drawnContainer = document.getElementById('drawnNumbersContainer');
+    const extraContainer = document.getElementById('extraContainer');
+    const extraLabel = document.getElementById('extraLabel');
+    const extraValue = document.getElementById('extraValue');
+    const excludedInput = document.getElementById('excludedInput');
+    const exclusionHint = document.getElementById('exclusionHint');
+    const btnApplyExclusion = document.getElementById('btnApplyExclusion');
+    const superSeteContainer = document.getElementById('superSeteContainer');
+    const lotterySelector = document.getElementById('lotterySelector');
+    const tray = document.getElementById('tray');
+    const globeBalls = document.getElementById('globeBalls');
+    const langSelect = document.getElementById('langSelect');
+
+    function updateLanguageUI() {
+        const t = I18N[currentLang];
+        document.getElementById('txtTitle').textContent = t.title;
+        document.getElementById('txtSubTitle').textContent = t.subTitle;
+        document.getElementById('txtPickLabel').textContent = t.pick;
+        document.getElementById('txtNumbersLabel').textContent = t.numbers;
+        document.getElementById('lblDrawOne').textContent = isGameFinished ? t.newDraw : t.draw;
+        document.getElementById('lblDrawAll').textContent = t.drawAll;
+        document.getElementById('txtDrawnTitle').textContent = t.drawnTitle;
+        document.getElementById('txtExclusionTitle').innerHTML = `<i class="fa-solid fa-ban"></i> ${t.excludeTitle}`;
+        document.getElementById('lblClear').textContent = t.clear;
+        document.getElementById('lblSave').textContent = t.saveGame;
+        gamesCount.textContent = `${t.games}: ${gamesCompleted}`;
+        
+        if (isSuperSete) {
+            btnApplyExclusion.textContent = t.clearExclusions;
+        } else {
+            btnApplyExclusion.textContent = t.applyExclusions;
+            const example = config.name === 'Lotomania' ? '05.12.24' : `${config.minNumber}.${config.minNumber + 1}`;
+            exclusionHint.textContent = `${t.hintText}${example}`;
+        }
+        updateStatus();
+    }
+
+    langSelect.addEventListener('change', (e) => {
+        currentLang = e.target.value;
+        updateLanguageUI();
+    });
+
+    function showToast(msg) {
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.textContent = msg;
+        document.body.appendChild(toast);
+        setTimeout(() => {
+            toast.classList.add('toast-out');
+            setTimeout(() => toast.remove(), 300);
+        }, 2500);
+    }
+
+    function renderLotteryCards() {
+        const lotteries = Object.values(LOTTERY_TYPES);
+        lotterySelector.innerHTML = lotteries.map(lot => `
+            <div class="lot-card ${lot.id === currentLotteryId ? 'active' : ''}"
+                 data-id="${lot.id}" style="--lot-color: ${lot.color}"
+                 role="button" tabindex="0">
+                <div class="icon" style="color: ${lot.color}">
+                    <i class="fa-solid ${lot.icon}"></i>
+                </div>
+                <div class="name">${lot.shortName || lot.name}</div>
+                <span class="badge-num">${lot.minNumbersToPick}</span>
+            </div>
+        `).join('');
+
+        document.querySelectorAll('.lot-card').forEach(card => {
+            card.addEventListener('click', function() { selectLottery(this.dataset.id); });
+        });
+    }
+
+    function selectLottery(id) {
+        if (isDrawing) return;
+        currentLotteryId = id;
+        config = LOTTERY_TYPES[id];
+        isSuperSete = config.isSuperSete || false;
+
+        document.documentElement.style.setProperty('--accent', config.color);
+        renderLotteryCards();
+        lotteryName.textContent = config.name;
+        totalNumbers.textContent = config.minNumbersToPick;
+
+        if (isSuperSete) {
+            excludedInput.style.display = 'none';
+            exclusionHint.style.display = 'none';
+            superSeteContainer.style.display = 'block';
+            buildSuperSeteExclusionUI();
+        } else {
+            superSeteContainer.style.display = 'none';
+            excludedInput.style.display = 'block';
+            exclusionHint.style.display = 'block';
+        }
+
+        updateLanguageUI();
+        resetGame();
+    }
+
+    function resetGame() {
+        drawnNumbers = [];
+        extraNumbers = [];
+        luckyMonth = '';
+        heartTeam = '';
+        isGameFinished = false;
+        isDrawing = false;
+
+        buildAvailablePool();
+        initGlobeBalls();
+
+        currentNumber.textContent = '--';
+        currentNumber.className = 'numero';
+        globo.className = 'globo';
+        tray.classList.remove('complete');
+        drawnArea.classList.remove('visible');
+        extraContainer.style.display = 'none';
+        btnSave.style.display = 'none';
+        btnDrawOne.disabled = false;
+        btnDrawAll.disabled = false;
+        updateLanguageUI();
+    }
+
+    function buildAvailablePool() {
+        availableNumbers = [];
+        for (let i = config.minNumber; i <= config.maxNumber; i++) {
+            if (!excludedNumbers.has(i) && !drawnNumbers.includes(i)) {
+                availableNumbers.push(i);
+            }
+        }
+    }
+
+    function formatNumber(num) {
+        if (isSuperSete) return num.toString();
+        if (config.name === 'Lotomania' && num === 0) return '00';
+        return num < 10 ? '0' + num : num.toString();
+    }
+
+    function getRandomNumber(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function initGlobeBalls() {
+        if (!globeBalls) return;
+        globeBalls.innerHTML = '';
+        const count = 12;
+        
+        for (let i = 0; i < count; i++) {
+            const angle = (i / count) * 360;
+            const radius = getRandomNumber(20, 65);
+            const rad = angle * Math.PI / 180;
+            const x = 50 + (radius * Math.cos(rad)) / 2;
+            const y = 50 + (radius * Math.sin(rad)) / 2;
+
+            const anchor = document.createElement('div');
+            anchor.className = 'mini-ball-anchor';
+            anchor.style.left = x + '%';
+            anchor.style.top = y + '%';
+
+            const ball = document.createElement('div');
+            ball.className = 'mini-ball';
+            ball.textContent = formatNumber(getRandomNumber(config.minNumber, config.maxNumber));
+            
+            ball.style.animationDelay = `${(Math.random() * 2).toFixed(2)}s`;
+            ball.style.animationDuration = `${(2.5 + Math.random() * 2).toFixed(2)}s`;
+
+            anchor.appendChild(ball);
+            globeBalls.appendChild(anchor);
+        }
+    }
+
+    function updateStatus() {
+        const t = I18N[currentLang];
+        if (isGameFinished) {
+            statusInfo.innerHTML = `<strong>${t.finishedStatus}</strong>`;
+        } else if (isSuperSete) {
+            statusInfo.innerHTML = `${t.columnStatus} <strong>${drawnNumbers.length + 1}</strong>/7`;
+        } else {
+            statusInfo.innerHTML = `${t.drawnStatus}: <strong>${drawnNumbers.length}</strong>/${config.minNumbersToPick}`;
+        }
+    }
+
+    function drawOne() {
+        if (isDrawing || isGameFinished) return;
+        if (availableNumbers.length === 0 && !isSuperSete) {
+            showToast(I18N[currentLang].toastNoAvailable);
+            return;
+        }
+        isDrawing = true;
+        btnDrawOne.disabled = true;
+        btnDrawAll.disabled = true;
+        globo.classList.add('girando');
+
+        let count = 0;
+        const interval = setInterval(() => {
+            currentNumber.textContent = formatNumber(getRandomNumber(config.minNumber, config.maxNumber));
+            count++;
+            if (count > 12) {
+                clearInterval(interval);
+                globo.classList.remove('girando');
+
+                let selected;
+                if (isSuperSete) {
+                    const col = drawnNumbers.length + 1;
+                    const excludedInCol = superSeteExclusions[col] || new Set();
+                    let valid = [];
+                    for(let i=0; i<=9; i++) if(!excludedInCol.has(i)) valid.push(i);
+                    selected = valid[Math.floor(Math.random() * valid.length)];
+                } else {
+                    const idx = Math.floor(Math.random() * availableNumbers.length);
+                    selected = availableNumbers[idx];
+                    availableNumbers.splice(idx, 1);
+                }
+
+                drawnNumbers.push(selected);
+                currentNumber.textContent = formatNumber(selected);
+                currentNumber.className = 'numero landed';
+                setTimeout(() => currentNumber.className = 'numero', 450);
+
+                updateDrawnArea();
+                isDrawing = false;
+                btnDrawOne.disabled = false;
+                btnDrawAll.disabled = false;
+
+                if (drawnNumbers.length === config.minNumbersToPick) {
+                    finishGame();
+                } else {
+                    updateLanguageUI();
+                }
+            }
+        }, 50);
+    }
+
+    function drawAll() {
+        if (isDrawing || isGameFinished) return;
+        isDrawing = true;
+        btnDrawOne.disabled = true;
+        btnDrawAll.disabled = true;
+        globo.classList.add('girando');
+
+        setTimeout(() => {
+            globo.classList.remove('girando');
+            while (drawnNumbers.length < config.minNumbersToPick) {
+                if (isSuperSete) {
+                    const col = drawnNumbers.length + 1;
+                    const excludedInCol = superSeteExclusions[col] || new Set();
+                    let valid = [];
+                    for(let i=0; i<=9; i++) if(!excludedInCol.has(i)) valid.push(i);
+                    drawnNumbers.push(valid[Math.floor(Math.random() * valid.length)]);
+                } else {
+                    if (availableNumbers.length === 0) break;
+                    const idx = Math.floor(Math.random() * availableNumbers.length);
+                    drawnNumbers.push(availableNumbers[idx]);
+                    availableNumbers.splice(idx, 1);
+                }
+            }
+            currentNumber.textContent = formatNumber(drawnNumbers[drawnNumbers.length - 1]);
+            updateDrawnArea();
+            finishGame();
+        }, 800);
+    }
+
+    function finishGame() {
+        isGameFinished = true;
+        gamesCompleted++;
+        tray.classList.add('complete');
+
+        if (config.hasExtraNumbers) {
+            while (extraNumbers.length < config.totalExtraNumbersToPick) {
+                let n = getRandomNumber(config.minExtraNumber, config.maxExtraNumber);
+                if (!extraNumbers.includes(n)) extraNumbers.push(n);
+            }
+            extraNumbers.sort((a,b)=>a-b);
+            extraContainer.style.display = 'flex';
+            extraLabel.textContent = currentLang === 'en' ? 'Lucky Clovers:' : (currentLang === 'es' ? 'Tréboles:' : 'Trevos da Sorte:');
+            extraValue.textContent = extraNumbers.map(n => formatNumber(n)).join(' e ');
+        } else if (config.hasLuckyMonth) {
+            luckyMonth = MONTHS[getRandomNumber(0, 11)];
+            extraContainer.style.display = 'flex';
+            extraLabel.textContent = currentLang === 'en' ? 'Lucky Month:' : (currentLang === 'es' ? 'Mes de Suerte:' : 'Mês da Sorte:');
+            extraValue.textContent = luckyMonth;
+        } else if (config.hasTeam) {
+            heartTeam = TEAMS[getRandomNumber(0, TEAMS.length - 1)];
+            extraContainer.style.display = 'flex';
+            extraLabel.textContent = currentLang === 'en' ? 'Heart Team:' : (currentLang === 'es' ? 'Equipo:' : 'Time do Coração:');
+            extraValue.textContent = heartTeam;
+        }
+
+        btnSave.style.display = 'inline-flex';
+        updateLanguageUI();
+    }
+
+    function updateDrawnArea() {
+        drawnArea.classList.add('visible');
+        const sorted = isSuperSete ? drawnNumbers : [...drawnNumbers].sort((a, b) => a - b);
+        drawnContainer.innerHTML = sorted.map(n => `
+            <div class="ball" style="background: ${config.color}">${formatNumber(n)}</div>
+        `).join('');
+    }
+
+    function buildSuperSeteExclusionUI() {
+        let html = `<div class="ss-grid">
+            <div class="ss-corner">Col</div>`;
+        for(let c=1; c<=7; c++) html += `<div class="ss-col-head">C${c}</div>`;
+        
+        for(let r=0; r<=9; r++) {
+            html += `<div class="ss-row-head">${r}</div>`;
+            for(let c=1; c<=7; c++) {
+                const checked = superSeteExclusions[c] && superSeteExclusions[c].has(r) ? 'checked' : '';
+                html += `<div class="ss-cell" data-col="${c}" data-row="${r}"><input type="checkbox" ${checked} tabindex="-1"></div>`;
+            }
+        }
+        html += `</div>`;
+        superSeteContainer.innerHTML = html;
+
+        superSeteContainer.querySelectorAll('.ss-cell').forEach(cell => {
+            cell.addEventListener('click', function(e) {
+                const c = parseInt(this.dataset.col);
+                const r = parseInt(this.dataset.row);
+                const cb = this.querySelector('input');
+                if (e.target !== cb) cb.checked = !cb.checked;
+                
+                if (!superSeteExclusions[c]) superSeteExclusions[c] = new Set();
+                if (cb.checked) superSeteExclusions[c].add(r);
+                else superSeteExclusions[c].delete(r);
+            });
+        });
+    }
+
+    btnApplyExclusion.addEventListener('click', () => {
+        if (isSuperSete) {
+            superSeteExclusions = {};
+            buildSuperSeteExclusionUI();
+            showToast(I18N[currentLang].toastCleared);
+            return;
+        }
+
+        const val = excludedInput.value.trim();
+        if (!val) {
+            excludedNumbers.clear();
+            buildAvailablePool();
+            showToast(I18N[currentLang].toastCleared);
+            return;
+        }
+
+        const parts = val.split(/[\.\,\s]+/);
+        parts.forEach(p => {
+            const num = parseInt(p, 10);
+            if (!isNaN(num) && num >= config.minNumber && num <= config.maxNumber) {
+                excludedNumbers.add(num);
+            }
+        });
+        buildAvailablePool();
+        showToast(currentLang === 'en' ? 'Exclusions applied!' : (currentLang === 'es' ? '¡Exclusiones aplicadas!' : 'Exclusões aplicadas!'));
+        excludedInput.value = '';
+    });
+
+    btnSave.addEventListener('click', () => {
+        const savedList = JSON.parse(localStorage.getItem('saved_games_list') || '[]');
+        savedList.push({
+            loteria: config.name,
+            numeros: [...drawnNumbers],
+            data: new Date().toLocaleDateString(),
+            linkAppOriginal: 'https://play.google.com/store/apps/details?id=com.fabioribeiroromelli.geradordejogos'
+        });
+        localStorage.setItem('saved_games_list', JSON.stringify(savedList));
+        showToast(I18N[currentLang].toastSaved);
+    });
+
+    btnClear.addEventListener('click', resetGame);
+    btnDrawOne.addEventListener('click', drawOne);
+    btnDrawAll.addEventListener('click', drawAll);
+
+    renderLotteryCards();
+    resetGame();
+});
+</script>
 </body>
 </html>

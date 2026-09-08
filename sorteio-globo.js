@@ -1,15 +1,129 @@
 /**
  * Sorteio Globo - Versão Web (Sem Anúncios)
- * Com seleção de loteria via cards
+ * Com seleção de loteria via cards, suporte multiidoma (PT, EN, ES)
+ * e animação realista do globo
+ * 
+ * Lógica de exclusão baseada no SorteioGlobeActivity.kt
  */
 
 document.addEventListener('DOMContentLoaded', function() {
+    // ===== TRADUÇÕES =====
+    const TRANSLATIONS = {
+        pt: {
+            megasena: 'Mega-Sena',
+            lotofacil: 'Lotofácil',
+            quina: 'Quina',
+            lotomania: 'Lotomania',
+            timemania: 'Timemania',
+            duplasena: 'Dupla Sena',
+            diadesorte: 'Dia de Sorte',
+            supersete: 'Super Sete',
+            maismilionaria: '+Milionária',
+            months: ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'],
+            draw: 'Sortear',
+            drawAll: 'Sortear Todos',
+            remaining: 'Sortear Restantes',
+            newDraw: 'Novo Sorteio',
+            save: 'Salvar Jogo',
+            clear: 'Limpar',
+            applyExclusion: 'Aplicar Exclusões',
+            clearExclusion: 'Limpar Exclusões',
+            noNumbers: 'Não há números disponíveis!',
+            noValidNumbers: 'Nenhum número válido encontrado!',
+            excludedSuccess: 'números excluídos!',
+            exclusionRemoved: 'Exclusões removidas!',
+            exclusionCleared: 'Exclusões limpas!',
+            complete: 'Sorteio completo!',
+            saved: 'Jogo salvo com sucesso!',
+            noSaved: 'Nenhum número sorteado para salvar!',
+            col: 'COLUNA',
+            extraTrevo: 'Trevo da Sorte:',
+            extraMonth: 'Mês da Sorte:',
+            extraTeam: 'Time do Coração:',
+            games: 'Jogos',
+            colFull: 'Coluna'
+        },
+        en: {
+            megasena: 'Mega-Sena',
+            lotofacil: 'Lotofácil',
+            quina: 'Quina',
+            lotomania: 'Lotomania',
+            timemania: 'Timemania',
+            duplasena: 'Dupla Sena',
+            diadesorte: 'Dia de Sorte',
+            supersete: 'Super Sete',
+            maismilionaria: '+Milionária',
+            months: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+            draw: 'Draw',
+            drawAll: 'Draw All',
+            remaining: 'Draw Remaining',
+            newDraw: 'New Draw',
+            save: 'Save Game',
+            clear: 'Clear',
+            applyExclusion: 'Apply Exclusions',
+            clearExclusion: 'Clear Exclusions',
+            noNumbers: 'No numbers available!',
+            noValidNumbers: 'No valid numbers found!',
+            excludedSuccess: 'numbers excluded!',
+            exclusionRemoved: 'Exclusions removed!',
+            exclusionCleared: 'Exclusions cleared!',
+            complete: 'Draw complete!',
+            saved: 'Game saved successfully!',
+            noSaved: 'No drawn numbers to save!',
+            col: 'COLUMN',
+            extraTrevo: 'Lucky Clover:',
+            extraMonth: 'Lucky Month:',
+            extraTeam: 'Heart Team:',
+            games: 'Games',
+            colFull: 'Column'
+        },
+        es: {
+            megasena: 'Mega-Sena',
+            lotofacil: 'Lotofácil',
+            quina: 'Quina',
+            lotomania: 'Lotomania',
+            timemania: 'Timemania',
+            duplasena: 'Dupla Sena',
+            diadesorte: 'Dia de Sorte',
+            supersete: 'Super Sete',
+            maismilionaria: '+Milionária',
+            months: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'],
+            draw: 'Sortear',
+            drawAll: 'Sortear Todos',
+            remaining: 'Sortear Restantes',
+            newDraw: 'Nuevo Sorteo',
+            save: 'Guardar Juego',
+            clear: 'Limpiar',
+            applyExclusion: 'Aplicar Exclusiones',
+            clearExclusion: 'Limpiar Exclusiones',
+            noNumbers: '¡No hay números disponibles!',
+            noValidNumbers: '¡No se encontraron números válidos!',
+            excludedSuccess: 'números excluidos!',
+            exclusionRemoved: '¡Exclusiones eliminadas!',
+            exclusionCleared: '¡Exclusiones limpias!',
+            complete: '¡Sorteo completo!',
+            saved: '¡Juego guardado con éxito!',
+            noSaved: '¡Ningún número sorteado para guardar!',
+            col: 'COLUMNA',
+            extraTrevo: 'Trébol de la Suerte:',
+            extraMonth: 'Mes de la Suerte:',
+            extraTeam: 'Equipo del Corazón:',
+            games: 'Juegos',
+            colFull: 'Columna'
+        }
+    };
+
+    // Idioma padrão atual (pode ser alterado dinamicamente via seletor no app)
+    let currentLang = 'pt';
+    function t(key) {
+        return TRANSLATIONS[currentLang][key] || key;
+    }
+
     // ===== CONFIGURAÇÕES DAS LOTERIAS =====
-   // ===== CONFIGURAÇÕES DAS LOTERIAS =====
     const LOTTERY_TYPES = {
         MEGA_SENA: {
             id: 'MEGA_SENA',
-            name: 'Mega-Sena',
+            nameKey: 'megasena',
             minNumber: 1,
             maxNumber: 60,
             minNumbersToPick: 6,
@@ -18,11 +132,11 @@ document.addEventListener('DOMContentLoaded', function() {
             hasTeam: false,
             color: '#209869',
             icon: 'fa-trophy',
-            shortName: 'Mega-Sena'
+            shortName: 'Mega'
         },
         LOTOFACIL: {
             id: 'LOTOFACIL',
-            name: 'Lotofácil',
+            nameKey: 'lotofacil',
             minNumber: 1,
             maxNumber: 25,
             minNumbersToPick: 15,
@@ -31,11 +145,11 @@ document.addEventListener('DOMContentLoaded', function() {
             hasTeam: false,
             color: '#930089',
             icon: 'fa-clover',
-            shortName: 'Lotofácil'
+            shortName: 'Loto'
         },
         QUINA: {
             id: 'QUINA',
-            name: 'Quina',
+            nameKey: 'quina',
             minNumber: 1,
             maxNumber: 80,
             minNumbersToPick: 5,
@@ -48,7 +162,7 @@ document.addEventListener('DOMContentLoaded', function() {
         },
         LOTOMANIA: {
             id: 'LOTOMANIA',
-            name: 'Lotomania',
+            nameKey: 'lotomania',
             minNumber: 0,
             maxNumber: 99,
             minNumbersToPick: 50,
@@ -61,7 +175,7 @@ document.addEventListener('DOMContentLoaded', function() {
         },
         TIMEMANIA: {
             id: 'TIMEMANIA',
-            name: 'Timemania',
+            nameKey: 'timemania',
             minNumber: 1,
             maxNumber: 80,
             minNumbersToPick: 10,
@@ -74,7 +188,7 @@ document.addEventListener('DOMContentLoaded', function() {
         },
         DUPLA_SENA: {
             id: 'DUPLA_SENA',
-            name: 'Dupla Sena',
+            nameKey: 'duplasena',
             minNumber: 1,
             maxNumber: 50,
             minNumbersToPick: 6,
@@ -83,11 +197,11 @@ document.addEventListener('DOMContentLoaded', function() {
             hasTeam: false,
             color: '#a61324',
             icon: 'fa-copy',
-            shortName: 'Dupla Sena'
+            shortName: 'Dupla'
         },
         DIA_DE_SORTE: {
             id: 'DIA_DE_SORTE',
-            name: 'Dia de Sorte',
+            nameKey: 'diadesorte',
             minNumber: 1,
             maxNumber: 31,
             minNumbersToPick: 7,
@@ -96,11 +210,11 @@ document.addEventListener('DOMContentLoaded', function() {
             hasTeam: false,
             color: '#cb8322',
             icon: 'fa-sun',
-            shortName: 'Dia de Sorte'
+            shortName: 'Dia Sorte'
         },
         SUPER_SETE: {
             id: 'SUPER_SETE',
-            name: 'Super Sete',
+            nameKey: 'supersete',
             minNumber: 0,
             maxNumber: 9,
             minNumbersToPick: 7,
@@ -110,11 +224,11 @@ document.addEventListener('DOMContentLoaded', function() {
             isSuperSete: true,
             color: '#a8cf45',
             icon: 'fa-seven',
-            shortName: 'Super Sete'
+            shortName: 'Sete'
         },
         MAIS_MILIONARIA: {
             id: 'MAIS_MILIONARIA',
-            name: '+Milionária',
+            nameKey: 'maismilionaria',
             minNumber: 1,
             maxNumber: 50,
             minNumbersToPick: 6,
@@ -126,12 +240,9 @@ document.addEventListener('DOMContentLoaded', function() {
             hasTeam: false,
             color: '#1b365d',
             icon: 'fa-gem',
-            shortName: '+Milionária'
+            shortName: '+Mili'
         }
     };
-
-    // ===== MESES E TIMES =====
-    const MONTHS = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 
     const TEAMS = [
         'Rio Branco-AC', 'CRB', 'CSA', 'Nacional-AM', 'São Raimundo-AM', 'Trem', 'Bahia', 'Vitória',
@@ -186,25 +297,91 @@ document.addEventListener('DOMContentLoaded', function() {
     const superSeteContainer = document.getElementById('superSeteContainer');
     const lotterySelector = document.getElementById('lotterySelector');
 
+    // ===== ANIMAÇÃO DO GLOBO =====
+    let animationInterval = null;
+
+    function startGlobeAnimation(finalNumber, callback) {
+        if (animationInterval) {
+            clearInterval(animationInterval);
+            animationInterval = null;
+        }
+
+        const isSuperSeteMode = isSuperSete;
+        const min = config.minNumber;
+        const max = config.maxNumber;
+        let count = 0;
+        const totalSteps = 25 + Math.floor(Math.random() * 15);
+
+        if (globo) {
+            globo.style.boxShadow = '0 0 80px rgba(255, 215, 0, 0.4), 0 0 120px rgba(255, 215, 0, 0.2)';
+            globo.style.transition = 'box-shadow 0.3s ease';
+        }
+
+        animationInterval = setInterval(() => {
+            count++;
+            let tempNum;
+            if (isSuperSeteMode) {
+                tempNum = Math.floor(Math.random() * 10);
+            } else {
+                tempNum = Math.floor(Math.random() * (max - min + 1)) + min;
+            }
+
+            if (currentNumber) {
+                currentNumber.textContent = formatNumber(tempNum);
+                currentNumber.className = 'numero girando';
+                const scale = 1 + Math.sin(count * 0.5) * 0.1;
+                currentNumber.style.transform = `scale(${scale})`;
+            }
+
+            if (globo) {
+                globo.className = 'globo girando';
+                const rotation = count * 8;
+                globo.style.transform = `rotate(${rotation}deg)`;
+            }
+
+            if (count >= totalSteps) {
+                clearInterval(animationInterval);
+                animationInterval = null;
+
+                if (currentNumber) {
+                    currentNumber.textContent = formatNumber(finalNumber);
+                    currentNumber.className = 'numero';
+                    currentNumber.style.transform = 'scale(1.2)';
+                    setTimeout(() => {
+                        if (currentNumber) {
+                            currentNumber.style.transform = 'scale(1)';
+                        }
+                    }, 300);
+                }
+
+                if (globo) {
+                    globo.className = 'globo';
+                    globo.style.transform = 'rotate(0deg)';
+                    globo.style.boxShadow = '0 0 60px rgba(37, 99, 235, 0.3), inset 0 -20px 40px rgba(0, 0, 0, 0.6)';
+                }
+
+                if (callback) callback();
+            }
+        }, isSuperSeteMode ? 60 : 50);
+    }
+
     // ===== RENDERIZAR CARDS DE LOTERIAS =====
     function renderLotteryCards() {
+        if (!lotterySelector) return;
         const lotteries = Object.values(LOTTERY_TYPES);
         lotterySelector.innerHTML = lotteries.map(lot => `
-            <div class="lot-card ${lot.id === currentLotteryId ? 'active' : ''}" 
-                 data-id="${lot.id}">
+            <div class="lot-card ${lot.id === currentLotteryId ? 'active' : ''}" data-id="${lot.id}">
                 <div class="icon" style="color: ${lot.color}">
                     <i class="fa-solid ${lot.icon}"></i>
                 </div>
-                <div class="name">${lot.shortName || lot.name}</div>
+                <div class="name">${lot.shortName || t(lot.nameKey)}</div>
                 <span class="badge-num">${lot.minNumbersToPick}</span>
             </div>
         `).join('');
 
-        // Adicionar evento de clique para cada card
         document.querySelectorAll('.lot-card').forEach(card => {
             card.addEventListener('click', function() {
-                const id = this.dataset.id;
-                selectLottery(id);
+                selectLottery(this.dataset.id);
             });
         });
     }
@@ -217,31 +394,42 @@ document.addEventListener('DOMContentLoaded', function() {
         config = LOTTERY_TYPES[id];
         isSuperSete = config.isSuperSete || false;
         
-        // Atualizar UI
         renderLotteryCards();
-        lotteryName.textContent = config.name;
-        totalNumbers.textContent = config.minNumbersToPick;
+        if (lotteryName) lotteryName.textContent = t(config.nameKey);
+        if (totalNumbers) totalNumbers.textContent = config.minNumbersToPick;
         
-        // Configurar exclusões
+        // RESETAR EXCLUSÕES AO TROCAR DE LOTERIA (igual ao Kotlin)
+        excludedNumbers = new Set();
+        superSeteExclusions = {};
+        
         if (isSuperSete) {
-            excludedInput.style.display = 'none';
-            exclusionHint.style.display = 'none';
-            btnApplyExclusion.textContent = 'Limpar Exclusões';
-            superSeteContainer.style.display = 'block';
-            buildSuperSeteExclusionUI();
+            if (excludedInput) {
+                excludedInput.style.display = 'none';
+                excludedInput.value = '';
+            }
+            if (exclusionHint) exclusionHint.style.display = 'none';
+            if (btnApplyExclusion) btnApplyExclusion.textContent = t('clearExclusion');
+            if (superSeteContainer) {
+                superSeteContainer.style.display = 'block';
+                buildSuperSeteExclusionUI();
+            }
         } else {
-            superSeteContainer.style.display = 'none';
-            excludedInput.style.display = 'block';
-            exclusionHint.style.display = 'block';
-            btnApplyExclusion.textContent = 'Aplicar Exclusões';
-            const example = config.name === 'Lotomania' ? '05.12.24' : `${config.minNumber}.${config.minNumber + 1}`;
-            exclusionHint.textContent = `Digite os números separados por ponto\nExemplo: ${example}`;
+            if (superSeteContainer) superSeteContainer.style.display = 'none';
+            if (excludedInput) {
+                excludedInput.style.display = 'block';
+                excludedInput.value = '';
+            }
+            if (exclusionHint) {
+                exclusionHint.style.display = 'block';
+                const example = config.id === 'LOTOMANIA' ? '05.12.24' : `${config.minNumber}.${config.minNumber + 1}`;
+                exclusionHint.textContent = `Digite os números separados por ponto\nExemplo: ${example}`;
+            }
+            if (btnApplyExclusion) btnApplyExclusion.textContent = t('applyExclusion');
         }
         
         resetGame();
     }
 
-    // ===== FUNÇÕES PRINCIPAIS =====
     function resetGame() {
         drawnNumbers = [];
         extraNumbers = [];
@@ -250,23 +438,35 @@ document.addEventListener('DOMContentLoaded', function() {
         isGameFinished = false;
         isDrawing = false;
 
-        buildAvailablePool();
+        refreshStandardPool();
 
-        currentNumber.textContent = '--';
-        currentNumber.className = 'numero';
-        globo.className = 'globo';
-        drawnArea.classList.remove('visible');
-        extraContainer.style.display = 'none';
-        btnSave.style.display = 'none';
-        btnDrawOne.disabled = false;
-        btnDrawAll.disabled = false;
-        btnDrawOne.innerHTML = '<i class="fa-solid fa-circle-play"></i> Sortear';
-        btnDrawAll.innerHTML = '<i class="fa-solid fa-forward-step"></i> Sortear Todos';
+        if (currentNumber) {
+            currentNumber.textContent = '--';
+            currentNumber.className = 'numero';
+            currentNumber.style.transform = 'scale(1)';
+        }
+        if (globo) {
+            globo.className = 'globo';
+            globo.style.transform = 'rotate(0deg)';
+            globo.style.boxShadow = '0 0 60px rgba(37, 99, 235, 0.3), inset 0 -20px 40px rgba(0, 0, 0, 0.6)';
+        }
+        if (drawnArea) drawnArea.classList.remove('visible');
+        if (extraContainer) extraContainer.style.display = 'none';
+        if (btnSave) btnSave.style.display = 'none';
+        if (btnDrawOne) {
+            btnDrawOne.disabled = false;
+            btnDrawOne.innerHTML = `<i class="fa-solid fa-circle-play"></i> ${isSuperSete ? t('colFull') + ' 1' : t('draw')}`;
+        }
+        if (btnDrawAll) {
+            btnDrawAll.disabled = false;
+            btnDrawAll.innerHTML = `<i class="fa-solid fa-forward-step"></i> ${t('drawAll')}`;
+        }
 
         updateStatus();
     }
 
-    function buildAvailablePool() {
+    // ===== REFRESH STANDARD POOL (igual ao Kotlin refreshStandardPool) =====
+    function refreshStandardPool() {
         availableNumbers = [];
         const min = config.minNumber;
         const max = config.maxNumber;
@@ -280,7 +480,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function formatNumber(num) {
         if (isSuperSete) return num.toString();
-        if (config.name === 'Lotomania' && num === 0) return '00';
+        if (config.id === 'LOTOMANIA' && num === 0) return '00';
         return num < 10 ? '0' + num : num.toString();
     }
 
@@ -295,9 +495,8 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        isDrawing = true;
-        btnDrawOne.disabled = true;
-        btnDrawAll.disabled = true;
+        // Aplica exclusões silenciosamente antes de sortear (igual ao Kotlin)
+        applyExclusionsSilent();
 
         if (isSuperSete) {
             drawSuperSeteOne();
@@ -309,9 +508,6 @@ document.addEventListener('DOMContentLoaded', function() {
     function drawSuperSeteOne() {
         const col = drawnNumbers.length + 1;
         if (col > 7) {
-            isDrawing = false;
-            btnDrawOne.disabled = false;
-            btnDrawAll.disabled = false;
             return;
         }
 
@@ -322,77 +518,50 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         if (available.length === 0) {
-            showToast(`Coluna ${col} sem números disponíveis!`);
-            isDrawing = false;
-            btnDrawOne.disabled = false;
-            btnDrawAll.disabled = false;
+            showToast(`${t('colFull')} ${col} ${t('noNumbers')}`);
             return;
         }
 
-        let count = 0;
-        const interval = setInterval(() => {
-            const temp = getRandomNumber(0, 9);
-            currentNumber.textContent = temp;
-            currentNumber.className = 'numero girando';
-            globo.className = 'globo girando';
-            count++;
-            if (count > 15) {
-                clearInterval(interval);
-                const selected = available[Math.floor(Math.random() * available.length)];
-                currentNumber.textContent = selected;
-                currentNumber.className = 'numero';
-                globo.className = 'globo';
-                drawnNumbers.push(selected);
-                updateDrawnNumbers();
-                isDrawing = false;
-                btnDrawOne.disabled = false;
-                btnDrawAll.disabled = false;
-                if (drawnNumbers.length >= config.minNumbersToPick) {
-                    completeGame();
-                }
-                updateStatus();
-            }
-        }, 60);
+        isDrawing = true;
+        if (btnDrawOne) btnDrawOne.disabled = true;
+        if (btnDrawAll) btnDrawAll.disabled = true;
+
+        const selected = available[Math.floor(Math.random() * available.length)];
+
+        startGlobeAnimation(selected, function() {
+            drawnNumbers.push(selected);
+            updateDrawnNumbersDisplay();
+            isDrawing = false;
+            if (btnDrawOne) btnDrawOne.disabled = false;
+            if (btnDrawAll) btnDrawAll.disabled = false;
+            if (drawnNumbers.length >= config.minNumbersToPick) completeGame();
+            updateStatus();
+        });
     }
 
     function drawStandardOne() {
         if (availableNumbers.length === 0) {
-            showToast('Não há números disponíveis!');
-            isDrawing = false;
-            btnDrawOne.disabled = false;
-            btnDrawAll.disabled = false;
+            showToast(t('noNumbers'));
             return;
         }
 
-        const min = config.minNumber;
-        const max = config.maxNumber;
+        isDrawing = true;
+        if (btnDrawOne) btnDrawOne.disabled = true;
+        if (btnDrawAll) btnDrawAll.disabled = true;
 
-        let count = 0;
-        const interval = setInterval(() => {
-            const temp = getRandomNumber(min, max);
-            currentNumber.textContent = formatNumber(temp);
-            currentNumber.className = 'numero girando';
-            globo.className = 'globo girando';
-            count++;
-            if (count > 20) {
-                clearInterval(interval);
-                const idx = Math.floor(Math.random() * availableNumbers.length);
-                const selected = availableNumbers[idx];
-                availableNumbers.splice(idx, 1);
-                currentNumber.textContent = formatNumber(selected);
-                currentNumber.className = 'numero';
-                globo.className = 'globo';
-                drawnNumbers.push(selected);
-                updateDrawnNumbers();
-                isDrawing = false;
-                btnDrawOne.disabled = false;
-                btnDrawAll.disabled = false;
-                if (drawnNumbers.length >= config.minNumbersToPick) {
-                    completeGame();
-                }
-                updateStatus();
-            }
-        }, 50);
+        const idx = Math.floor(Math.random() * availableNumbers.length);
+        const selected = availableNumbers[idx];
+        availableNumbers.splice(idx, 1);
+
+        startGlobeAnimation(selected, function() {
+            drawnNumbers.push(selected);
+            updateDrawnNumbersDisplay();
+            isDrawing = false;
+            if (btnDrawOne) btnDrawOne.disabled = false;
+            if (btnDrawAll) btnDrawAll.disabled = false;
+            if (drawnNumbers.length >= config.minNumbersToPick) completeGame();
+            updateStatus();
+        });
     }
 
     // ===== SORTEAR TODOS =====
@@ -402,12 +571,14 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        // Aplica exclusões silenciosamente antes de sortear (igual ao Kotlin)
+        applyExclusionsSilent();
+
         isDrawing = true;
-        btnDrawOne.disabled = true;
-        btnDrawAll.disabled = true;
+        if (btnDrawOne) btnDrawOne.disabled = true;
+        if (btnDrawAll) btnDrawAll.disabled = true;
 
         const remaining = config.minNumbersToPick - drawnNumbers.length;
-
         if (isSuperSete) {
             drawSuperSeteAll(remaining);
         } else {
@@ -422,11 +593,9 @@ document.addEventListener('DOMContentLoaded', function() {
         function drawNext() {
             if (drawn >= remaining || col > 7) {
                 isDrawing = false;
-                btnDrawOne.disabled = false;
-                btnDrawAll.disabled = false;
-                if (drawnNumbers.length >= config.minNumbersToPick) {
-                    completeGame();
-                }
+                if (btnDrawOne) btnDrawOne.disabled = false;
+                if (btnDrawAll) btnDrawAll.disabled = false;
+                if (drawnNumbers.length >= config.minNumbersToPick) completeGame();
                 updateStatus();
                 return;
             }
@@ -438,29 +607,23 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             if (available.length === 0) {
-                showToast(`Coluna ${col} sem números disponíveis!`);
+                showToast(`${t('colFull')} ${col} ${t('noNumbers')}`);
                 isDrawing = false;
-                btnDrawOne.disabled = false;
-                btnDrawAll.disabled = false;
+                if (btnDrawOne) btnDrawOne.disabled = false;
+                if (btnDrawAll) btnDrawAll.disabled = false;
                 return;
             }
 
             const selected = available[Math.floor(Math.random() * available.length)];
-            currentNumber.textContent = selected;
-            currentNumber.className = 'numero girando';
-            globo.className = 'globo girando';
 
-            setTimeout(() => {
-                currentNumber.className = 'numero';
-                globo.className = 'globo';
+            startGlobeAnimation(selected, function() {
                 drawnNumbers.push(selected);
                 drawn++;
                 col++;
-                updateDrawnNumbers();
+                updateDrawnNumbersDisplay();
                 setTimeout(drawNext, 200);
-            }, 300);
+            });
         }
-
         drawNext();
     }
 
@@ -470,36 +633,24 @@ document.addEventListener('DOMContentLoaded', function() {
         function drawNext() {
             if (drawn >= remaining || availableNumbers.length === 0) {
                 isDrawing = false;
-                btnDrawOne.disabled = false;
-                btnDrawAll.disabled = false;
-                if (drawnNumbers.length >= config.minNumbersToPick) {
-                    completeGame();
-                }
+                if (btnDrawOne) btnDrawOne.disabled = false;
+                if (btnDrawAll) btnDrawAll.disabled = false;
+                if (drawnNumbers.length >= config.minNumbersToPick) completeGame();
                 updateStatus();
                 return;
             }
 
-            const min = config.minNumber;
-            const max = config.maxNumber;
-            const temp = getRandomNumber(min, max);
-            currentNumber.textContent = formatNumber(temp);
-            currentNumber.className = 'numero girando';
-            globo.className = 'globo girando';
+            const idx = Math.floor(Math.random() * availableNumbers.length);
+            const selected = availableNumbers[idx];
+            availableNumbers.splice(idx, 1);
 
-            setTimeout(() => {
-                const idx = Math.floor(Math.random() * availableNumbers.length);
-                const selected = availableNumbers[idx];
-                availableNumbers.splice(idx, 1);
-                currentNumber.textContent = formatNumber(selected);
-                currentNumber.className = 'numero';
-                globo.className = 'globo';
+            startGlobeAnimation(selected, function() {
                 drawnNumbers.push(selected);
                 drawn++;
-                updateDrawnNumbers();
+                updateDrawnNumbersDisplay();
                 setTimeout(drawNext, 200);
-            }, 300);
+            });
         }
-
         drawNext();
     }
 
@@ -508,68 +659,90 @@ document.addEventListener('DOMContentLoaded', function() {
         isGameFinished = true;
         gamesCompleted++;
 
-        if (config.hasExtraNumbers) {
-            sortExtraNumbers();
-        }
-        if (config.hasLuckyMonth) {
-            luckyMonth = getRandomNumber(1, 12);
-        }
-        if (config.hasTeam) {
-            heartTeam = TEAMS[Math.floor(Math.random() * TEAMS.length)];
-        }
+        if (config.hasExtraNumbers) sortExtraNumbers();
+        if (config.hasLuckyMonth) sortLuckyMonth();
+        if (config.hasTeam) sortHeartTeam();
 
-        updateExtraInfo();
+        updateExtraInfoDisplay();
 
-        btnDrawOne.innerHTML = '<i class="fa-solid fa-rotate-right"></i> Novo Sorteio';
-        btnDrawAll.innerHTML = '<i class="fa-solid fa-rotate-right"></i> Novo Sorteio';
-        btnSave.style.display = 'inline-flex';
+        if (btnDrawOne) btnDrawOne.innerHTML = `<i class="fa-solid fa-rotate-right"></i> ${t('newDraw')}`;
+        if (btnDrawAll) btnDrawAll.innerHTML = `<i class="fa-solid fa-rotate-right"></i> ${t('newDraw')}`;
+        if (btnSave) btnSave.style.display = 'inline-flex';
 
-        showToast('✅ Sorteio completo!');
+        showToast('✅ ' + t('complete'));
     }
 
     function sortExtraNumbers() {
         extraNumbers = [];
-        const min = config.minExtraNumber || 1;
-        const max = config.maxExtraNumber || 6;
-        const total = config.totalExtraNumbersToPick || 2;
-
-        while (extraNumbers.length < total) {
-            const num = getRandomNumber(min, max);
-            if (!extraNumbers.includes(num)) {
-                extraNumbers.push(num);
-            }
+        while (extraNumbers.length < config.totalExtraNumbersToPick) {
+            const num = getRandomNumber(config.minExtraNumber, config.maxExtraNumber);
+            if (!extraNumbers.includes(num)) extraNumbers.push(num);
         }
         extraNumbers.sort((a, b) => a - b);
     }
 
-    // ===== ATUALIZAR UI =====
-    function updateDrawnNumbers() {
-        drawnArea.classList.add('visible');
-
-        const sorted = [...drawnNumbers].sort((a, b) => a - b);
-        drawnContainer.innerHTML = sorted.map(n =>
-            `<div class="ball" style="background: ${config.color};">${formatNumber(n)}</div>`
-        ).join('');
-
-        const remaining = config.minNumbersToPick - drawnNumbers.length;
-        if (remaining > 0 && !isGameFinished) {
-            btnDrawOne.innerHTML = `<i class="fa-solid fa-circle-play"></i> ${isSuperSete ? 'Coluna ' + (drawnNumbers.length + 1) : 'Sortear'}`;
-            btnDrawAll.innerHTML = `<i class="fa-solid fa-forward-step"></i> Sortear Restantes (${remaining})`;
-        }
+    function sortLuckyMonth() { 
+        luckyMonth = getRandomNumber(1, 12); 
     }
 
-    function updateExtraInfo() {
+    function sortHeartTeam() { 
+        heartTeam = TEAMS[Math.floor(Math.random() * TEAMS.length)]; 
+    }
+
+    // ===== ATUALIZAR UI =====
+    function updateDrawnNumbersDisplay() {
+        if (!drawnArea || !drawnContainer) return;
+        
+        if (drawnNumbers.length > 0) {
+            drawnArea.classList.add('visible');
+            const sorted = [...drawnNumbers].sort((a, b) => a - b);
+            const separador = config.id === 'LOTOMANIA' ? '  ' : ' - ';
+            const numbersText = isSuperSete 
+                ? sorted.join(' - ') 
+                : sorted.map(n => formatNumber(n)).join(separador);
+            
+            drawnContainer.innerHTML = sorted.map(n =>
+                `<div class="ball" style="background: ${config.color};">${formatNumber(n)}</div>`
+            ).join('');
+
+            // Atualiza o texto dos botões
+            isGameFinished = drawnNumbers.length >= config.minNumbersToPick;
+
+            if (isGameFinished) {
+                if (btnDrawOne) btnDrawOne.innerHTML = `<i class="fa-solid fa-rotate-right"></i> ${t('newDraw')}`;
+                if (btnDrawAll) btnDrawAll.innerHTML = `<i class="fa-solid fa-rotate-right"></i> ${t('newDraw')}`;
+                if (btnSave) btnSave.style.display = 'inline-flex';
+            } else {
+                if (btnDrawOne) {
+                    btnDrawOne.innerHTML = `<i class="fa-solid fa-circle-play"></i> ${isSuperSete ? t('colFull') + ' ' + (drawnNumbers.length + 1) : t('draw')}`;
+                }
+                if (btnDrawAll) {
+                    const faltam = config.minNumbersToPick - drawnNumbers.length;
+                    btnDrawAll.innerHTML = `<i class="fa-solid fa-forward-step"></i> ${t('remaining')} (${faltam})`;
+                }
+                if (btnSave) btnSave.style.display = 'none';
+            }
+        } else {
+            drawnArea.classList.remove('visible');
+            if (btnSave) btnSave.style.display = 'none';
+        }
+        updateStatus();
+    }
+
+    function updateExtraInfoDisplay() {
+        if (!extraContainer || !extraLabel || !extraValue) return;
+        
         if (config.hasExtraNumbers && extraNumbers.length > 0) {
             extraContainer.style.display = 'block';
-            extraLabel.textContent = 'Trevo da Sorte:';
+            extraLabel.textContent = t('extraTrevo');
             extraValue.textContent = extraNumbers.map(n => formatNumber(n)).join(' - ');
         } else if (config.hasLuckyMonth && luckyMonth > 0) {
             extraContainer.style.display = 'block';
-            extraLabel.textContent = 'Mês da Sorte:';
-            extraValue.textContent = MONTHS[luckyMonth - 1];
+            extraLabel.textContent = t('extraMonth');
+            extraValue.textContent = TRANSLATIONS[currentLang].months[luckyMonth - 1];
         } else if (config.hasTeam && heartTeam) {
             extraContainer.style.display = 'block';
-            extraLabel.textContent = 'Time do Coração:';
+            extraLabel.textContent = t('extraTeam');
             extraValue.textContent = heartTeam;
         } else {
             extraContainer.style.display = 'none';
@@ -577,30 +750,51 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function updateStatus() {
-        const remaining = config.minNumbersToPick - drawnNumbers.length;
-        statusInfo.innerHTML = `<strong>${config.name}</strong> (${drawnNumbers.length}/${config.minNumbersToPick})`;
-        gamesCount.textContent = `Jogos: ${gamesCompleted}`;
+        if (statusInfo) {
+            statusInfo.innerHTML = `<strong>${t(config.nameKey)}</strong> (${drawnNumbers.length}/${config.minNumbersToPick})`;
+        }
+        if (gamesCount) {
+            gamesCount.textContent = `${t('games')}: ${gamesCompleted}`;
+        }
     }
 
-    // ===== EXCLUSÕES =====
-    function applyExclusions() {
+    // ===== EXCLUSÕES (igual ao Kotlin) =====
+    function applyExclusions(showToastMessage = false) {
         if (isSuperSete) {
+            // Super Sete: limpar exclusões
             superSeteExclusions = {};
             buildSuperSeteExclusionUI();
-            showToast('✅ Exclusões limpas!');
+            if (showToastMessage) {
+                showToast('✅ ' + t('exclusionCleared'));
+            }
             return;
         }
 
-        const text = excludedInput.value.trim();
+        // Lógica padrão (igual ao Kotlin applyStandardExclusions)
+        const text = excludedInput ? excludedInput.value.trim() : '';
         if (!text) {
+            // Se o campo estiver vazio, limpa as exclusões (igual ao Kotlin)
             excludedNumbers.clear();
-            buildAvailablePool();
-            showToast('✅ Exclusões removidas!');
+            refreshStandardPool();
+            
+            // Remove números excluídos que já foram sorteados
+            const iterator = drawnNumbers.iterator();
+            while (iterator.hasNext()) {
+                if (excludedNumbers.has(iterator.next())) {
+                    iterator.remove();
+                }
+            }
+            updateDrawnNumbersDisplay();
+            
+            if (showToastMessage) {
+                showToast('✅ ' + t('exclusionRemoved'));
+            }
             return;
         }
 
-        const tokens = text.split(/[.,\s]+/).filter(t => t !== '');
+        // Processa os números (igual ao Kotlin)
         const numbers = new Set();
+        const tokens = text.split(/[.,\s]+/).filter(item => item !== '');
         const min = config.minNumber;
         const max = config.maxNumber;
 
@@ -612,36 +806,78 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         if (numbers.size === 0) {
-            showToast('⚠️ Nenhum número válido encontrado!');
+            if (showToastMessage) {
+                showToast('⚠️ ' + t('noValidNumbers'));
+            }
             return;
         }
 
+        // Aplica as exclusões (igual ao Kotlin)
         excludedNumbers = numbers;
-        buildAvailablePool();
+        refreshStandardPool();
 
-        drawnNumbers = drawnNumbers.filter(n => !excludedNumbers.has(n));
-        updateDrawnNumbers();
+        // Remove números excluídos que já foram sorteados (igual ao Kotlin)
+        const iterator = drawnNumbers.iterator();
+        while (iterator.hasNext()) {
+            const value = iterator.next();
+            if (excludedNumbers.has(value)) {
+                iterator.remove();
+            }
+        }
+        updateDrawnNumbersDisplay();
 
-        showToast(`✅ ${excludedNumbers.size} números excluídos!`);
+        if (showToastMessage) {
+            showToast(`✅ ${excludedNumbers.size} ${t('excludedSuccess')}`);
+        }
+    }
+
+    // Versão silenciosa (chamada antes de sortear)
+    function applyExclusionsSilent() {
+        // Apenas atualiza o pool (sem mostrar toast)
+        refreshStandardPool();
     }
 
     function buildSuperSeteExclusionUI() {
+        if (!superSeteContainer) return;
         superSeteContainer.innerHTML = '';
+        
+        superSeteContainer.style.cssText = `
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 15px;
+            width: 100%;
+        `;
+
         for (let col = 1; col <= 7; col++) {
             const card = document.createElement('div');
             card.className = 'coluna-card';
+            card.style.cssText = `
+                background: #1e293b;
+                border: 1px solid #334155;
+                border-radius: 8px;
+                padding: 8px;
+                text-align: center;
+                min-width: 90px;
+                flex: 1 1 auto;
+                max-width: 120px;
+            `;
 
             const title = document.createElement('div');
             title.className = 'coluna-title';
-            title.textContent = `COLUNA ${col}`;
+            title.style.cssText = 'color: #e2e8f0; font-size: 12px; font-weight: bold; margin-bottom: 6px;';
+            title.textContent = `${t('col')} ${col}`;
             card.appendChild(title);
 
             const linha = document.createElement('div');
             linha.className = 'linha';
+            linha.style.cssText = 'display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px;';
 
             for (let n = 0; n <= 9; n++) {
                 const item = document.createElement('div');
                 item.className = 'num-item';
+                item.style.cssText = 'display: flex; flex-direction: column; align-items: center; font-size: 10px; color: #94a3b8;';
 
                 const label = document.createElement('label');
                 label.textContent = n;
@@ -650,6 +886,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 const checkbox = document.createElement('input');
                 checkbox.type = 'checkbox';
                 checkbox.checked = (superSeteExclusions[col] || new Set()).has(n);
+                checkbox.style.cssText = 'cursor: pointer; accent-color: #a8cf45;';
+                
                 checkbox.addEventListener('change', function() {
                     if (!superSeteExclusions[col]) {
                         superSeteExclusions[col] = new Set();
@@ -660,8 +898,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         superSeteExclusions[col].delete(n);
                     }
                 });
+                
                 item.appendChild(checkbox);
-
                 linha.appendChild(item);
             }
 
@@ -673,87 +911,81 @@ document.addEventListener('DOMContentLoaded', function() {
     // ===== SALVAR =====
     function saveGame() {
         if (drawnNumbers.length === 0) {
-            showToast('⚠️ Nenhum número sorteado para salvar!');
+            showToast('⚠️ ' + t('noSaved'));
             return;
         }
 
-        const numbersStr = drawnNumbers.sort((a, b) => a - b).map(n => formatNumber(n)).join(' - ');
-        let extraStr = null;
-        let monthStr = null;
-        let teamStr = null;
-
-        if (config.hasExtraNumbers && extraNumbers.length > 0) {
-            extraStr = extraNumbers.map(n => formatNumber(n)).join(' - ');
-        }
-        if (config.hasLuckyMonth && luckyMonth > 0) {
-            monthStr = MONTHS[luckyMonth - 1];
-        }
-        if (config.hasTeam && heartTeam) {
-            teamStr = heartTeam;
-        }
+        const numbersString = isSuperSete 
+            ? drawnNumbers.join(' - ') 
+            : drawnNumbers.sort((a, b) => a - b).map(n => formatNumber(n)).join(' - ');
+        
+        let extra = (config.hasExtraNumbers && extraNumbers.length > 0) 
+            ? extraNumbers.map(n => formatNumber(n)).join(', ') 
+            : null;
+        let month = (config.hasLuckyMonth && luckyMonth > 0) 
+            ? TRANSLATIONS[currentLang].months[luckyMonth - 1] 
+            : null;
+        let team = (config.hasTeam && heartTeam) ? heartTeam : null;
 
         const saved = JSON.parse(localStorage.getItem('saved_games_list') || '[]');
         saved.push({
-            loteria: config.name,
+            loteria: t(config.nameKey),
             data: new Date().toLocaleDateString('pt-BR'),
             numeros: drawnNumbers,
-            extra: extraStr,
-            mes: monthStr,
-            time: teamStr,
+            extra: extra,
+            mes: month,
+            time: team,
             tipo: 'sorteio-globo'
         });
         localStorage.setItem('saved_games_list', JSON.stringify(saved));
-
-        showToast('💾 Jogo salvo com sucesso!');
+        showToast('💾 ' + t('saved'));
     }
 
     // ===== TOAST =====
     function showToast(message) {
         const toast = document.createElement('div');
         toast.style.cssText = `
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #1e293b;
-            color: #e2e8f0;
-            padding: 12px 24px;
-            border-radius: 8px;
-            border: 1px solid #334155;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-            z-index: 9999;
-            font-weight: 500;
-            animation: fadeInUp 0.3s ease-out;
-            max-width: 90%;
-            text-align: center;
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            background: #1e293b; color: #e2e8f0; padding: 12px 24px; border-radius: 8px;
+            border: 1px solid #334155; box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+            z-index: 9999; font-weight: 500; animation: fadeInUp 0.3s ease-out;
+            max-width: 90%; text-align: center;
         `;
         toast.textContent = message;
         document.body.appendChild(toast);
-
         setTimeout(() => {
             toast.style.opacity = '0';
             toast.style.transition = 'opacity 0.3s';
             setTimeout(() => toast.remove(), 300);
-        }, 2500);
+        }, 3000);
     }
 
     // ===== EVENTOS =====
-    btnDrawOne.addEventListener('click', drawOne);
-    btnDrawAll.addEventListener('click', drawAll);
-    btnSave.addEventListener('click', saveGame);
-    btnClear.addEventListener('click', resetGame);
-    btnApplyExclusion.addEventListener('click', applyExclusions);
+    if (btnDrawOne) btnDrawOne.addEventListener('click', drawOne);
+    if (btnDrawAll) btnDrawAll.addEventListener('click', drawAll);
+    if (btnSave) btnSave.addEventListener('click', saveGame);
+    if (btnClear) btnClear.addEventListener('click', resetGame);
+    if (btnApplyExclusion) btnApplyExclusion.addEventListener('click', function() {
+        applyExclusions(true);
+    });
 
     // ===== INICIAR =====
     renderLotteryCards();
     resetGame();
 
-    // Adicionar estilo para toast
+    // Adicionar estilo para animações
     const style = document.createElement('style');
     style.textContent = `
         @keyframes fadeInUp {
             from { opacity: 0; transform: translateX(-50%) translateY(20px); }
             to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 60px rgba(255, 215, 0, 0.2); }
+            50% { box-shadow: 0 0 100px rgba(255, 215, 0, 0.5); }
+        }
+        .globo.girando {
+            animation: pulseGlow 0.5s ease-in-out infinite alternate !important;
         }
     `;
     document.head.appendChild(style);
