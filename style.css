@@ -1,222 +1,403 @@
-/* ===== VARIÁVEIS GLORAIS ===== */
+/* ============================================================
+   VARIÁVEIS GLOBAIS
+   ============================================================ */
 :root {
+    /* Cores Base */
     --bg-color: #f4f5f7;
+    --bg-dark: #0f172a;
     --text-color: #333;
-    --primary-purple: #7b1fa2;
+    --text-light: #94a3b8;
+    --text-white: #ffffff;
     --card-bg: #ffffff;
     --border-color: #e0e0e0;
+    --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.06);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.15);
     
-    /* Cores de Cards / Destaques */
+    /* Cores Primárias */
+    --primary-purple: #7b1fa2;
+    --primary-purple-dark: #5a0f7a;
+    --primary-purple-light: #9c27b0;
+    
+    /* Cores de Destaque */
     --accent-blue: #2563eb;
+    --accent-blue-dark: #1d4ed8;
     --accent-purple: #7c3aed;
     --accent-gold: #FFD700;
-    --success-green: #28a745;
-    --danger-red: #dc3545;
+    --accent-gold-dark: #f59e0b;
+    --success-green: #22c55e;
+    --success-green-dark: #16a34a;
+    --danger-red: #ef4444;
+    --danger-red-dark: #dc2626;
+    --warning-yellow: #f59e0b;
+    --info-cyan: #06b6d4;
+    
+    /* Cores das Loterias (Oficiais CAIXA) */
+    --color-megasena: #209869;
+    --color-lotofacil: #930089;
+    --color-quina: #260085;
+    --color-lotomania: #F78100;
+    --color-timemania: #2ecc71;
+    --color-duplasena: #a61324;
+    --color-diadesorte: #cb8322;
+    --color-supersete: #a8cf45;
+    --color-maismilionaria: #1b365d;
+    
+    /* Espaçamentos */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 12px;
+    --spacing-lg: 16px;
+    --spacing-xl: 24px;
+    --spacing-2xl: 32px;
+    
+    /* Bordas */
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+    --radius-full: 9999px;
+    
+    /* Transições */
+    --transition-fast: 0.15s ease;
+    --transition-normal: 0.25s ease;
+    --transition-slow: 0.4s ease;
+    
+    /* Fontes */
+    --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    --font-size-xs: 0.65rem;
+    --font-size-sm: 0.75rem;
+    --font-size-md: 0.85rem;
+    --font-size-base: 1rem;
+    --font-size-lg: 1.2rem;
+    --font-size-xl: 1.5rem;
 }
 
-/* ===== RESET & BASE ===== */
-*, *::before, *::after {
+/* ============================================================
+   RESET & BASE
+   ============================================================ */
+*,
+*::before,
+*::after {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
 }
 
+html {
+    scroll-behavior: smooth;
+}
+
 body {
     background-color: var(--bg-color);
     color: var(--text-color);
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    line-height: 1.4;
+    font-family: var(--font-family);
+    line-height: 1.5;
+    min-height: 100vh;
 }
 
-/* ===== HEADER ===== */
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* ============================================================
+   HEADER / TOOLBAR
+   ============================================================ */
 .toolbar {
-    background-color: var(--primary-purple);
-    color: #ffffff;
-    padding: 14px 20px;
+    background: linear-gradient(135deg, var(--primary-purple), var(--primary-purple-dark));
+    color: var(--text-white);
+    padding: var(--spacing-md) var(--spacing-xl);
     display: flex;
     justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
-    gap: 10px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    gap: var(--spacing-sm);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    position: sticky;
+    top: 0;
+    z-index: 100;
 }
 
 .toolbar h1 {
-    font-size: 1.3rem;
-    font-weight: 600;
+    font-size: var(--font-size-lg);
+    font-weight: 700;
     margin: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
 }
 
-/* ===== BARRA DE ATALHOS ===== */
+.toolbar h1 i {
+    color: var(--accent-gold);
+}
+
+.toolbar .btn-voltar {
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--text-white);
+    padding: var(--spacing-sm) var(--spacing-lg);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    font-weight: 600;
+    font-size: var(--font-size-sm);
+    transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.toolbar .btn-voltar:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: translateY(-1px);
+}
+
+.toolbar .btn-voltar:active {
+    transform: scale(0.97);
+}
+
+/* ============================================================
+   BARRA DE ATALHOS
+   ============================================================ */
 .shortcuts-bar {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: var(--spacing-sm);
     justify-content: center;
     max-width: 1200px;
-    margin: 15px auto;
-    padding: 0 10px;
+    margin: var(--spacing-md) auto;
+    padding: 0 var(--spacing-md);
 }
 
 .shortcuts-bar button {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--spacing-sm);
     background: var(--card-bg);
     border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 10px 14px;
+    border-radius: var(--radius-md);
+    padding: var(--spacing-sm) var(--spacing-lg);
     font-weight: 600;
+    font-size: var(--font-size-sm);
     color: #444;
     cursor: pointer;
-    transition: background-color 0.2s ease, transform 0.1s ease;
+    transition: all var(--transition-fast);
+    box-shadow: var(--shadow-sm);
 }
 
 .shortcuts-bar button:hover {
-    background: #f5f5f5;
+    background: #f8f9fa;
+    border-color: var(--primary-purple);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
 }
 
 .shortcuts-bar button:active {
-    transform: scale(0.98);
+    transform: scale(0.97);
 }
 
 .shortcuts-bar button i {
-    color: #001489;
-    font-size: 1.1rem;
+    color: var(--primary-purple);
+    font-size: 1rem;
 }
 
-/* ===== CONTAINER ===== */
+/* ============================================================
+   CONTAINER
+   ============================================================ */
 .container {
     max-width: 1200px;
-    margin: 20px auto;
-    padding: 0 16px;
+    margin: var(--spacing-lg) auto;
+    padding: 0 var(--spacing-lg);
 }
 
-/* ===== GRID DE CARDS ===== */
+/* ============================================================
+   GRID DE CARDS
+   ============================================================ */
 .lottery-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 14px;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: var(--spacing-md);
 }
 
+/* ============================================================
+   CARD BASE
+   ============================================================ */
 .lottery-card {
     background: var(--card-bg);
-    border-radius: 10px;
-    padding: 12px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md);
+    box-shadow: var(--shadow-sm);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     border-top: 4px solid #ccc;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    min-height: 140px;
+    transition: all var(--transition-normal);
+    min-height: 150px;
+    position: relative;
+    overflow: hidden;
+}
+
+.lottery-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, transparent 50%, rgba(255, 255, 255, 0.02));
+    pointer-events: none;
 }
 
 .lottery-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
 }
 
-/* ===== CARD HEADER ===== */
+/* ============================================================
+   CARD HEADER
+   ============================================================ */
 .card-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 4px;
+    margin-bottom: var(--spacing-xs);
 }
 
 .card-header h3 {
-    font-size: 1rem;
+    font-size: var(--font-size-base);
     margin: 0;
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--spacing-xs);
+    font-weight: 700;
+}
+
+.card-header h3 i {
+    font-size: 0.9rem;
 }
 
 .badge-conc {
-    font-size: 0.65rem;
+    font-size: var(--font-size-xs);
     color: #666;
     background: #eee;
-    padding: 2px 6px;
-    border-radius: 10px;
+    padding: 2px var(--spacing-sm);
+    border-radius: var(--radius-full);
+    white-space: nowrap;
+    font-weight: 600;
 }
 
-/* ===== NÚMEROS E ESTIMATIVA ===== */
+/* ============================================================
+   NÚMEROS E ESTIMATIVA
+   ============================================================ */
 .drawn-numbers {
     font-weight: 600;
-    font-size: 0.8rem;
+    font-size: var(--font-size-sm);
     color: #444;
-    margin: 4px 0;
+    margin: var(--spacing-xs) 0;
     word-break: break-word;
-    line-height: 1.3;
+    line-height: 1.4;
+    letter-spacing: 0.3px;
 }
 
 .estimate-prize {
-    font-size: 0.75rem;
+    font-size: var(--font-size-xs);
     color: #2e7d32;
-    margin: 2px 0;
+    margin: var(--spacing-xs) 0;
+    font-weight: 500;
 }
 
-/* ===== BOTÃO GERAR ===== */
+/* ============================================================
+   BOTÃO GERAR
+   ============================================================ */
 .btn-generate {
-    margin-top: 6px;
+    margin-top: var(--spacing-xs);
     border: none;
-    padding: 6px;
-    border-radius: 4px;
-    font-weight: bold;
-    font-size: 0.75rem;
+    padding: var(--spacing-sm);
+    border-radius: var(--radius-md);
+    font-weight: 700;
+    font-size: var(--font-size-xs);
     cursor: pointer;
     width: 100%;
-    color: #ffffff;
+    color: var(--text-white);
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 4px;
-    transition: opacity 0.2s ease;
+    gap: var(--spacing-xs);
+    transition: all var(--transition-fast);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .btn-generate:hover {
     opacity: 0.85;
+    transform: translateY(-1px);
 }
 
-/* ===== BADGES ===== */
-.badge-accumulated,
-.badge-winners,
-.badge-extra {
-    display: inline-block;
-    color: #ffffff;
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-weight: bold;
+.btn-generate:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
 }
 
+/* ============================================================
+   BADGES
+   ============================================================ */
 .badge-accumulated {
+    display: inline-block;
     background: var(--danger-red);
-    font-size: 0.7rem;
+    color: var(--text-white);
+    font-size: var(--font-size-xs);
+    padding: 2px var(--spacing-sm);
+    border-radius: var(--radius-sm);
+    font-weight: 700;
+    animation: pulse-badge 2s infinite;
+}
+
+@keyframes pulse-badge {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
 }
 
 .badge-winners {
+    display: inline-block;
     background: var(--success-green);
-    font-size: 0.7rem;
+    color: var(--text-white);
+    font-size: var(--font-size-xs);
+    padding: 2px var(--spacing-sm);
+    border-radius: var(--radius-sm);
+    font-weight: 600;
 }
 
 .badge-extra {
+    display: inline-block;
     background: #6c757d;
-    font-size: 0.65rem;
-    font-weight: normal;
+    color: var(--text-white);
+    font-size: var(--font-size-xs);
+    padding: 2px var(--spacing-sm);
+    border-radius: var(--radius-sm);
+    font-weight: 500;
 }
 
 .badge-extra i {
     margin-right: 2px;
 }
 
-/* ===== CARD PREMIUM (Destaque Principal) ===== */
+/* ============================================================
+   CARDS ESPECIAIS
+   ============================================================ */
+
+/* 1. Premium Card */
 .premium-card {
-    background: linear-gradient(145deg, #1e1e1e, #2a2a2a);
-    border: 2px solid var(--accent-gold);
-    border-radius: 16px;
-    box-shadow: 0 8px 20px rgba(255, 215, 0, 0.15);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    background: linear-gradient(145deg, #1a1a2e, #16213e) !important;
+    border: 2px solid var(--accent-gold) !important;
+    border-radius: var(--radius-xl) !important;
+    box-shadow: 0 8px 30px rgba(255, 215, 0, 0.15) !important;
+    transition: all var(--transition-normal) !important;
     cursor: pointer;
     min-height: 160px;
     display: flex;
@@ -224,165 +405,542 @@ body {
     justify-content: center;
     align-items: center;
     text-align: center;
-    padding: 16px;
+    padding: var(--spacing-lg) !important;
+    position: relative;
+    overflow: hidden;
+}
+
+.premium-card::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at center, rgba(255, 215, 0, 0.05), transparent 70%);
+    pointer-events: none;
 }
 
 .premium-card:hover {
-    transform: translateY(-4px) scale(1.02);
-    box-shadow: 0 12px 30px rgba(255, 215, 0, 0.25);
+    transform: translateY(-6px) scale(1.02) !important;
+    box-shadow: 0 12px 40px rgba(255, 215, 0, 0.25) !important;
 }
 
 .premium-card h3 {
     color: var(--accent-gold);
-    margin: 0 0 4px 0;
-    font-size: 1.2rem;
+    margin: 0 0 var(--spacing-xs) 0;
+    font-size: var(--font-size-lg);
+    font-weight: 800;
+    text-shadow: 0 0 30px rgba(255, 215, 0, 0.2);
 }
 
 .premium-card p {
-    color: #ccc;
-    margin: 0 0 8px 0;
-    font-size: 0.85rem;
+    color: #cbd5e1;
+    margin: 0 0 var(--spacing-sm) 0;
+    font-size: var(--font-size-md);
 }
 
 .premium-card .explore-btn {
     background: var(--accent-gold);
-    color: #222;
-    padding: 4px 16px;
-    border-radius: 30px;
-    font-weight: bold;
-    font-size: 0.8rem;
+    color: #1a1a2e;
+    padding: var(--spacing-xs) var(--spacing-lg);
+    border-radius: var(--radius-full);
+    font-weight: 700;
+    font-size: var(--font-size-sm);
     display: inline-block;
+    transition: all var(--transition-fast);
+}
+
+.premium-card .explore-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
 }
 
 .premium-card .lock-badge {
-    margin-top: 8px;
-    font-size: 0.65rem;
+    margin-top: var(--spacing-sm);
+    font-size: var(--font-size-xs);
     color: var(--accent-gold);
     opacity: 0.6;
 }
 
-/* ===== CARD AVANÇADO ===== */
+/* 2. Gerador Avançado */
 .card-avancado {
-    background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
-    border-top: 4px solid var(--accent-blue);
-    border-radius: 10px;
-    padding: 12px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+    background: linear-gradient(135deg, #eff6ff, #dbeafe) !important;
+    border-top: 4px solid var(--accent-blue) !important;
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md);
+    box-shadow: var(--shadow-sm);
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     text-align: center;
     cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition: all var(--transition-normal);
     min-height: 140px;
 }
 
 .card-avancado:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
 }
 
 .card-avancado h3 {
     color: #1e40af;
     margin: 0;
-    font-size: 1rem;
+    font-size: var(--font-size-base);
+    font-weight: 700;
 }
 
 .card-avancado p {
     color: #1e3a5f;
-    font-size: 0.8rem;
-    margin: 6px 0;
+    font-size: var(--font-size-sm);
+    margin: var(--spacing-xs) 0;
 }
 
-.card-avancado .access-btn {
-    background: var(--accent-blue);
-    color: #ffffff;
-    padding: 4px 14px;
-    border-radius: 30px;
-    font-weight: bold;
-    font-size: 0.75rem;
-    display: inline-block;
-}
-
-/* ===== CARD INTELIGENTE ===== */
-.card-inteligente {
-    background: linear-gradient(135deg, #f5f3ff, #ede9fe);
-    border-top: 4px solid var(--accent-purple);
-    border-radius: 10px;
-    padding: 12px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+/* 3. Lotofácil - Repetição */
+.card-lotofacil-rep {
+    background: linear-gradient(135deg, #fdf2f8, #fce7f3) !important;
+    border-top: 4px solid var(--color-lotofacil) !important;
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md);
+    box-shadow: var(--shadow-sm);
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     text-align: center;
     cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition: all var(--transition-normal);
     min-height: 140px;
 }
 
-.card-inteligente:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+.card-lotofacil-rep:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
 }
 
-.card-inteligente h3 {
-    color: #5b21b6;
+.card-lotofacil-rep h3 {
+    color: var(--color-lotofacil);
     margin: 0;
-    font-size: 1rem;
+    font-size: var(--font-size-base);
+    font-weight: 700;
 }
 
-.card-inteligente p {
-    color: #3b0764;
-    font-size: 0.8rem;
-    margin: 6px 0;
+.card-lotofacil-rep p {
+    color: #555;
+    font-size: var(--font-size-sm);
+    margin: var(--spacing-xs) 0;
 }
 
-.card-inteligente .access-btn {
-    background: var(--accent-purple);
-    color: #ffffff;
-    padding: 4px 14px;
-    border-radius: 30px;
-    font-weight: bold;
-    font-size: 0.75rem;
+/* 4. Lotomania - Estratégia */
+.card-lotomania-est {
+    background: linear-gradient(135deg, #fff7ed, #ffedd5) !important;
+    border-top: 4px solid var(--color-lotomania) !important;
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md);
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    min-height: 140px;
+}
+
+.card-lotomania-est:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+}
+
+.card-lotomania-est h3 {
+    color: var(--color-lotomania);
+    margin: 0;
+    font-size: var(--font-size-base);
+    font-weight: 700;
+}
+
+.card-lotomania-est p {
+    color: #555;
+    font-size: var(--font-size-sm);
+    margin: var(--spacing-xs) 0;
+}
+
+/* 5. Dia de Sorte - Repetição */
+.card-diadesorte-rep {
+    background: linear-gradient(135deg, #fef3c7, #fde68a) !important;
+    border-top: 4px solid var(--color-diadesorte) !important;
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md);
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    min-height: 140px;
+}
+
+.card-diadesorte-rep:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+}
+
+.card-diadesorte-rep h3 {
+    color: var(--color-diadesorte);
+    margin: 0;
+    font-size: var(--font-size-base);
+    font-weight: 700;
+}
+
+.card-diadesorte-rep p {
+    color: #555;
+    font-size: var(--font-size-sm);
+    margin: var(--spacing-xs) 0;
+}
+
+/* 6. Sorteio Globo */
+.card-sorteio-globo {
+    background: linear-gradient(135deg, #0f172a, #1e293b) !important;
+    border-top: 4px solid #60a5fa !important;
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md);
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    min-height: 140px;
+}
+
+.card-sorteio-globo:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+}
+
+.card-sorteio-globo h3 {
+    color: #60a5fa;
+    margin: 0;
+    font-size: var(--font-size-base);
+    font-weight: 700;
+}
+
+.card-sorteio-globo p {
+    color: var(--text-light);
+    font-size: var(--font-size-sm);
+    margin: var(--spacing-xs) 0;
+}
+
+/* ============================================================
+   BOTÃO DE ACESSO (padrão para cards especiais)
+   ============================================================ */
+.access-btn {
     display: inline-block;
+    padding: var(--spacing-xs) var(--spacing-lg);
+    border-radius: var(--radius-full);
+    font-weight: 700;
+    font-size: var(--font-size-xs);
+    color: var(--text-white);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
-/* ===== RESPONSIVIDADE ===== */
-@media (max-width: 600px) {
+.access-btn:hover {
+    opacity: 0.85;
+    transform: scale(1.05);
+}
+
+/* ============================================================
+   RESPONSIVIDADE
+   ============================================================ */
+@media (max-width: 992px) {
+    .lottery-grid {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: var(--spacing-md);
+    }
+}
+
+@media (max-width: 768px) {
+    .toolbar {
+        flex-direction: column;
+        text-align: center;
+        padding: var(--spacing-md);
+    }
+
+    .toolbar h1 {
+        font-size: var(--font-size-base);
+    }
+
+    .shortcuts-bar {
+        gap: var(--spacing-xs);
+    }
+
+    .shortcuts-bar button {
+        padding: var(--spacing-xs) var(--spacing-md);
+        font-size: var(--font-size-xs);
+    }
+
+    .shortcuts-bar button i {
+        font-size: 0.8rem;
+    }
+
+    .lottery-grid {
+        grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+        gap: var(--spacing-sm);
+    }
+
+    .container {
+        padding: 0 var(--spacing-md);
+        margin: var(--spacing-md) auto;
+    }
+}
+
+@media (max-width: 480px) {
     .lottery-grid {
         grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-        gap: 10px;
+        gap: var(--spacing-sm);
     }
 
     .lottery-card,
     .premium-card,
     .card-avancado,
-    .card-inteligente {
+    .card-lotofacil-rep,
+    .card-lotomania-est,
+    .card-diadesorte-rep,
+    .card-sorteio-globo {
         min-height: 120px;
-        padding: 10px;
+        padding: var(--spacing-sm) !important;
     }
 
     .card-header h3 {
-        font-size: 0.85rem;
+        font-size: var(--font-size-sm);
     }
 
     .drawn-numbers {
-        font-size: 0.7rem;
+        font-size: var(--font-size-xs);
     }
 
     .btn-generate {
-        font-size: 0.65rem;
-        padding: 4px;
+        font-size: var(--font-size-xs);
+        padding: var(--spacing-xs);
+    }
+
+    .badge-conc {
+        font-size: 0.55rem;
+        padding: 1px var(--spacing-xs);
     }
 
     .premium-card h3 {
-        font-size: 1rem;
+        font-size: var(--font-size-base);
+    }
+
+    .premium-card p {
+        font-size: var(--font-size-xs);
+    }
+
+    .premium-card .explore-btn {
+        font-size: var(--font-size-xs);
+        padding: 2px var(--spacing-md);
     }
 
     .card-avancado h3,
-    .card-inteligente h3 {
-        font-size: 0.9rem;
+    .card-lotofacil-rep h3,
+    .card-lotomania-est h3,
+    .card-diadesorte-rep h3,
+    .card-sorteio-globo h3 {
+        font-size: var(--font-size-sm);
     }
+
+    .card-avancado p,
+    .card-lotofacil-rep p,
+    .card-lotomania-est p,
+    .card-diadesorte-rep p,
+    .card-sorteio-globo p {
+        font-size: var(--font-size-xs);
+    }
+
+    .access-btn {
+        font-size: var(--font-size-xs);
+        padding: 2px var(--spacing-sm);
+    }
+
+    .toolbar .btn-voltar {
+        font-size: var(--font-size-xs);
+        padding: var(--spacing-xs) var(--spacing-md);
+    }
+}
+
+/* ============================================================
+   SCROLLBAR PERSONALIZADA
+   ============================================================ */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+    transition: all var(--transition-fast);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #a1a1a1;
+}
+
+/* ============================================================
+   UTILITÁRIOS
+   ============================================================ */
+.text-center {
+    text-align: center;
+}
+
+.text-muted {
+    color: var(--text-light);
+}
+
+.mt-1 { margin-top: var(--spacing-sm); }
+.mt-2 { margin-top: var(--spacing-md); }
+.mt-3 { margin-top: var(--spacing-lg); }
+
+.mb-1 { margin-bottom: var(--spacing-sm); }
+.mb-2 { margin-bottom: var(--spacing-md); }
+.mb-3 { margin-bottom: var(--spacing-lg); }
+
+.flex {
+    display: flex;
+}
+.flex-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.flex-between {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.flex-column {
+    display: flex;
+    flex-direction: column;
+}
+.gap-1 { gap: var(--spacing-sm); }
+.gap-2 { gap: var(--spacing-md); }
+
+.w-full {
+    width: 100%;
+}
+
+/* ============================================================
+   ANIMAÇÕES
+   ============================================================ */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateX(-20px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+.fade-in {
+    animation: fadeIn 0.4s ease forwards;
+}
+
+.slide-in {
+    animation: slideIn 0.4s ease forwards;
+}
+
+/* Delay classes para animações em cascata */
+.delay-1 { animation-delay: 0.05s; }
+.delay-2 { animation-delay: 0.1s; }
+.delay-3 { animation-delay: 0.15s; }
+.delay-4 { animation-delay: 0.2s; }
+
+/* ============================================================
+   TELA SORTEIO GLOBO
+   ============================================================ */
+.sorteio-container {
+    max-width: 1000px;
+    margin: 20px auto;
+    padding: 0 16px;
+}
+
+.sorteio-card {
+    background: #111827;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    border: 1px solid #1e293b;
+}
+
+.lottery-selector {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.lottery-selector .lot-card {
+    background: #1e293b;
+    border: 2px solid transparent;
+    border-radius: 10px;
+    padding: 10px 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: #94a3b8;
+}
+
+.lottery-selector .lot-card:hover {
+    background: #2d3a4f;
+    transform: translateY(-2px);
+}
+
+.lottery-selector .lot-card.active {
+    border-color: #60a5fa;
+    background: #1a2744;
+    color: white;
+}
+
+.globo-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 0;
+}
+
+.globo {
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #1e3a5f, #0a1628);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 60px rgba(37, 99, 235, 0.3), inset 0 -20px 40px rgba(0, 0, 0, 0.6);
+    position: relative;
+}
+
+.globo .numero {
+    font-size: 4rem;
+    font-weight: 800;
+    color: var(--accent-gold);
+    text-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+    font-family: monospace;
 }

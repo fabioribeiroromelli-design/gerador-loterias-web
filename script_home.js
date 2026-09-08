@@ -38,7 +38,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             container.appendChild(btn);
         });
 
-        // Insere após o header (toolbar)
         const header = document.querySelector('.toolbar');
         if (header && header.parentNode) {
             header.parentNode.insertBefore(container, header.nextSibling);
@@ -311,6 +310,33 @@ document.addEventListener('DOMContentLoaded', async () => {
         `;
     }
 
+    function renderDiadesorteRepeticaoCard() {
+        return `
+            <div class="lottery-card card-diadesorte-rep" onclick="window.location.href='diadesorte-repeticao.html'">
+                <i class="fa-solid fa-calendar-day" style="font-size: 2rem; color: #cb8322; margin-bottom: 6px;"></i>
+                <h3 style="color: #cb8322; margin: 0 0 4px 0;">Dia de Sorte - Repetição</h3>
+                <p style="color: #555; font-size: 0.8rem; margin: 0 0 8px 0;">Estratégia baseada na repetição do último concurso</p>
+                <span class="access-btn" style="background: #cb8322; color: white; padding: 4px 14px; border-radius: 30px; font-weight: bold; font-size: 0.75rem;">
+                    <i class="fa-solid fa-arrow-right"></i> Acessar
+                </span>
+            </div>
+        `;
+    }
+
+    // ===== NOVO: Sorteio Globo =====
+    function renderSorteioGloboCard() {
+        return `
+            <div class="lottery-card card-sorteio-globo" onclick="window.location.href='sorteio-globo.html'">
+                <i class="fa-solid fa-globe" style="font-size: 2rem; color: #60a5fa; margin-bottom: 6px;"></i>
+                <h3 style="color: #60a5fa; margin: 0 0 4px 0;">Sorteio Globo</h3>
+                <p style="color: #94a3b8; font-size: 0.8rem; margin: 0 0 8px 0;">Sorteio interativo com animações e sons</p>
+                <span class="access-btn" style="background: #2563eb; color: white; padding: 4px 14px; border-radius: 30px; font-weight: bold; font-size: 0.75rem;">
+                    <i class="fa-solid fa-arrow-right"></i> Acessar
+                </span>
+            </div>
+        `;
+    }
+
     // ===== 7. FUNÇÃO PARA TOGGLE DA PREMIAÇÃO =====
     window.togglePrizes = function(id) {
         const el = document.getElementById(id);
@@ -354,12 +380,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         } catch (e) {}
     }
 
-    // Monta o grid: cards especiais + loterias
-    let html = renderPremiumCard();
+    // ===== MONTA O GRID: CARDS ESPECIAIS + LOTERIAS =====
+    let html = '';
+    
+    // 1. Cards Especiais (em grid, 6 cards)
+    html += renderPremiumCard();
     html += renderAvancadoCard();
     html += renderLotofacilRepeticaoCard();
     html += renderLotomaniaEstrategiaCard();
+    html += renderDiadesorteRepeticaoCard();
+    html += renderSorteioGloboCard();
 
+    // 2. Loterias (resultados da API)
     LOTTERIES.forEach((lot, index) => {
         html += renderCard(lot.name, results[index]);
     });

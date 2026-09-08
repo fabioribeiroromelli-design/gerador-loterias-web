@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sorteio Globo</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* ===== ESTILOS DO SORTEIO GLOBO ===== */
+        .sorteio-container {
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 0 16px;
+        }
+
+        .sorteio-card {
+            background: #111827;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            border: 1px solid #1e293b;
+        }
+
+        /* ===== CARDS DE LOTERIAS ===== */
+        .lottery-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .lottery-selector .lot-card {
+            background: #1e293b;
+            border: 2px solid transparent;
+            border-radius: 10px;
+            padding: 10px 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #94a3b8;
+        }
+
+        .lottery-selector .lot-card:hover {
+            background: #2d3a4f;
+            transform: translateY(-2px);
+        }
+
+        .lottery-selector .lot-card.active {
+            border-color: #60a5fa;
+            background: #1a2744;
+            color: white;
+        }
+
+        .lottery-selector .lot-card .icon {
+            font-size: 1.8rem;
+            margin-bottom: 4px;
+        }
+
+        .lottery-selector .lot-card .name {
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .lottery-selector .lot-card .badge-num {
+            font-size: 0.6rem;
+            background: #334155;
+            padding: 1px 6px;
+            border-radius: 10px;
+            margin-top: 4px;
+            display: inline-block;
+        }
+
+        /* ===== GLOBO ===== */
+        .globo-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 0;
+        }
+
+        .globo {
+            width: 160px;
+            height: 160px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #1e3a5f, #0a1628);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 60px rgba(37, 99, 235, 0.3), inset 0 -20px 40px rgba(0, 0, 0, 0.6);
+            transition: transform 0.1s;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .globo::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.3), transparent 50%, rgba(37, 99, 235, 0.2));
+            z-index: 0;
+        }
+
+        .globo .numero {
+            font-size: 4rem;
+            font-weight: 800;
+            color: #FFD700;
+            text-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+            z-index: 1;
+            font-family: 'Courier New', monospace;
+            transition: transform 0.3s;
+        }
+
+        .globo .numero.girando {
+            transform: scale(1.3);
+            color: #60a5fa;
+        }
+
+        .globo.girando {
+            animation: girarGlobo 0.8s ease-in-out infinite alternate;
+        }
+
+        @keyframes girarGlobo {
+            0% { transform: rotate(-5deg) scale(1); }
+            100% { transform: rotate(5deg) scale(1.02); }
+        }
+
+        .info-area {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            margin-top: 16px;
+            padding: 12px 16px;
+            background: #1e293b;
+            border-radius: 8px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .info-area .status {
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+
+        .info-area .status strong {
+            color: #e2e8f0;
+        }
+
+        /* ===== BOTÕES ===== */
+        .btn-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin: 16px 0;
+        }
+
+        .btn-group .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+        }
+
+        .btn-group .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: white;
+        }
+
+        .btn-success:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+        }
+
+        .btn-warning:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+        }
+
+        /* ===== NÚMEROS SORTEADOS ===== */
+        .drawn-numbers-area {
+            margin-top: 16px;
+            padding: 16px;
+            background: #0f172a;
+            border-radius: 12px;
+            border: 1px solid #1e293b;
+            display: none;
+        }
+
+        .drawn-numbers-area.visible {
+            display: block;
+        }
+
+        .drawn-numbers-area .title {
+            color: #94a3b8;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .drawn-numbers-area .numbers {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 8px 0;
+        }
+
+        .drawn-numbers-area .numbers .ball {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+            color: white;
+            animation: popIn 0.3s ease-out;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0); opacity: 0; }
+            70% { transform: scale(1.2); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .drawn-numbers-area .extra {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid #1e293b;
+        }
+
+        .drawn-numbers-area .extra .label {
+            color: #f59e0b;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .drawn-numbers-area .extra .value {
+            color: #e2e8f0;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        /* ===== EXCLUSÕES ===== */
+        .exclusion-area {
+            margin-top: 16px;
+            padding: 16px;
+            background: #0f172a;
+            border-radius: 12px;
+            border: 1px solid #1e293b;
+        }
+
+        .exclusion-area .label {
+            color: #94a3b8;
+            font-size: 0.8rem;
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        .exclusion-area input {
+            width: 100%;
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid #334155;
+            background: #1e293b;
+            color: #e2e8f0;
+            font-size: 0.9rem;
+        }
+
+        .exclusion-area input:focus {
+            outline: none;
+            border-color: #2563eb;
+        }
+
+        .exclusion-area .hint {
+            color: #64748b;
+            font-size: 0.7rem;
+            margin-top: 4px;
+        }
+
+        .exclusion-area .btn-apply {
+            margin-top: 8px;
+            padding: 6px 16px;
+            border: none;
+            border-radius: 6px;
+            background: #2563eb;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .exclusion-area .btn-apply:hover {
+            background: #1d4ed8;
+        }
+
+        /* ===== SUPER SETE ===== */
+        .super-sete-exclusion {
+            margin-top: 16px;
+        }
+
+        .super-sete-exclusion .coluna-card {
+            background: #0f172a;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 8px;
+            border: 1px solid #1e293b;
+        }
+
+        .super-sete-exclusion .coluna-card .coluna-title {
+            color: #f59e0b;
+            font-weight: bold;
+            font-size: 0.85rem;
+            margin-bottom: 6px;
+        }
+
+        .super-sete-exclusion .coluna-card .linha {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+
+        .super-sete-exclusion .coluna-card .linha .num-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 28px;
+        }
+
+        .super-sete-exclusion .coluna-card .linha .num-item label {
+            font-size: 0.7rem;
+            color: #94a3b8;
+        }
+
+        .super-sete-exclusion .coluna-card .linha .num-item input[type="checkbox"] {
+            accent-color: #f59e0b;
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+
+        /* ===== RESPONSIVIDADE ===== */
+        @media (max-width: 600px) {
+            .globo {
+                width: 120px;
+                height: 120px;
+            }
+            .globo .numero {
+                font-size: 3rem;
+            }
+            .btn-group .btn {
+                padding: 8px 14px;
+                font-size: 0.8rem;
+            }
+            .drawn-numbers-area .numbers .ball {
+                width: 32px;
+                height: 32px;
+                font-size: 0.75rem;
+            }
+            .sorteio-card {
+                padding: 16px;
+            }
+            .lottery-selector {
+                grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+            }
+            .lottery-selector .lot-card .icon {
+                font-size: 1.4rem;
+            }
+            .lottery-selector .lot-card .name {
+                font-size: 0.65rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="toolbar" style="background: #0f172a; border-bottom: 1px solid #1e293b;">
+        <h1 style="display: flex; align-items: center; gap: 10px;">
+            <i class="fa-solid fa-globe" style="color: #60a5fa;"></i>
+            <span>Sorteio Globo</span>
+        </h1>
+        <button class="btn-voltar" onclick="window.location.href='home.html'">
+            <i class="fa-solid fa-arrow-left"></i> Voltar
+        </button>
+    </header>
+
+    <div class="sorteio-container">
+        <div class="sorteio-card">
+            <!-- Seleção de Loterias Dinâmicas do Globo -->
+            <div class="lottery-selector" id="lotterySelector">
+                <div class="lot-card active" data-lottery="megasena">
+                    <div class="icon"><i class="fa-solid fa-clover"></i></div>
+                    <div class="name">Mega-Sena</div>
+                    <span class="badge-num">6/60</span>
+                </div>
+                <div class="lot-card" data-lottery="lotofacil">
+                    <div class="icon"><i class="fa-solid fa-star"></i></div>
+                    <div class="name">Lotofácil</div>
+                    <span class="badge-num">15/25</span>
+                </div>
+                <div class="lot-card" data-lottery="quina">
+                    <div class="icon"><i class="fa-solid fa-dice-five"></i></div>
+                    <div class="name">Quina</div>
+                    <span class="badge-num">5/80</span>
+                </div>
+                <div class="lot-card" data-lottery="lotomania">
+                    <div class="icon"><i class="fa-solid fa-border-all"></i></div>
+                    <div class="name">Lotomania</div>
+                    <span class="badge-num">50/100</span>
+                </div>
+                <div class="lot-card" data-lottery="timemania">
+                    <div class="icon"><i class="fa-solid fa-shield-halved"></i></div>
+                    <div class="name">Timemania</div>
+                    <span class="badge-num">10/80</span>
+                </div>
+                <div class="lot-card" data-lottery="duplasena">
+                    <div class="icon"><i class="fa-solid fa-clone"></i></div>
+                    <div class="name">Dupla Sena</div>
+                    <span class="badge-num">6/50</span>
+                </div>
+                <div class="lot-card" data-lottery="dia-de-sorte">
+                    <div class="icon"><i class="fa-solid fa-calendar-days"></i></div>
+                    <div class="name">Dia de Sorte</div>
+                    <span class="badge-num">7/31</span>
+                </div>
+                <div class="lot-card" data-lottery="super-sete">
+                    <div class="icon"><i class="fa-solid fa-list-ol"></i></div>
+                    <div class="name">Super Sete</div>
+                    <span class="badge-num">7 Colunas</span>
+                </div>
+                <div class="lot-card" data-lottery="mais-millionaria">
+                    <div class="icon"><i class="fa-solid fa-sack-dollar"></i></div>
+                    <div class="name">+Milionária</div>
+                    <span class="badge-num">6/50 + 2/6</span>
+                </div>
+            </div>
+
+            <!-- Globo -->
+            <div class="globo-area">
+                <div class="globo" id="globo">
+                    <span class="numero" id="currentNumber">--</span>
+                </div>
+                <div class="info-area">
+                    <span class="status" id="statusInfo"><strong id="lotteryName">Mega-Sena</strong> (0/<span id="totalNumbers">6</span>)</span>
+                    <span class="status" id="gamesCount">Jogos: 0</span>
+                </div>
+            </div>
+
+            <!-- Botões -->
+            <div class="btn-group">
+                <button class="btn btn-primary" id="btnDrawOne">
+                    <i class="fa-solid fa-circle-play"></i> Sortear
+                </button>
+                <button class="btn btn-success" id="btnDrawAll">
+                    <i class="fa-solid fa-forward-step"></i> Sortear Todos
+                </button>
+                <button class="btn btn-warning" id="btnSave">
+                    <i class="fa-solid fa-floppy-disk"></i> Salvar
+                </button>
+                <button class="btn btn-danger" id="btnClear">
+                    <i class="fa-solid fa-trash"></i> Limpar
+                </button>
+            </div>
+
+            <!-- Números Sorteados -->
+            <div class="drawn-numbers-area" id="drawnArea">
+                <div class="title"><i class="fa-solid fa-list"></i> Números Sorteados</div>
+                <div class="numbers" id="drawnNumbersContainer"></div>
+                <div class="extra" id="extraContainer" style="display:none;">
+                    <span class="label" id="extraLabel">Extra:</span>
+                    <span class="value" id="extraValue">--</span>
+                </div>
+            </div>
+
+            <!-- Exclusões -->
+            <div class="exclusion-area" id="exclusionArea">
+                <label class="label"><i class="fa-solid fa-ban"></i> Números Excluídos</label>
+                <input type="text" id="excludedInput" placeholder="Ex: 05.12.24">
+                <div class="hint" id="exclusionHint">Digite os números separados por ponto</div>
+                <button class="btn-apply" id="btnApplyExclusion">Aplicar Exclusões</button>
+                <div id="superSeteContainer" style="display:none; margin-top:12px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="sorteio-globo.js"></script>
+</body>
+</html>

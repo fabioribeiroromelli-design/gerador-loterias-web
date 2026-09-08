@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dia de Sorte - Repetição</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="historico_diadesorte.js"></script>
+    
+    <style>
+        .ds-container { max-width: 1000px; margin: 20px auto; padding: 0 16px; }
+        .toolbar-ds { background: #cb8322; }
+        .card-analise { background: #1e1e2e; border-radius: 12px; padding: 16px; color: #e0e0e0; margin-bottom: 20px; border-left: 4px solid #cb8322; }
+        .card-analise h3 { color: #cb8322; margin: 0 0 8px 0; }
+        
+        /* Layout de dois painéis lado a lado */
+        .paineis-wrapper { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
+        .panel-container { background: #1e1e2e; border-radius: 12px; padding: 16px; color: #fff; }
+        .grid-31 { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 10px; }
+        .ball-panel { height: 32px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.8rem; background: #2a2a3a; color: #555; border: 1px solid #333; }
+        .ball-panel.sorteada { background: #3b82f6; color: #fff; border-color: #60a5fa; }
+        .ball-panel.repetida { background: #cb8322; color: #fff; border-color: #ffa500; font-weight: 900; }
+        
+        .controls { display: flex; flex-wrap: wrap; gap: 16px; background: white; padding: 16px; border-radius: 12px; margin: 16px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+        .controls .group { display: flex; align-items: center; gap: 8px; }
+        .controls .group label { font-weight: 600; font-size: 0.85rem; color: #333; }
+        .controls .group input[type="number"] { width: 50px; padding: 4px 6px; border: 1px solid #ccc; border-radius: 4px; text-align: center; background: #f8f8f8; }
+        .controls .group button { background: #cb8322; color: white; border: none; border-radius: 4px; padding: 4px 10px; font-weight: bold; cursor: pointer; }
+        .controls .group button:hover { opacity: 0.8; }
+        .btn-gerar { background: #cb8322; color: white; border: none; padding: 12px 24px; border-radius: 40px; font-weight: bold; font-size: 1rem; cursor: pointer; margin: 8px 0; width: 100%; }
+        .btn-gerar:hover { opacity: 0.85; }
+        .game-card { background: #1e1e2e; border-radius: 12px; padding: 12px; margin-bottom: 12px; border-left: 4px solid #cb8322; }
+        .game-card .header { display: flex; justify-content: space-between; align-items: center; }
+        .game-card .header .title { color: #cb8322; font-weight: bold; }
+        .game-card .dezenas { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+        .game-card .dezenas span { background: #cb8322; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px; }
+        .game-card .info { font-size: 0.75rem; color: #aaa; }
+        .game-card .actions { display: flex; gap: 8px; margin-top: 6px; }
+        .game-card .actions button { background: #3DD68C; border: none; color: white; padding: 4px 12px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 0.75rem; }
+        .game-card .actions button.ver { background: #3B82F6; }
+        .btn-salvar-todos { background: #3DD68C; color: white; border: none; padding: 10px; border-radius: 40px; font-weight: bold; width: 100%; margin: 12px 0; cursor: pointer; }
+        #progress { display: none; text-align: center; padding: 20px; }
+
+        @media (max-width: 768px) {
+            .paineis-wrapper { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <header class="toolbar toolbar-ds">
+        <h1><i class="fa-solid fa-calendar-day" style="color: #FFD700;"></i> Dia de Sorte - Repetição</h1>
+        <button onclick="window.location.href='home.html'" style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: bold;">
+            <i class="fa-solid fa-arrow-left"></i> Voltar
+        </button>
+    </header>
+
+    <div class="ds-container">
+        <div id="analise" class="card-analise">
+            <h3><i class="fa-solid fa-chart-line"></i> Análise</h3>
+            <div id="analise-texto">Carregando dados locais...</div>
+        </div>
+
+        <!-- Dois Painéis (Anterior vs. Último) -->
+        <div class="paineis-wrapper">
+            <div id="painel-anterior-box" class="panel-container">
+                <h4 style="color: #aaa; margin: 0 0 8px 0;" id="titulo-anterior">Anterior</h4>
+                <div id="grid-anterior" class="grid-31"></div>
+            </div>
+            <div id="painel-ultimo-box" class="panel-container">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h4 style="color: #cb8322; margin: 0;" id="titulo-ultimo">Último</h4>
+                    <span style="font-size: 0.75rem; color: #cb8322;"><i class="fa-solid fa-square"></i> Repetida</span>
+                </div>
+                <div id="grid-ultimo" class="grid-31"></div>
+                <div id="stats-ultimo" style="font-size:0.75rem; color: #aaa; margin-top: 8px;"></div>
+                <div id="mes-sorte" style="font-size:0.75rem; color: #cb8322; margin-top: 4px;"></div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="group">
+                <label>Dezenas:</label>
+                <button id="dec-men">-</button>
+                <input type="number" id="qtd-dezenas" value="7" min="7" max="15">
+                <button id="dec-mais">+</button>
+            </div>
+            <div class="group">
+                <label>Repetidas:</label>
+                <button id="rep-men">-</button>
+                <input type="number" id="qtd-repetidas" value="4" min="0" max="7">
+                <button id="rep-mais">+</button>
+            </div>
+            <div class="group">
+                <label>Jogos:</label>
+                <button id="jog-men">-</button>
+                <input type="number" id="qtd-jogos" value="10" min="1" max="50">
+                <button id="jog-mais">+</button>
+            </div>
+            <div class="group">
+                <label>Pares:</label>
+                <input type="number" id="filter-pares" placeholder="ex: 4" style="width:50px;">
+            </div>
+            <div class="group">
+                <label>Ímpares:</label>
+                <input type="number" id="filter-impares" placeholder="ex: 3" style="width:50px;">
+            </div>
+            <div class="group">
+                <label>Primos:</label>
+                <input type="number" id="filter-primos" placeholder="ex: 3" style="width:50px;">
+            </div>
+        </div>
+
+        <button id="btn-gerar" class="btn-gerar"><i class="fa-solid fa-bolt"></i> Gerar Jogos</button>
+        <div id="progress"><i class="fa-solid fa-spinner fa-spin"></i> Gerando...</div>
+
+        <div id="resultados">
+            <button id="btn-salvar-todos" class="btn-salvar-todos" style="display:none;"><i class="fa-solid fa-save"></i> Salvar Todos</button>
+            <div id="container-jogos"></div>
+        </div>
+    </div>
+
+    <script src="diadesorte-repeticao.js"></script>
+</body>
+</html>
