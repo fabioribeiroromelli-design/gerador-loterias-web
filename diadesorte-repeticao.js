@@ -1,290 +1,327 @@
-document.addEventListener('DOMContentLoaded', async () => {
-    const analiseTexto = document.getElementById('analise-texto');
-    const gridAnterior = document.getElementById('grid-anterior');
-    const gridUltimo = document.getElementById('grid-ultimo');
-    const tituloAnterior = document.getElementById('titulo-anterior');
-    const tituloUltimo = document.getElementById('titulo-ultimo');
-    const statsUltimo = document.getElementById('stats-ultimo');
-    const mesSorte = document.getElementById('mes-sorte');
-    const containerJogos = document.getElementById('container-jogos');
-    const progress = document.getElementById('progress');
-    const btnGerar = document.getElementById('btn-gerar');
-    const btnSalvarTodos = document.getElementById('btn-salvar-todos');
+// ELEMENTOS DA TELA
+const analiseTexto = document.getElementById('analise-texto');
+const comparativo = document.getElementById('comparativo');
+const tituloAnterior = document.getElementById('titulo-anterior');
+const tituloUltimo = document.getElementById('titulo-ultimo');
+const gridAnterior = document.getElementById('grid-anterior');
+const gridUltimo = document.getElementById('grid-ultimo');
+const statsUltimo = document.getElementById('stats-ultimo');
+const mesSorte = document.getElementById('mes-sorte');
 
-    const qtdDezenasInput = document.getElementById('qtd-dezenas');
-    const qtdRepetidasInput = document.getElementById('qtd-repetidas');
-    const qtdJogosInput = document.getElementById('qtd-jogos');
-    const filterPares = document.getElementById('filter-pares');
-    const filterImpares = document.getElementById('filter-impares');
-    const filterPrimos = document.getElementById('filter-primos');
+const inputDezenas = document.getElementById('qtd-dezenas');
+const inputRepetidas = document.getElementById('qtd-repetidas');
+const inputJogos = document.getElementById('qtd-jogos');
+const filterPares = document.getElementById('filter-pares');
+const filterImpares = document.getElementById('filter-impares');
+const filterPrimos = document.getElementById('filter-primos');
 
-    document.getElementById('dec-men').addEventListener('click', () => { let v = parseInt(qtdDezenasInput.value) || 7; if (v > 7) qtdDezenasInput.value = v - 1; });
-    document.getElementById('dec-mais').addEventListener('click', () => { let v = parseInt(qtdDezenasInput.value) || 7; if (v < 15) qtdDezenasInput.value = v + 1; });
-    document.getElementById('rep-men').addEventListener('click', () => { let v = parseInt(qtdRepetidasInput.value) || 4; if (v > 0) qtdRepetidasInput.value = v - 1; });
-    document.getElementById('rep-mais').addEventListener('click', () => { let v = parseInt(qtdRepetidasInput.value) || 4; if (v < 7) qtdRepetidasInput.value = v + 1; });
-    document.getElementById('jog-men').addEventListener('click', () => { let v = parseInt(qtdJogosInput.value) || 10; if (v > 1) qtdJogosInput.value = v - 1; });
-    document.getElementById('jog-mais').addEventListener('click', () => { let v = parseInt(qtdJogosInput.value) || 10; if (v < 50) qtdJogosInput.value = v + 1; });
+const btnGerar = document.getElementById('btn-gerar');
+const progress = document.getElementById('progress');
+const containerJogos = document.getElementById('container-jogos');
+const btnSalvarTodos = document.getElementById('btn-salvar-todos');
 
-    function isPrime(n) {
-        if (n < 2) return false;
-        for (let i = 2; i <= Math.sqrt(n); i++) if (n % i === 0) return false;
-        return true;
-    }
+let ultimoConcursoGlobal = null;
+let anteriorConcursoGlobal = null;
+let jogosGeradosAtuais = [];
 
-    function shuffleArray(arr) {
-        let array = [...arr];
-        for (let i = array.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [array[i], array[j]] = [array[j], array[i]];
-        }
-        return array;
-    }
+function isPrime(n) {
+    if (n < 2) return false;
+    for (let i = 2; i <= Math.sqrt(n); i++) if (n % i === 0) return false;
+    return true;
+}
 
-    let historico = [];
-    let ultimoConcurso = null;
-    let anteriorConcurso = null;
-    let analise = null;
+// Extrai as dezenas convertendo "01", "10" para os números 1, 10
+function extrairDezenas(item) {
+    if (!item || !item.dezenas) return [];
+    return item.dezenas.map(Number).filter(n => !isNaN(n));
+}
 
-    function carregarHistoricoLocal() {
-        let fonteDados = window.HISTORICO_DIADESORTE || window.HISTORICO_DIADESORTEData;
+// 1. CARREGAMENTO DOS DADOS (Com suporte ao LocalStorage atualizado)
+function carregarDadosDiaDeSorte() {
+    let historico = null;
 
-        if (!fonteDados) {
-            const raw = localStorage.getItem('historico_diadesorte');
-            if (raw) {
-                try { fonteDados = JSON.parse(raw); } catch (e) {}
-            }
-        }
-
-        if (fonteDados && Array.isArray(fonteDados) && fonteDados.length > 0) {
-            historico = fonteDados.map(item => ({
-                numero: Number(item.concurso || item.numero || 0),
-                data: item.dataApuracao || item.data || '',
-                dezenas: (item.dezenas || item.listaDezenas || item.dezenasSorteadas || []).map(n => parseInt(n, 10)),
-                mes: item.nomeTimeCoracaoMesSorte || item.mes || ''
-            })).filter(item => item.dezenas.length > 0)
-              // Ordena do menor para o maior pelo número do concurso
-              .sort((a,b) => a.numero - b.numero);
-        }
-
-        if (historico.length >= 2) {
-            ultimoConcurso = historico[historico.length - 1];
-            anteriorConcurso = historico[historico.length - 2];
-        } else if (historico.length === 1) {
-            ultimoConcurso = historico[0];
+    // 1º Tenta ler os dados salvos/atualizados via download_results.html no LocalStorage
+    const dadosSalvos = localStorage.getItem('diadesorte_dados');
+    if (dadosSalvos) {
+        try {
+            historico = JSON.parse(dadosSalvos);
+        } catch (e) {
+            console.error("Erro ao converter dados do localStorage:", e);
         }
     }
 
-    function calcularAnalise() {
-        if (historico.length < 2) return null;
-        const ult = historico[historico.length - 1];
-        const ant = historico[historico.length - 2];
-        const repetidas = ult.dezenas.filter(d => ant.dezenas.includes(d));
-
-        const freq = {};
-        const ultimos10 = historico.slice(-10);
-        ultimos10.forEach(conc => {
-            conc.dezenas.forEach(d => { freq[d] = (freq[d] || 0) + 1; });
-        });
-        const quentes = Object.entries(freq).sort((a,b) => b[1] - a[1]).slice(0,5).map(e => parseInt(e[0]));
-
-        const ultimos5 = historico.slice(-5);
-        const apareceram = new Set(ultimos5.flatMap(c => c.dezenas));
-        const atrasados = Array.from({length: 31}, (_,i) => i+1).filter(n => !apareceram.has(n)).slice(0,5);
-
-        return { quentes, atrasados, ultimoConcurso: ult, anteriorConcurso: ant, repetidas };
+    // 2º Se não encontrou no LocalStorage, lê do arquivo JS local (historico_diadesorte.js)
+    if (!historico || !Array.isArray(historico) || historico.length === 0) {
+        historico = window.HISTORICO_DIADESORTE;
     }
 
-    function renderizarPainel31(dezenasSorteadas, repetidasSet = new Set()) {
-        const sorteadasSet = new Set(dezenasSorteadas);
-        let html = '';
-        for (let i = 1; i <= 31; i++) {
-            let classe = '';
-            if (repetidasSet.has(i)) {
-                classe = 'repetida';
-            } else if (sorteadasSet.has(i)) {
-                classe = 'sorteada';
-            }
-            html += `<div class="ball-panel ${classe}">${String(i).padStart(2, '0')}</div>`;
+    // Validação final da lista de resultados
+    if (!historico || !Array.isArray(historico) || historico.length < 2) {
+        if (analiseTexto) {
+            analiseTexto.innerHTML = '<span style="color: #ff6b6b;">Erro ao carregar o histórico. Verifique se realizou o download dos dados.</span>';
         }
-        return html;
+        return;
     }
 
-    function exibirAnalise() {
-        if (!analise) {
-            analiseTexto.textContent = 'Dados insuficientes para análise.';
-            return;
-        }
-        const { quentes, atrasados, ultimoConcurso, anteriorConcurso, repetidas } = analise;
+    // Ordena do concurso maior para o menor
+    const historicoOrdenado = [...historico].sort((a, b) => Number(b.concurso) - Number(a.concurso));
 
+    ultimoConcursoGlobal = historicoOrdenado[0];
+    anteriorConcursoGlobal = historicoOrdenado[1];
+
+    processarExibicaoDiaDeSorte(ultimoConcursoGlobal, anteriorConcursoGlobal);
+}
+
+function processarExibicaoDiaDeSorte(ultimo, anterior) {
+    const dezenasUltimo = extrairDezenas(ultimo);
+    const dezenasAnterior = extrairDezenas(anterior);
+
+    const numUltimo = ultimo.concurso;
+    const numAnterior = anterior.concurso;
+    const dataUltimo = ultimo.dataApuracao || '';
+
+    // Atualiza cabeçalho do painel de análise
+    if (analiseTexto) {
         analiseTexto.innerHTML = `
-            <strong>Último Concurso:</strong> ${ultimoConcurso.numero} - ${ultimoConcurso.data}<br>
-            <strong>Dezenas Sorteadas:</strong> ${ultimoConcurso.dezenas.sort((a,b)=>a-b).map(n => String(n).padStart(2,'0')).join(' ')}<br>
-            <strong>Repetições do Concurso Anterior:</strong> ${repetidas.length} dezenas<br>
-            🔥 <strong>Quentes (Últimos 10):</strong> ${quentes.sort((a,b)=>a-b).map(n => String(n).padStart(2,'0')).join(' ')}<br>
-            ⏰ <strong>Atrasados:</strong> ${atrasados.sort((a,b)=>a-b).map(n => String(n).padStart(2,'0')).join(' ')}
+            <strong>Último Concurso: ${numUltimo} ${dataUltimo ? '(' + dataUltimo + ')' : ''}</strong><br>
+            Dezenas: ${dezenasUltimo.map(n => String(n).padStart(2, '0')).sort((a,b)=>a-b).join(' ')}
+        `;
+    }
+
+    if (comparativo) comparativo.style.display = 'block';
+    if (tituloAnterior) tituloAnterior.textContent = `Anterior (${numAnterior})`;
+    if (tituloUltimo) tituloUltimo.textContent = `Último (${numUltimo})`;
+
+    const setAnterior = new Set(dezenasAnterior);
+    const setUltimo = new Set(dezenasUltimo);
+
+    // Identifica quais dezenas saíram em AMBOS os concursos
+    const setRepetidasReais = new Set(
+        [...setUltimo].filter(dezena => setAnterior.has(dezena))
+    );
+
+    // MONTA O GRID DO CONCURSO ANTERIOR (1 a 31)
+    if (gridAnterior) {
+        let htmlAnt = '';
+        for (let i = 1; i <= 31; i++) {
+            const sorteada = setAnterior.has(i);
+            const classe = sorteada ? 'ball-panel sorteada' : 'ball-panel';
+            htmlAnt += `<div class="${classe}">${String(i).padStart(2, '0')}</div>`;
+        }
+        gridAnterior.innerHTML = htmlAnt;
+    }
+
+    // MONTA O GRID DO ÚLTIMO CONCURSO (1 a 31)
+    if (gridUltimo) {
+        let htmlUlt = '';
+        for (let i = 1; i <= 31; i++) {
+            const saiuNoUltimo = setUltimo.has(i);
+            const ehRepetida = setRepetidasReais.has(i);
+
+            let classe = 'ball-panel';
+            if (ehRepetida) {
+                classe += ' repetida';
+            } else if (saiuNoUltimo) {
+                classe += ' sorteada';
+            }
+
+            htmlUlt += `<div class="${classe}">${String(i).padStart(2, '0')}</div>`;
+        }
+        gridUltimo.innerHTML = htmlUlt;
+    }
+
+    // ESTATÍSTICAS DO ÚLTIMO CONCURSO
+    if (statsUltimo) {
+        const pares = dezenasUltimo.filter(n => n % 2 === 0).length;
+        const impares = dezenasUltimo.length - pares;
+        const primos = dezenasUltimo.filter(isPrime).length;
+        const soma = dezenasUltimo.reduce((a, b) => a + b, 0);
+
+        statsUltimo.textContent = `• Repetidas Reais: ${setRepetidasReais.size} • Pares: ${pares} • Ímpares: ${impares} • Primos: ${primos} • Soma: ${soma}`;
+    }
+
+    // MÊS DA SORTE (OCULTO SE NÃO EXISTIR NO BANCO)
+    if (mesSorte) {
+        const mes = ultimo.nomeTimeCoracaoMesSorte || ultimo.mesSorte || ultimo.mes || '';
+        if (mes) {
+            mesSorte.style.display = 'block';
+            mesSorte.textContent = `🌙 Mês da Sorte: ${mes}`;
+        } else {
+            mesSorte.style.display = 'none';
+        }
+    }
+}
+
+// 2. GERAÇÃO DE JOGOS
+function gerarJogosDiaDeSorte() {
+    if (!ultimoConcursoGlobal) {
+        alert("Aguarde o carregamento do histórico.");
+        return;
+    }
+
+    const totalDezenas = parseInt(inputDezenas?.value) || 7;
+    const qtdRepetidas = parseInt(inputRepetidas.value) || 4;
+    const qtdJogos = parseInt(inputJogos.value) || 10;
+
+    const strictPares = filterPares && filterPares.value !== '' ? parseInt(filterPares.value) : null;
+    const strictImpares = filterImpares && filterImpares.value !== '' ? parseInt(filterImpares.value) : null;
+    const strictPrimos = filterPrimos && filterPrimos.value !== '' ? parseInt(filterPrimos.value) : null;
+
+    const dezenasUltimo = extrairDezenas(ultimoConcursoGlobal);
+    const todasDezenas = Array.from({ length: 31 }, (_, i) => i + 1);
+    const dezenasFora = todasDezenas.filter(d => !dezenasUltimo.includes(d));
+
+    if (qtdRepetidas > dezenasUltimo.length) {
+        alert(`O número de repetidas não pode ser maior que ${dezenasUltimo.length}.`);
+        return;
+    }
+
+    if (progress) progress.style.display = 'block';
+    containerJogos.innerHTML = '';
+    jogosGeradosAtuais = [];
+
+    setTimeout(() => {
+        for (let i = 0; i < qtdJogos; i++) {
+            let jogoOk = false;
+            let tentativas = 0;
+            let jogoFinal = [];
+
+            while (!jogoOk && tentativas < 1000) {
+                tentativas++;
+
+                const repetidasSorteadas = [...dezenasUltimo]
+                    .sort(() => Math.random() - 0.5)
+                    .slice(0, qtdRepetidas);
+
+                const faltam = totalDezenas - qtdRepetidas;
+
+                const outrasSorteadas = [...dezenasFora]
+                    .sort(() => Math.random() - 0.5)
+                    .slice(0, faltam);
+
+                const candidato = [...repetidasSorteadas, ...outrasSorteadas].sort((a, b) => a - b);
+
+                const pares = candidato.filter(n => n % 2 === 0).length;
+                const impares = candidato.length - pares;
+                const primos = candidato.filter(isPrime).length;
+
+                if (strictPares !== null && pares !== strictPares) continue;
+                if (strictImpares !== null && impares !== strictImpares) continue;
+                if (strictPrimos !== null && primos !== strictPrimos) continue;
+
+                jogoFinal = candidato;
+                jogoOk = true;
+            }
+
+            if (!jogoOk) {
+                const repetidasSorteadas = [...dezenasUltimo].sort(() => Math.random() - 0.5).slice(0, qtdRepetidas);
+                const faltam = totalDezenas - qtdRepetidas;
+                const outrasSorteadas = [...dezenasFora].sort(() => Math.random() - 0.5).slice(0, faltam);
+                jogoFinal = [...repetidasSorteadas, ...outrasSorteadas].sort((a, b) => a - b);
+            }
+
+            jogosGeradosAtuais.push(jogoFinal);
+        }
+
+        renderizarJogos();
+        if (progress) progress.style.display = 'none';
+        if (btnSalvarTodos) btnSalvarTodos.style.display = 'block';
+    }, 100);
+}
+
+function renderizarJogos() {
+    containerJogos.innerHTML = '';
+
+    const dezenasUltimo = extrairDezenas(ultimoConcursoGlobal);
+
+    jogosGeradosAtuais.forEach((jogo, index) => {
+        const pares = jogo.filter(n => n % 2 === 0).length;
+        const impares = jogo.length - pares;
+        const primos = jogo.filter(isPrime).length;
+        const repetidasCount = jogo.filter(d => dezenasUltimo.includes(d)).length;
+        const soma = jogo.reduce((a, b) => a + b, 0);
+
+        const card = document.createElement('div');
+        card.className = 'game-card';
+
+        let htmlDezenas = '';
+        jogo.forEach(dez => {
+            htmlDezenas += `<span>${String(dez).padStart(2, '0')}</span>`;
+        });
+
+        card.innerHTML = `
+            <div class="header">
+                <span class="title">Jogo ${index + 1} (${jogo.length} Dezenas)</span>
+            </div>
+            <div class="dezenas">
+                ${htmlDezenas}
+            </div>
+            <div class="info">
+                • Repetidas: ${repetidasCount} • Pares: ${pares} • Ímpares: ${impares} • Primos: ${primos} • Soma: ${soma}
+            </div>
         `;
 
-        if (anteriorConcurso) {
-            tituloAnterior.textContent = `Anterior (${anteriorConcurso.numero} - ${anteriorConcurso.data})`;
-            gridAnterior.innerHTML = renderizarPainel31(anteriorConcurso.dezenas);
-        }
+        containerJogos.appendChild(card);
+    });
+}
 
-        if (ultimoConcurso) {
-            tituloUltimo.textContent = `Último (${ultimoConcurso.numero} - ${ultimoConcurso.data})`;
-            const repetidasSet = new Set(repetidas);
-            gridUltimo.innerHTML = renderizarPainel31(ultimoConcurso.dezenas, repetidasSet);
-
-            const pares = ultimoConcurso.dezenas.filter(d => d % 2 === 0).length;
-            const impares = ultimoConcurso.dezenas.length - pares;
-            const primos = ultimoConcurso.dezenas.filter(isPrime).length;
-            const soma = ultimoConcurso.dezenas.reduce((a,b) => a+b, 0);
-
-            statsUltimo.textContent = `• Repetidas: ${repetidas.length} • Pares: ${pares} • Ímpares: ${impares} • Primos: ${primos} • Soma: ${soma}`;
-            if (ultimoConcurso.mes) {
-                mesSorte.textContent = `🌙 Mês da Sorte: ${ultimoConcurso.mes}`;
-            }
-        }
+// 3. SALVAR JOGOS DO DIA DE SORTE
+function salvarTodosOsJogosDiaDeSorte() {
+    if (!jogosGeradosAtuais || jogosGeradosAtuais.length === 0) {
+        alert("Nenhum jogo gerado para salvar.");
+        return;
     }
 
-    function gerarJogos() {
-        if (!analise) return;
+    const salvosAnteriores = JSON.parse(localStorage.getItem('saved_games_list') || '[]');
+    const dataHoje = new Date().toLocaleDateString('pt-BR');
 
-        const totalDezenas = parseInt(qtdDezenasInput.value) || 7;
-        const qtdRepetidas = parseInt(qtdRepetidasInput.value) || 4;
-        const qtdJogos = parseInt(qtdJogosInput.value) || 10;
-        const strictPares = filterPares.value !== '' ? parseInt(filterPares.value) : null;
-        const strictImpares = filterImpares.value !== '' ? parseInt(filterImpares.value) : null;
-        const strictPrimos = filterPrimos.value !== '' ? parseInt(filterPrimos.value) : null;
+    const novosJogosFormatados = jogosGeradosAtuais.map(jogo => ({
+        id: Date.now() + Math.random(),
+        loteria: 'Dia de Sorte',
+        data: dataHoje,
+        numeros: jogo
+    }));
 
-        const dezenasUltimo = ultimoConcurso.dezenas;
-        const range = Array.from({length: 31}, (_,i) => i+1);
+    const listaAtualizada = [...salvosAnteriores, ...novosJogosFormatados];
 
-        progress.style.display = 'block';
-        btnGerar.disabled = true;
-        containerJogos.innerHTML = '';
-        btnSalvarTodos.style.display = 'none';
+    localStorage.setItem('saved_games_list', JSON.stringify(listaAtualizada));
+    alert(`Sucesso! ${novosJogosFormatados.length} jogo(s) do Dia de Sorte foram salvos.`);
+}
 
-        setTimeout(() => {
-            const jogos = [];
-            for (let j = 0; j < qtdJogos; j++) {
-                let tentativas = 0;
-                let jogoOk = false;
-                let dezenasEscolhidas = [];
+// INITIALIZATION
+document.addEventListener('DOMContentLoaded', () => {
+    carregarDadosDiaDeSorte();
 
-                while (!jogoOk && tentativas < 1500) {
-                    tentativas++;
-                    let selecionadas = new Set();
-
-                    const repetidasEmbaralhadas = shuffleArray([...dezenasUltimo]);
-                    for (let i = 0; i < Math.min(qtdRepetidas, repetidasEmbaralhadas.length); i++) {
-                        selecionadas.add(repetidasEmbaralhadas[i]);
-                    }
-
-                    const novasDisponiveis = shuffleArray(range.filter(n => !dezenasUltimo.includes(n)));
-                    let faltam = totalDezenas - selecionadas.size;
-                    for (let i = 0; i < Math.min(faltam, novasDisponiveis.length); i++) {
-                        selecionadas.add(novasDisponiveis[i]);
-                    }
-
-                    const arr = Array.from(selecionadas).sort((a,b) => a-b);
-                    if (arr.length !== totalDezenas) continue;
-
-                    const pares = arr.filter(n => n % 2 === 0).length;
-                    const impares = arr.filter(n => n % 2 !== 0).length;
-                    const primos = arr.filter(isPrime).length;
-
-                    if (strictPares !== null && pares !== strictPares) continue;
-                    if (strictImpares !== null && impares !== strictImpares) continue;
-                    if (strictPrimos !== null && primos !== strictPrimos) continue;
-
-                    dezenasEscolhidas = arr;
-                    jogoOk = true;
-                }
-
-                if (!jogoOk) {
-                    dezenasEscolhidas = shuffleArray(range).slice(0, totalDezenas).sort((a,b) => a-b);
-                }
-
-                const repetidasCount = dezenasEscolhidas.filter(d => dezenasUltimo.includes(d)).length;
-                const pares = dezenasEscolhidas.filter(n => n % 2 === 0).length;
-                const impares = dezenasEscolhidas.filter(n => n % 2 !== 0).length;
-                const primos = dezenasEscolhidas.filter(isPrime).length;
-                const soma = dezenasEscolhidas.reduce((a,b) => a+b, 0);
-
-                jogos.push({ dezenas: dezenasEscolhidas, repetidas: repetidasCount, pares, impares, primos, soma });
-            }
-
-            exibirJogos(jogos);
-            progress.style.display = 'none';
-            btnGerar.disabled = false;
-            btnSalvarTodos.style.display = 'block';
-            window._jogosGerados = jogos;
-        }, 50);
-    }
-
-    function exibirJogos(jogos) {
-        containerJogos.innerHTML = jogos.map((jogo, idx) => `
-            <div class="game-card">
-                <div class="header">
-                    <span class="title">JOGO ${String(idx+1).padStart(2,'0')}</span>
-                    <div class="actions">
-                        <button class="ver" onclick="verVolante(${idx})">VER</button>
-                        <button onclick="salvarJogo(${idx})">💾 Salvar</button>
-                    </div>
-                </div>
-                <div class="dezenas">
-                    ${jogo.dezenas.map(d => `<span>${String(d).padStart(2,'0')}</span>`).join('')}
-                </div>
-                <div class="info">Repetidas: ${jogo.repetidas} | Pares: ${jogo.pares} | Ímpares: ${jogo.impares} | Primos: ${jogo.primos} | Soma: ${jogo.soma}</div>
-            </div>
-        `).join('');
-    }
-
-    window.salvarJogo = function(idx) {
-        const jogos = window._jogosGerados;
-        if (!jogos || !jogos[idx]) return;
-
-        const saved = JSON.parse(localStorage.getItem('saved_games_list') || '[]');
-        saved.push({
-            id: Date.now() + Math.random(),
-            loteria: 'DIA_DE_SORTE',
-            data: new Date().toLocaleDateString('pt-BR'),
-            numeros: jogos[idx].dezenas,
-            estrategia: 'repeticao'
-        });
-
-        localStorage.setItem('saved_games_list', JSON.stringify(saved));
-        alert('Jogo salvo com sucesso!');
-    };
-
-    window.verVolante = function(idx) {
-        const jogos = window._jogosGerados;
-        if (!jogos || !jogos[idx]) return;
-        alert(`Jogo ${idx + 1} - Dia de Sorte:\n${jogos[idx].dezenas.map(n => String(n).padStart(2,'0')).join(' - ')}`);
-    };
-
-    btnSalvarTodos.addEventListener('click', function() {
-        const jogos = window._jogosGerados;
-        if (!jogos || jogos.length === 0) return;
-
-        const saved = JSON.parse(localStorage.getItem('saved_games_list') || '[]');
-        jogos.forEach(j => {
-            saved.push({
-                id: Date.now() + Math.random(),
-                loteria: 'DIA_DE_SORTE',
-                data: new Date().toLocaleDateString('pt-BR'),
-                numeros: j.dezenas,
-                estrategia: 'repeticao'
-            });
-        });
-
-        localStorage.setItem('saved_games_list', JSON.stringify(saved));
-        alert(`${jogos.length} jogos salvos com sucesso!`);
+    document.getElementById('dec-men')?.addEventListener('click', () => {
+        let val = parseInt(inputDezenas.value) || 7;
+        if (val > 7) inputDezenas.value = val - 1;
     });
 
-    btnGerar.addEventListener('click', gerarJogos);
+    document.getElementById('dec-mais')?.addEventListener('click', () => {
+        let val = parseInt(inputDezenas.value) || 7;
+        if (val < 15) inputDezenas.value = val + 1;
+    });
 
-    carregarHistoricoLocal();
-    analise = calcularAnalise();
-    exibirAnalise();
+    document.getElementById('rep-men')?.addEventListener('click', () => {
+        let val = parseInt(inputRepetidas.value) || 0;
+        if (val > 0) inputRepetidas.value = val - 1;
+    });
+
+    document.getElementById('rep-mais')?.addEventListener('click', () => {
+        let val = parseInt(inputRepetidas.value) || 0;
+        if (val < 7) inputRepetidas.value = val + 1;
+    });
+
+    document.getElementById('jog-men')?.addEventListener('click', () => {
+        let val = parseInt(inputJogos.value) || 1;
+        if (val > 1) inputJogos.value = val - 1;
+    });
+
+    document.getElementById('jog-mais')?.addEventListener('click', () => {
+        let val = parseInt(inputJogos.value) || 1;
+        if (val < 50) inputJogos.value = val + 1;
+    });
+
+    if (btnGerar) btnGerar.addEventListener('click', gerarJogosDiaDeSorte);
+    if (btnSalvarTodos) btnSalvarTodos.addEventListener('click', salvarTodosOsJogosDiaDeSorte);
 });

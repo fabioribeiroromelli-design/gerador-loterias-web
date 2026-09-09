@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', async () => {
-    // ===== 1. INJETAR FONTAWESOME =====
+    // ===== 1. INJETAR FONTAWESOME E BIBLIOTECA GOOGLE AUTH =====
     if (!document.getElementById('fa-icons')) {
         const fa = document.createElement('link');
         fa.id = 'fa-icons';
@@ -7,6 +7,83 @@ document.addEventListener('DOMContentLoaded', async () => {
         fa.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css';
         document.head.appendChild(fa);
     }
+
+    if (!document.getElementById('google-gsi-script')) {
+        const gsi = document.createElement('script');
+        gsi.id = 'google-gsi-script';
+        gsi.src = 'https://accounts.google.com/gsi/client';
+        gsi.async = true;
+        gsi.defer = true;
+        gsi.onload = () => {
+            initGoogleAuth();
+        };
+        document.head.appendChild(gsi);
+    } else {
+        initGoogleAuth();
+    }
+
+    // ===== 1.1 CONFIGURAÇÃO E LOGIN DO GOOGLE =====
+    function initGoogleAuth() {
+        if (typeof google === 'undefined') return;
+
+        // Procura se já existe um container no HTML
+        let authContainer = document.getElementById('google_auth_container');
+        
+        if (!authContainer) {
+            authContainer = document.createElement('div');
+            authContainer.id = 'google_auth_container';
+            authContainer.style.display = 'flex';
+            authContainer.style.justifyContent = 'center';
+            authContainer.style.margin = '10px 0';
+
+            const toolbar = document.querySelector('.toolbar');
+            if (toolbar && toolbar.parentNode) {
+                toolbar.parentNode.insertBefore(authContainer, toolbar);
+            } else {
+                document.body.prepend(authContainer);
+            }
+        }
+
+        // Garante que não vai renderizar mais de uma vez
+        authContainer.innerHTML = '';
+
+        // Inicializa o OAuth do Google com o seu Client ID
+        google.accounts.id.initialize({
+            client_id: "383374785711-e00t37fkf9q6aqe5imqi0nnh29v2npq4.apps.googleusercontent.com",
+            callback: handleCredentialResponse
+        });
+
+        // Renderiza apenas um botão oficial
+        google.accounts.id.renderButton(
+            authContainer,
+            { theme: "outline", size: "medium", text: "signin_with" }
+        );
+    }
+
+    // Função global para processar o token retornado pelo Google
+    window.handleCredentialResponse = function(response) {
+        const responsePayload = parseJwt(response.credential);
+
+        console.log("ID do Usuário:", responsePayload.sub);
+        console.log("Nome:", responsePayload.name);
+        console.log("E-mail:", responsePayload.email);
+
+        localStorage.setItem("user_email", responsePayload.email);
+        localStorage.setItem("user_name", responsePayload.name);
+
+        alert(`Olá, ${responsePayload.name}!\nLogin realizado com sucesso.\nE-mail: ${responsePayload.email}`);
+    };
+
+    // Função utilitária para decodificar JWT
+    function parseJwt(token) {
+        var base64Url = token.split('.')[1];
+        var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        var jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+
+        return JSON.parse(jsonPayload);
+    };
 
     // ===== 2. BARRA DE ATALHOS =====
     function createShortcuts() {
@@ -323,7 +400,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         `;
     }
 
-    // ===== NOVO: Sorteio Globo =====
     function renderSorteioGloboCard() {
         return `
             <div class="lottery-card card-sorteio-globo" onclick="window.location.href='sorteio-globo.html'">
@@ -383,7 +459,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // ===== MONTA O GRID: CARDS ESPECIAIS + LOTERIAS =====
     let html = '';
     
-    // 1. Cards Especiais (em grid, 6 cards)
+    // 1. Cards Especiais
     html += renderPremiumCard();
     html += renderAvancadoCard();
     html += renderLotofacilRepeticaoCard();

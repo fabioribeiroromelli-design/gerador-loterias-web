@@ -13,16 +13,16 @@
 <body>
     <header class="toolbar" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 20px;">
         <h1 id="home_title" style="margin: 0; font-size: 1.2rem;">
-            <i class="fa-solid fa-dice"></i> Loterias Disponíveis / Available Lotteries
+            <i class="fa-solid fa-dice"></i> Loterias Disponíveis
         </h1>
 
-        <!-- ÁREA DE LOGIN DO USUÁRIO -->
+        <!-- ÁREA DE LOGIN DO USUÁRIO (Apenas um botão centralizado aqui) -->
         <div id="user_auth_area">
             <div id="g_id_onload"
-                 data-client_id="SEU_CLIENT_ID_DO_GOOGLE.apps.googleusercontent.com"
+                 data-client_id="383374785711-e00t37fkf9q6aqe5imqi0nnh29v2npq4.apps.googleusercontent.com"
                  data-callback="handleCredentialResponse">
             </div>
-            <div class="g_id_signin" data-type="standard" data-size="medium"></div>
+            <div class="g_id_signin" data-type="standard" data-size="medium" data-locale="pt-BR"></div>
         </div>
     </header>
 
@@ -67,7 +67,7 @@
             <i class="fa-solid fa-download"></i> Downloads / Resultados
         </button>
         <button onclick="window.location.href='statistics.html'">
-            <i class="fa-solid fa-chart-pie"></i> Estatísticas / Statistics
+            <i class="fa-solid fa-chart-pie"></i> Estatísticas
         </button>
         <button onclick="window.location.href='generator.html'">
             <i class="fa-solid fa-filter"></i> Filtrar Números

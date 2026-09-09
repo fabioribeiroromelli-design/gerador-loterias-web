@@ -150,6 +150,17 @@
         let loteriaAtual = 'megasena';
         let dadosAtuais = [];
 
+        // Salva uma cópia dos dados no LocalStorage do Navegador
+        function salvarNoLocalStorage(loteria, dados) {
+            try {
+                const chave = `${loteria}_dados`;
+                localStorage.setItem(chave, JSON.stringify(dados));
+                console.log(`Dados de ${loteria} salvos no LocalStorage!`);
+            } catch (e) {
+                console.error("Erro ao salvar no LocalStorage:", e);
+            }
+        }
+
         onAuthStateChanged(auth, (user) => {
             const btnUpload = document.getElementById('btn_upload');
             const btnFetchApi = document.getElementById('btn_fetch_api');
@@ -205,12 +216,10 @@
             btn.disabled = true;
 
             try {
-                // 1. Apaga do Firebase
                 btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Deletando banco...`;
                 const docRef = doc(db, 'loterias', loteriaAtual);
                 await deleteDoc(docRef);
 
-                // 2. Consulta o último concurso para saber o limite máximo
                 btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Verificando último concurso...`;
                 const resUltimo = await fetch(`https://servicebus2.caixa.gov.br/portaldeloterias/api/${loteriaAtual}`);
                 if (!resUltimo.ok) throw new Error("Não foi possível conectar à API da Caixa para obter o concurso recente.");
@@ -222,7 +231,6 @@
                     throw new Error("Resposta inválida da API da Caixa.");
                 }
 
-                // 3. Loop para baixar concurso por concurso do 1 até o totalConcursos
                 const novosDados = [];
                 for (let i = 1; i <= totalConcursos; i++) {
                     btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Baixando #${i} de ${totalConcursos}...`;
@@ -247,14 +255,14 @@
                     }
                 }
 
-                // 4. Grava no Firebase e atualiza a tela
-                btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Salvando no Firebase...`;
+                btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Salvando no Firebase e Local...`;
                 await setDoc(docRef, { historico: novosDados });
 
                 dadosAtuais = novosDados;
+                salvarNoLocalStorage(loteriaAtual, dadosAtuais); // Atualiza LocalStorage
                 exibirDadosNaTabela(loteriaAtual, dadosAtuais);
 
-                alert(`🎉 Sucesso total!\n\n${novosDados.length} concursos de ${loteriaAtual.toUpperCase()} foram baixados da API da Caixa e salvos no Firebase!`);
+                alert(`🎉 Sucesso total!\n\n${novosDados.length} concursos de ${loteriaAtual.toUpperCase()} foram baixados da API da Caixa, salvos no Firebase e atualizados localmente!`);
 
             } catch (err) {
                 alert(`Erro durante o processo: ${err.message}\n\nNota: Se ocorrer erro de CORS, certifique-se de que a API da Caixa não está bloqueando requisições do navegador.`);
@@ -296,6 +304,7 @@
                 await setDoc(docRef, { historico: dadosFormatados });
 
                 dadosAtuais = dadosFormatados;
+                salvarNoLocalStorage(loteriaAtual, dadosAtuais); // Atualiza LocalStorage
                 exibirDadosNaTabela(loteriaAtual, dadosAtuais);
 
                 alert(`🎉 Sucesso!\n\nHistórico de ${loteriaAtual.toUpperCase()} regravado do zero com ${dadosFormatados.length} concursos do seu PC!`);
@@ -344,8 +353,9 @@
                 const docRef = doc(db, 'loterias', loteriaAtual);
                 await setDoc(docRef, { historico: dadosAtuais }, { merge: true });
 
+                salvarNoLocalStorage(loteriaAtual, dadosAtuais); // Atualiza LocalStorage
                 exibirDadosNaTabela(loteriaAtual, dadosAtuais);
-                alert(`Sucesso! Concurso #${novoConcurso.concurso} carregado diretamente da Caixa.`);
+                alert(`Sucesso! Concurso #${novoConcurso.concurso} carregado diretamente da Caixa e atualizado na memória local.`);
 
             } catch (err) {
                 alert(`Erro na API Oficial da Caixa:\n${err.message}`);
@@ -399,7 +409,7 @@
             destacarBotaoAtivo(loteria);
 
             const syncEl = document.getElementById('sync_status');
-            syncEl.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Lendo do Firebase...`;
+            syncEl.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Lendo dados...`;
 
             try {
                 const docRef = doc(db, 'loterias', loteria);
@@ -407,13 +417,19 @@
 
                 if (docSnap.exists()) {
                     dadosAtuais = docSnap.data().historico || [];
-                    exibirDadosNaTabela(loteria, dadosAtuais);
-                    syncEl.innerHTML = `<i class="fa-solid fa-circle-check"></i> Dados do Firebase carregados (${dadosAtuais.length} concursos)`;
                 } else {
                     dadosAtuais = [];
-                    exibirDadosNaTabela(loteria, []);
+                }
+
+                salvarNoLocalStorage(loteria, dadosAtuais); // Garante que a memória fique sincronizada ao trocar de aba
+                exibirDadosNaTabela(loteria, dadosAtuais);
+                
+                if (dadosAtuais.length > 0) {
+                    syncEl.innerHTML = `<i class="fa-solid fa-circle-check"></i> Dados carregados (${dadosAtuais.length} concursos)`;
+                } else {
                     syncEl.innerHTML = `<i class="fa-solid fa-circle-info"></i> Sem dados no banco. Faça login para enviar.`;
                 }
+
             } catch (err) {
                 console.error("Erro ao ler Firebase:", err);
                 syncEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Erro de conexão com Firebase`;
@@ -439,9 +455,10 @@
                 await setDoc(docRef, { historico: listaLocal }, { merge: true });
 
                 dadosAtuais = listaLocal;
+                salvarNoLocalStorage(loteriaAtual, dadosAtuais); // Atualiza LocalStorage
                 exibirDadosNaTabela(loteriaAtual, dadosAtuais);
 
-                alert(`Sucesso! ${listaLocal.length} concursos salvos no Firebase!`);
+                alert(`Sucesso! ${listaLocal.length} concursos salvos no Firebase e atualizados no navegador!`);
 
             } catch (err) {
                 alert(`Erro ao salvar no Firebase: ${err.message}`);
