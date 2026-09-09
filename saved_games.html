@@ -21,6 +21,7 @@
         
         .ball { display: inline-block; background: #27ae60; color: white; width: 28px; height: 28px; line-height: 28px; border-radius: 50%; text-align: center; font-weight: bold; font-size: 12px; margin-right: 4px; margin-bottom: 4px; }
         .ball.hit { background: #f1c40f; color: #2c3e50; border: 2px solid #d4ac0d; }
+        .ball.draw-ball { background: #34495e; border: 1px solid #2c3e50; }
 
         .acertos-info { margin-top: 6px; font-size: 13px; font-weight: bold; color: #2c3e50; }
 
@@ -29,6 +30,11 @@
 
         .btn-check-api { background: #2980b9; color: white; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.9rem; display: flex; align-items: center; gap: 6px; }
         .btn-check-api:hover { background: #2471a3; }
+
+        .btn-clear-all { background: #d32f2f; color: white; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.9rem; display: flex; align-items: center; gap: 6px; }
+        .btn-clear-all:hover { background: #b71c1c; }
+
+        .resultado-box { background: #eef2f7; padding: 12px 15px; border-radius: 6px; border-left: 4px solid #800080; margin-bottom: 15px; font-size: 0.95rem; }
     </style>
 </head>
 <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f6f9;">
@@ -60,8 +66,14 @@
         <div id="history_display" class="history-table-container">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
                 <h3 id="table_title" style="margin: 0; color: #333;">Meus Jogos Salvos</h3>
-                <button class="btn-check-api" onclick="conferirComUltimoConcurso(true)"><i class="fa-solid fa-rotate"></i> Atualizar Concurso</button>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button class="btn-check-api" onclick="conferirComUltimoConcurso(true)"><i class="fa-solid fa-rotate"></i> Atualizar Concurso</button>
+                    <button class="btn-clear-all" onclick="zerarTudoDefinitivo()"><i class="fa-solid fa-trash-can"></i> Limpar Tudo (Zerar Memória)</button>
+                </div>
             </div>
+
+            <!-- EXIBIÇÃO VISUAL DO ÚLTIMO CONCURSO -->
+            <div id="concurso_display" class="resultado-box">Carregando resultado do último concurso...</div>
             
             <table class="history-table">
                 <thead>
@@ -96,17 +108,16 @@
             return String(texto || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
         }
 
-        // Obtém o último concurso salvo no localStorage do seu app ou busca via API
         async function obterUltimoResultado(loteria, forcarAtualizacao = false) {
             const idNorm = normalizar(loteria);
 
-            // 1. Tenta buscar das chaves vistas na imagem do LocalStorage
             if (!forcarAtualizacao) {
                 const chaves = [
                     `resultado_conferido_${idNorm}`,
                     `ultimo_resultado_${idNorm}`,
                     `lottery_cache_${nomesLoterias[loteria]}`,
-                    `lottery_cache_${idNorm}`
+                    `lottery_cache_${idNorm}`,
+                    `lottery_cache_+Milionária`
                 ];
 
                 for (let chave of chaves) {
@@ -115,33 +126,41 @@
                         if (item) {
                             let obj = JSON.parse(item);
                             let dados = obj.data || obj;
-                            let dezenas = dados.dezenas || dados.dezenasSorteadas || dados.dezenasOrdemSorteio;
-                            if (dados && dezenas) {
-                                return {
-                                    concurso: dados.concurso || dados.numero || 'Atual',
-                                    dezenas: dezenas.map(d => String(d).padStart(2, '0'))
-                                };
+                            if (dados) {
+                                return formatarDadosConcurso(dados);
                             }
                         }
                     } catch(e) {}
                 }
             }
 
-            // 2. Busca na API se não houver cache local ou se solicitado
             try {
-                let apiName = idNorm === 'maismilionaria' ? 'milionaria' : idNorm;
+                let apiName = (idNorm === 'maismilionaria' || idNorm === 'milionaria') ? 'maismilionaria' : idNorm;
                 const res = await fetch(`https://loteriascaixa-api.herokuapp.com/api/${apiName}/latest`);
                 if (!res.ok) throw new Error();
                 const data = await res.json();
                 
-                let dezenasApi = (data.dezenas || data.dezenasOrdemSorteio || []).map(d => String(d).padStart(2, '0'));
-                let resultadoObj = { concurso: data.concurso || data.numero, dezenas: dezenasApi };
-
-                localStorage.setItem(`resultado_conferido_${idNorm}`, JSON.stringify(resultadoObj));
-                return resultadoObj;
+                let resObj = formatarDadosConcurso(data);
+                localStorage.setItem(`resultado_conferido_${idNorm}`, JSON.stringify(resObj));
+                return resObj;
             } catch (e) {
                 return null;
             }
+        }
+
+        function formatarDadosConcurso(data) {
+            let numConcurso = data.concurso || data.numero || 'Atual';
+            
+            // Tratamento Dupla Sena
+            if (data.s2 || data.dezenasSorteio2) {
+                let s1 = (data.dezenas || data.dezenasSorteio1 || []).map(d => String(d).padStart(2, '0'));
+                let s2 = (data.dezenasSorteio2 || data.s2 || []).map(d => String(d).padStart(2, '0'));
+                return { concurso: numConcurso, dezenas: s1, dezenasSorteio2: s2, ehDuplaSena: true };
+            }
+
+            // Tratamento Geral
+            let dezenas = (data.dezenas || data.dezenasOrdemSorteio || data.dezenasSorteadas || []).map(d => String(d).padStart(2, '0'));
+            return { concurso: numConcurso, dezenas: dezenas };
         }
 
         function extrairDezenas(jogo) {
@@ -154,8 +173,7 @@
             let jogosDaLoteria = [];
             const idNorm = normalizar(loteriaId);
 
-            // Tenta buscar no array 'saved_games_list' ou em chaves com o nome da loteria
-            let chaves = ['saved_games_list', 'jogos_salvos', loteriaId, idNorm, `jogos_${idNorm}`];
+            let chaves = ['saved_games_list', 'jogos_salvos', loteriaId, idNorm, `jogos_${idNorm}`, '+Milionária', 'maismilionaria'];
 
             chaves.forEach(chave => {
                 try {
@@ -179,7 +197,6 @@
                 } catch(e) {}
             });
 
-            // Evita jogos duplicados na exibição
             let vistos = new Set();
             return jogosDaLoteria.filter(j => {
                 let chaveUnica = extrairDezenas(j).join('-');
@@ -195,10 +212,36 @@
 
             const tbody = document.getElementById('table_body');
             const title = document.getElementById('table_title');
+            const concursoDisplay = document.getElementById('concurso_display');
             
             const nomeLoteria = nomesLoterias[loteria] || loteria;
             title.textContent = `Jogos Salvos: ${nomeLoteria.toUpperCase()}`;
             tbody.innerHTML = '';
+
+            const resultadoConcurso = await obterUltimoResultado(loteria, forcarBuscaAPI);
+
+            // Atualiza topo com os números do concurso para comparação visual
+            if (resultadoConcurso) {
+                if (resultadoConcurso.ehDuplaSena) {
+                    concursoDisplay.innerHTML = `
+                        <strong>Último Concurso (${resultadoConcurso.concurso}):</strong><br>
+                        1º Sorteio: ${resultadoConcurso.dezenas.map(d => `<span class="ball draw-ball">${d}</span>`).join('')}<br>
+                        2º Sorteio: ${resultadoConcurso.dezenasSorteio2.map(d => `<span class="ball draw-ball">${d}</span>`).join('')}
+                    `;
+                } else if (normalizar(loteria) === 'supersete') {
+                    concursoDisplay.innerHTML = `
+                        <strong>Último Concurso (${resultadoConcurso.concurso}):</strong><br>
+                        Colunas 1 a 7: ${resultadoConcurso.dezenas.map((d, i) => `<span class="ball draw-ball">C${i+1}:${d}</span>`).join('')}
+                    `;
+                } else {
+                    concursoDisplay.innerHTML = `
+                        <strong>Último Concurso (${resultadoConcurso.concurso}):</strong> 
+                        ${resultadoConcurso.dezenas.map(d => `<span class="ball draw-ball">${d}</span>`).join('')}
+                    `;
+                }
+            } else {
+                concursoDisplay.innerHTML = `<em>Não foi possível carregar o resultado do concurso. Clique em "Atualizar Concurso".</em>`;
+            }
 
             const jogosFiltrados = buscarJogosLocais(loteria);
 
@@ -207,31 +250,51 @@
                 return;
             }
 
-            const resultadoConcurso = await obterUltimoResultado(loteria, forcarBuscaAPI);
-            const dezenasSorteadasSet = new Set(
-                resultadoConcurso ? resultadoConcurso.dezenas.map(d => String(parseInt(d, 10))) : []
-            );
+            const isSuperSete = normalizar(loteria) === 'supersete';
+            const setS1 = new Set(resultadoConcurso ? resultadoConcurso.dezenas.map(d => String(parseInt(d, 10))) : []);
+            const setS2 = new Set(resultadoConcurso && resultadoConcurso.dezenasSorteio2 ? resultadoConcurso.dezenasSorteio2.map(d => String(parseInt(d, 10))) : []);
 
             jogosFiltrados.forEach((jogo, index) => {
                 const tr = document.createElement('tr');
                 let dezenasArray = extrairDezenas(jogo);
 
-                let totalAcertos = 0;
-                const dezenasHtml = dezenasArray.map(d => {
+                let acertosS1 = 0;
+                let acertosS2 = 0;
+
+                const dezenasHtml = dezenasArray.map((d, colIndex) => {
                     const numNormal = String(parseInt(d, 10));
                     const formatado = String(d).padStart(2, '0');
-                    
-                    let acertou = dezenasSorteadasSet.has(numNormal);
-                    if (acertou) totalAcertos++;
-                    
-                    return `<span class="ball ${acertou ? 'hit' : ''}">${formatado}</span>`;
-                }).join('');
+                    let acertou = false;
+
+                    if (isSuperSete) {
+                        // Super Sete: Confere pela mesma coluna (posição)
+                        if (resultadoConcurso && resultadoConcurso.dezenas[colIndex] !== undefined) {
+                            acertou = (numNormal === String(parseInt(resultadoConcurso.dezenas[colIndex], 10)));
+                        }
+                    } else if (resultadoConcurso && resultadoConcurso.ehDuplaSena) {
+                        // Dupla Sena: Verifica se acertou em qualquer um dos dois sorteios
+                        let inS1 = setS1.has(numNormal);
+                        let inS2 = setS2.has(numNormal);
+                        if (inS1) acertosS1++;
+                        if (inS2) acertosS2++;
+                        acertou = inS1 || inS2;
+                    } else {
+                        // Loterias Gerais
+                        acertou = setS1.has(numNormal);
+                        if (acertou) acertosS1++;
+                    }
+
+                    let prefixoCol = isSuperSete ? `<small style="font-size:10px;color:#666;">C${colIndex+1}:</small>` : '';
+                    return `${prefixoCol}<span class="ball ${acertou ? 'hit' : ''}">${formatado}</span>`;
+                }).join(' ');
 
                 let infoConcurso = '';
-                if (resultadoConcurso && dezenasSorteadasSet.size > 0) {
-                    infoConcurso = `<div class="acertos-info"><i class="fa-solid fa-trophy" style="color: #f39c12;"></i> Acertos: ${totalAcertos} (Concurso ${resultadoConcurso.concurso})</div>`;
-                } else {
-                    infoConcurso = `<div class="acertos-info" style="color: #7f8c8d; font-weight: normal;">Clique em "Atualizar Concurso" para conferir.</div>`;
+                if (resultadoConcurso) {
+                    if (resultadoConcurso.ehDuplaSena) {
+                        infoConcurso = `<div class="acertos-info"><i class="fa-solid fa-trophy" style="color: #f39c12;"></i> 1º Sorteio: ${acertosS1} acertos | 2º Sorteio: ${acertosS2} acertos</div>`;
+                    } else {
+                        infoConcurso = `<div class="acertos-info"><i class="fa-solid fa-trophy" style="color: #f39c12;"></i> Acertos: ${acertosS1}</div>`;
+                    }
                 }
 
                 const dataJogo = jogo.data || jogo.date || new Date().toLocaleDateString('pt-BR');
@@ -260,7 +323,7 @@
             if (!confirm("Deseja realmente excluir este jogo salvo?")) return;
             
             let idNorm = normalizar(loteriaAtual);
-            let chaves = ['saved_games_list', 'jogos_salvos', loteriaAtual, idNorm, `jogos_${idNorm}`];
+            let chaves = ['saved_games_list', 'jogos_salvos', loteriaAtual, idNorm, `jogos_${idNorm}`, '+Milionária', 'maismilionaria'];
 
             chaves.forEach(chave => {
                 try {
@@ -280,6 +343,16 @@
             });
             
             carregarJogosSalvos(loteriaAtual, false);
+        }
+
+        function zerarTudoDefinitivo() {
+            if (confirm("ATENÇÃO: Deseja APAGAR TODOS os jogos salvos de TODAS as loterias?\nEsta ação limpará totalmente a memória local do seu computador e não poderá ser desfeita.")) {
+                if (confirm("Tem certeza absoluta? Todos os dados gravados serão removidos do PC.")) {
+                    localStorage.clear();
+                    alert("A memória local foi zerada com sucesso!");
+                    carregarJogosSalvos(loteriaAtual, false);
+                }
+            }
         }
 
         function destacarBotaoAtivo(loteria) {
