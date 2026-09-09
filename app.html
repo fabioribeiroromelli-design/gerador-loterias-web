@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Jogos - Volante</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- SCRIPT OFICIAL DO GOOGLE PARA LOGIN VIA GMAIL -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f6f9;">
+
+    <header class="header-bar" style="background: #8e44ad; color: white; padding: 15px 20px; display: flex; align-items: center; justify-content: space-between; gap: 15px;">
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <button class="btn-back" onclick="window.location.href='index.html'" style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;">← Voltar</button>
+            <h1 id="page_title" style="margin: 0; font-size: 1.5rem;">Gerador de Jogos</h1>
+        </div>
+
+        <!-- ÁREA DE LOGIN DO USUÁRIO (GMAIL) -->
+        <div id="user_auth_area">
+            <div id="g_id_onload"
+                 data-client_id="383374785711-e00t37fkf9q6aqe5imqi0nnh29v2npq4.apps.googleusercontent.com"
+                 data-callback="handleCredentialResponse">
+            </div>
+            <div class="g_id_signin" data-type="standard" data-size="medium"></div>
+        </div>
+    </header>
+
+    <!-- BANNER ANÚNCIO / CONVITE PARA O APP DA PLAY STORE -->
+    <section class="app-promo-banner" style="background: linear-gradient(135deg, #0d47a1, #1976d2); color: white; padding: 12px 20px; border-radius: 8px; margin: 15px auto; max-width: 900px; display: flex; align-items: center; justify-content: space-between; gap: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); flex-wrap: wrap;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <i class="fa-brands fa-google-play" style="font-size: 2rem; color: #64ffda;"></i>
+            <div>
+                <strong style="font-size: 1rem; display: block;">Assine no App e libere no site!</strong>
+                <span style="font-size: 0.85rem; opacity: 0.9;">Baixe nosso aplicativo na Google Play Store, faça a assinatura e acesse aqui com o mesmo Gmail!</span>
+            </div>
+        </div>
+        <a href="https://play.google.com/store/apps/details?id=com.fabioribeiroromelli.geradordejogos&pli=1" target="_blank" style="background-color: #00c853; color: white; padding: 8px 16px; border-radius: 6px; font-weight: bold; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; font-size: 0.9rem;">
+            <i class="fa-solid fa-download"></i> Baixar no Google Play
+        </a>
+    </section>
+
+    <nav class="lotteries-bar" style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; padding: 12px; background: #fff; border-bottom: 1px solid #e0e0e0; margin-bottom: 15px;">
+        <button class="btn-lottery" data-type="MEGA_SENA" style="background: #27ae60; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold;">Mega-Sena</button>
+        <button class="btn-lottery" data-type="LOTOFACIL" style="background: #9b59b6; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold;">Lotofácil</button>
+        <button class="btn-lottery" data-type="QUINA" style="background: #2c3e50; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold;">Quina</button>
+        <button class="btn-lottery" data-type="LOTOMANIA" style="background: #e67e22; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold;">Lotomania</button>
+        <button class="btn-lottery" data-type="TIMEMANIA" style="background: #2ecc71; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold;">Timemania</button>
+        <button class="btn-lottery" data-type="DUPLA_SENA" style="background: #a00037; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold;">Dupla Sena</button>
+        <button class="btn-lottery" data-type="DIA_DE_SORTE" style="background: #d35400; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold;">Dia de Sorte</button>
+        <button class="btn-lottery" data-type="SUPER_SETE" style="background: #a2b700; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold;">Super Sete</button>
+        <button class="btn-lottery" data-type="MAIS_MILIONARIA" style="background: #1b365d; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold;">+Milionária</button>
+    </nav>
+
+    <main class="container" style="max-width: 900px; margin: 0 auto; padding: 0 15px 30px 15px;">
+        <div class="volante-card" style="background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <div class="volante-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h2 id="volante_title" style="margin: 0;">Volante de Seleção</h2>
+                <div class="mode-selector">
+                    <label style="cursor: pointer;"><input type="radio" name="mode" value="fixed" checked> <span>Fixo</span></label>
+                    <label style="margin-left: 10px; cursor: pointer;"><input type="radio" name="mode" value="excluded"> <span>Excluído</span></label>
+                </div>
+            </div>
+
+            <div id="summary-info" style="margin-bottom: 15px; background: #f0f0f0; padding: 10px; border-radius: 6px;">
+                Fixos: <strong>Nenhum</strong> | Excluídos: <strong>Nenhum</strong>
+            </div>
+
+            <div id="numbers_grid"></div>
+
+            <div class="filters-panel" style="margin: 20px 0; display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
+                <div>
+                    <label for="qtd_jogos">Qtd. Jogos:</label>
+                    <input type="number" id="qtd_jogos" value="1" min="1" max="50" style="width: 60px; padding: 4px;">
+                </div>
+                <div>
+                    <label for="select_pares">Pares:</label>
+                    <select id="select_pares" style="padding: 4px;"><option value="">Todos</option></select>
+                </div>
+                <div>
+                    <label for="select_impares">Ímpares:</label>
+                    <select id="select_impares" style="padding: 4px;"><option value="">Todos</option></select>
+                </div>
+                <div>
+                    <label for="select_primos">Primos:</label>
+                    <select id="select_primos" style="padding: 4px;"><option value="">Todos</option></select>
+                </div>
+            </div>
+
+            <div class="actions-panel" style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <button id="btn_clear" style="padding: 10px 16px; cursor: pointer; border: 1px solid #ccc; background: #fff; border-radius: 4px;">Limpar</button>
+                <button id="btn_generate" style="padding: 10px 16px; background: #8e44ad; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Gerar Jogo</button>
+                <button id="btn_save" style="padding: 10px 16px; background: #28a745; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Salvar</button>
+                <button id="btn_download" style="padding: 10px 16px; background: #17a2b8; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Baixar TXT</button>
+            </div>
+        </div>
+
+        <div class="stats-card" style="margin-top: 15px; padding: 12px; background: #fff; border-radius: 8px; border: 1px solid #ddd;">
+            <h4 style="margin: 0 0 5px 0;">Estatísticas do Volante</h4>
+            <div id="stats_info" style="font-size: 14px; color: #333;">
+                Pares: <strong>0</strong> | Ímpares: <strong>0</strong> | Primos: <strong>0</strong> | Soma: <strong>0</strong>
+            </div>
+        </div>
+
+        <div class="games-container" style="margin-top: 20px;">
+            <h3>Jogos Gerados</h3>
+            <div id="generated_games_list"></div>
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+    <script>
+        function handleCredentialResponse(response) {
+            console.log("Encoded JWT ID token: " + response.credential);
+        }
+    </script>
+</body>
+</html>

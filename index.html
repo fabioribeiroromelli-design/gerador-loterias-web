@@ -3,113 +3,440 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerador de Jogos - Volante</title>
+    <title>Gerador de Jogos - Loterias</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- SCRIPT OFICIAL DO GOOGLE PARA LOGIN VIA GMAIL -->
+    <!-- Google Sign-In SDK -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+    <style>
+        :root {
+            --primary-bg: #0f172a;
+            --card-bg: #ffffff;
+            --card-text: #1e293b;
+            --accent-color: #0284c7;
+            --text-color: #ffffff;
+            --muted-text: #cbd5e1;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f6f9;
+            color: #333;
+        }
+
+        .toolbar {
+            background-color: var(--primary-bg);
+            color: var(--text-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 24px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        /* CARROSSEL */
+        .carousel-container {
+            position: relative;
+            max-width: 1200px;
+            margin: 20px auto;
+            overflow: hidden;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            background: #1e293b;
+            color: var(--text-color);
+        }
+        .carousel-slides {
+            display: flex;
+            transition: transform 0.4s ease-in-out;
+            width: 100%;
+        }
+        .carousel-slide {
+            min-width: 100%;
+            box-sizing: border-box;
+            padding: 25px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .carousel-slide-content { flex: 1; min-width: 280px; }
+        .carousel-slide-content h3 { margin: 0 0 10px 0; font-size: 1.4rem; color: #38bdf8; }
+        .carousel-slide-content p { margin: 0 0 15px 0; font-size: 0.95rem; line-height: 1.4; opacity: 0.9; }
+        .carousel-slide-img {
+            max-width: 140px;
+            max-height: 140px;
+            border-radius: 12px;
+            object-fit: contain;
+            background: #fff;
+            padding: 5px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+        .carousel-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0,0,0,0.5);
+            color: white;
+            border: none;
+            padding: 12px 16px;
+            cursor: pointer;
+            border-radius: 50%;
+            font-size: 1.2rem;
+            z-index: 10;
+            transition: background 0.3s;
+        }
+        .carousel-btn:hover { background: rgba(0,0,0,0.8); }
+        .carousel-btn.prev { left: 10px; }
+        .carousel-btn.next { right: 10px; }
+        .carousel-dots { text-align: center; padding: 10px; background: rgba(0,0,0,0.2); }
+        .dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            margin: 0 5px;
+            background-color: #bbb;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .dot.active { background-color: #38bdf8; }
+
+        /* SHORTCUTS */
+        .shortcuts-bar {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 20px auto;
+            max-width: 1200px;
+            padding: 0 10px;
+        }
+        .shortcuts-bar button {
+            background: #1e293b;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.2s;
+        }
+        .shortcuts-bar button:hover { background: #334155; }
+
+        /* ESTILO PARA DEIXAR OS CARDS DE LOTERIA BRANCOS */
+        .lottery-grid > div, .lottery-card {
+            background-color: #ffffff !important;
+            color: #1e293b !important;
+            border: 1px solid #e2e8f0 !important;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+        }
+
+        /* VIP BADGE & MODAL */
+        .vip-card-locked { position: relative !important; }
+        .vip-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #e74c3c;
+            color: #ffffff;
+            font-size: 0.75rem;
+            font-weight: bold;
+            padding: 4px 8px;
+            border-radius: 12px;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            pointer-events: none;
+        }
+        .vip-toast-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0, 0, 0, 0.75);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 99999;
+            backdrop-filter: blur(3px);
+        }
+        .vip-toast-box {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 25px;
+            max-width: 420px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+
+        /* FOOTER */
+        .site-footer {
+            background-color: var(--primary-bg);
+            color: var(--muted-text);
+            padding: 25px 20px;
+            text-align: center;
+            margin-top: 40px;
+            font-size: 0.9rem;
+            border-top: 1px solid #334155;
+        }
+        .site-footer a { color: #38bdf8; text-decoration: none; margin: 0 10px; }
+        .site-footer a:hover { text-decoration: underline; }
+        .footer-links { display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; margin-bottom: 12px; }
+    </style>
 </head>
-<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f6f9;">
+<body>
 
-    <header class="header-bar" style="background: #8e44ad; color: white; padding: 15px 20px; display: flex; align-items: center; justify-content: space-between; gap: 15px;">
-        <div style="display: flex; align-items: center; gap: 15px;">
-            <button class="btn-back" onclick="window.location.href='home.html'" style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;">← Voltar</button>
-            <h1 id="page_title" style="margin: 0; font-size: 1.5rem;">Gerador de Jogos</h1>
-        </div>
+    <header class="toolbar">
+        <h1 id="home_title" style="margin: 0; font-size: 1.2rem;">
+            <i class="fa-solid fa-dice"></i> Loterias Disponíveis
+        </h1>
 
-        <!-- ÁREA DE LOGIN DO USUÁRIO (GMAIL) -->
         <div id="user_auth_area">
             <div id="g_id_onload"
-                 data-client_id="SEU_CLIENT_ID_DO_GOOGLE.apps.googleusercontent.com"
+                 data-client_id="383374785711-e00t37fkf9q6aqe5imqi0nnh29v2npq4.apps.googleusercontent.com"
                  data-callback="handleCredentialResponse">
             </div>
-            <div class="g_id_signin" data-type="standard" data-size="medium"></div>
+            <div class="g_id_signin" data-type="standard" data-size="medium" data-locale="pt-BR"></div>
         </div>
     </header>
 
-    <!-- BANNER ANÚNCIO / CONVITE PARA O APP DA PLAY STORE -->
-    <section class="app-promo-banner" style="background: linear-gradient(135deg, #0d47a1, #1976d2); color: white; padding: 12px 20px; border-radius: 8px; margin: 15px auto; max-width: 900px; display: flex; align-items: center; justify-content: space-between; gap: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); flex-wrap: wrap;">
-        <div style="display: flex; align-items: center; gap: 12px;">
-            <i class="fa-brands fa-google-play" style="font-size: 2rem; color: #64ffda;"></i>
-            <div>
-                <strong style="font-size: 1rem; display: block;">Assine no App e libere no site!</strong>
-                <span style="font-size: 0.85rem; opacity: 0.9;">Baixe nosso aplicativo na Google Play Store, faça a assinatura e acesse aqui com o mesmo Gmail!</span>
+    <!-- CARROSSEL -->
+    <section class="carousel-container">
+        <button class="carousel-btn prev" id="btnPrev"><i class="fa-solid fa-chevron-left"></i></button>
+        <button class="carousel-btn next" id="btnNext"><i class="fa-solid fa-chevron-right"></i></button>
+
+        <div class="carousel-slides" id="carouselSlides">
+            
+            <!-- Slide 1: Horóscopo -->
+            <div class="carousel-slide">
+                <div class="carousel-slide-content">
+                    <h3><i class="fa-solid fa-star"></i> Horóscopo</h3>
+                    <p class="lang-pt">Confira as previsões diárias, signos e a astrologia completa no seu celular.</p>
+                    <p class="lang-en">Check daily predictions, horoscope signs and astrology on your phone.</p>
+                    <p class="lang-es">Consulta las predicciones diarias, signos y astrología en tu móvil.</p>
+                    <a href="https://play.google.com/store/apps/details?id=com.fabioribeiroromelli.horoscopo" target="_blank" style="background:#00c853; color:#fff; padding:8px 16px; border-radius:6px; text-decoration:none; font-weight:bold; display:inline-flex; align-items:center; gap:8px;">
+                        <i class="fa-brands fa-google-play"></i> Google Play
+                    </a>
+                </div>
+                <img src="horoscopo.png" alt="Horóscopo" class="carousel-slide-img">
             </div>
+
+            <!-- Slide 2: ChemPuzzle (Química) -->
+            <div class="carousel-slide">
+                <div class="carousel-slide-content">
+                    <h3><i class="fa-solid fa-flask"></i> ChemPuzzle</h3>
+                    <p class="lang-pt">Desafie sua mente com enigmas e jogos educativos incríveis!</p>
+                    <p class="lang-en">Challenge your mind with amazing educational puzzles!</p>
+                    <p class="lang-es">¡Desafía tu mente con increíbles acertijos educativos!</p>
+                    <a href="https://play.google.com/store/apps/details?id=com.fabioribeiroromelli.chempuzzle" target="_blank" style="background:#00c853; color:#fff; padding:8px 16px; border-radius:6px; text-decoration:none; font-weight:bold; display:inline-flex; align-items:center; gap:8px;">
+                        <i class="fa-brands fa-google-play"></i> Google Play
+                    </a>
+                </div>
+                <img src="ic_mascote_ia.png" alt="ChemPuzzle" class="carousel-slide-img">
+            </div>
+
+            <!-- Slide 3: Tabuleiro Clássico -->
+            <div class="carousel-slide">
+                <div class="carousel-slide-content">
+                    <h3><i class="fa-solid fa-chess-board"></i> Tabuleiro Clássico</h3>
+                    <p class="lang-pt">Os melhores jogos de tabuleiro reunidos em um único aplicativo leve e divertido.</p>
+                    <p class="lang-en">The best classic board games in one lightweight and fun app.</p>
+                    <p class="lang-es">Los mejores juegos de mesa clásicos en una aplicación ligera y divertida.</p>
+                    <a href="https://play.google.com/store/apps/details?id=com.fabioribeiroromelli.tabuleiroclssico" target="_blank" style="background:#00c853; color:#fff; padding:8px 16px; border-radius:6px; text-decoration:none; font-weight:bold; display:inline-flex; align-items:center; gap:8px;">
+                        <i class="fa-brands fa-google-play"></i> Google Play
+                    </a>
+                </div>
+                <img src="imagemjogoxadrez.png" alt="Tabuleiro Clássico" class="carousel-slide-img">
+            </div>
+
+            <!-- Slide 4: UniQuiz -->
+            <div class="carousel-slide">
+                <div class="carousel-slide-content">
+                    <h3><i class="fa-solid fa-question-circle"></i> UniQuiz</h3>
+                    <p class="lang-pt">Teste seus conhecimentos gerais com perguntas desafiadoras e divertidas.</p>
+                    <p class="lang-en">Test your general knowledge with challenging and fun questions.</p>
+                    <p class="lang-es">Pon a prueba tus conocimientos generales con preguntas desafiantes y divertidas.</p>
+                    <a href="https://play.google.com/store/apps/details?id=com.fabioribeiroromelli.uniquiz" target="_blank" style="background:#00c853; color:#fff; padding:8px 16px; border-radius:6px; text-decoration:none; font-weight:bold; display:inline-flex; align-items:center; gap:8px;">
+                        <i class="fa-brands fa-google-play"></i> Google Play
+                    </a>
+                </div>
+                <img src="imagemuniquizdoapp.png" alt="UniQuiz" class="carousel-slide-img">
+            </div>
+
+            <!-- Slide 5: Gerador de Jogos (Loterias) -->
+            <div class="carousel-slide">
+                <div class="carousel-slide-content">
+                    <h3><i class="fa-solid fa-clover"></i> Gerador de Jogos - Loterias</h3>
+                    <p class="lang-pt">Acesse estatísticas VIP, fechamentos matemáticos e resultados atualizados das loterias!</p>
+                    <p class="lang-en">Access VIP statistics, mathematical combinations, and updated lottery results!</p>
+                    <p class="lang-es">¡Acceda a estadísticas VIP, combinaciones matemáticas y resultados actualizados de lotería!</p>
+                    <a href="https://play.google.com/store/apps/details?id=com.fabioribeiroromelli.geradordejogos" target="_blank" style="background:#00c853; color:#fff; padding:8px 16px; border-radius:6px; text-decoration:none; font-weight:bold; display:inline-flex; align-items:center; gap:8px;">
+                        <i class="fa-brands fa-google-play"></i> Google Play
+                    </a>
+                </div>
+                <img src="banner2.png" alt="Gerador de Jogos" class="carousel-slide-img">
+            </div>
+
         </div>
-        <a href="https://play.google.com/store/apps/details?id=com.fabioribeiroromelli.geradordejogos&pli=1" target="_blank" style="background-color: #00c853; color: white; padding: 8px 16px; border-radius: 6px; font-weight: bold; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; font-size: 0.9rem;">
-            <i class="fa-solid fa-download"></i> Baixar no Google Play
-        </a>
+
+        <div class="carousel-dots" id="carouselDots">
+            <span class="dot active" data-index="0"></span>
+            <span class="dot" data-index="1"></span>
+            <span class="dot" data-index="2"></span>
+            <span class="dot" data-index="3"></span>
+            <span class="dot" data-index="4"></span>
+        </div>
     </section>
 
-    <nav class="lotteries-bar" style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; padding: 12px; background: #fff; border-bottom: 1px solid #e0e0e0; margin-bottom: 15px;">
-        <button class="btn-lottery" data-type="MEGA_SENA" style="background: #27ae60; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold;">Mega-Sena</button>
-        <button class="btn-lottery" data-type="LOTOFACIL" style="background: #9b59b6; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold;">Lotofácil</button>
-        <button class="btn-lottery" data-type="QUINA" style="background: #2c3e50; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold;">Quina</button>
-        <button class="btn-lottery" data-type="LOTOMANIA" style="background: #e67e22; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold;">Lotomania</button>
-        <button class="btn-lottery" data-type="TIMEMANIA" style="background: #2ecc71; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold;">Timemania</button>
-        <button class="btn-lottery" data-type="DUPLA_SENA" style="background: #a00037; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold;">Dupla Sena</button>
-        <button class="btn-lottery" data-type="DIA_DE_SORTE" style="background: #d35400; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold;">Dia de Sorte</button>
-        <button class="btn-lottery" data-type="SUPER_SETE" style="background: #a2b700; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold;">Super Sete</button>
-        <button class="btn-lottery" data-type="MAIS_MILIONARIA" style="background: #1b365d; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold;">+Milionária</button>
-    </nav>
+    <!-- SHORTCUTS -->
+    <div class="shortcuts-bar">
+        <button onclick="window.location.href='gerar_jogos.html'"><i class="fa-solid fa-wand-magic-sparkles"></i> Gerar Jogos</button>
+        <button onclick="window.location.href='saved_games.html'"><i class="fa-solid fa-bookmark"></i> Jogos Salvos</button>
+        <button onclick="window.location.href='download_results.html'"><i class="fa-solid fa-download"></i> Downloads / Resultados</button>
+        <button onclick="window.location.href='statistics.html'"><i class="fa-solid fa-chart-pie"></i> Estatísticas</button>
+        <button onclick="window.location.href='generator.html'"><i class="fa-solid fa-filter"></i> Filtrar Números</button>
+        <button onclick="window.open('https://www.youtube.com/channel/UCPbhr02AfVb2nd5pm12BxTw/live', '_blank')"><i class="fa-solid fa-tv"></i> Sorteio ao Vivo</button>
+    </div>
 
-    <main class="container" style="max-width: 900px; margin: 0 auto; padding: 0 15px 30px 15px;">
-        <div class="volante-card" style="background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-            <div class="volante-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h2 id="volante_title" style="margin: 0;">Volante de Seleção</h2>
-                <div class="mode-selector">
-                    <label style="cursor: pointer;"><input type="radio" name="mode" value="fixed" checked> <span>Fixo</span></label>
-                    <label style="margin-left: 10px; cursor: pointer;"><input type="radio" name="mode" value="excluded"> <span>Excluído</span></label>
-                </div>
-            </div>
-
-            <div id="summary-info" style="margin-bottom: 15px; background: #f0f0f0; padding: 10px; border-radius: 6px;">
-                Fixos: <strong>Nenhum</strong> | Excluídos: <strong>Nenhum</strong>
-            </div>
-
-            <div id="numbers_grid"></div>
-
-            <div class="filters-panel" style="margin: 20px 0; display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
-                <div>
-                    <label for="qtd_jogos">Qtd. Jogos:</label>
-                    <input type="number" id="qtd_jogos" value="1" min="1" max="50" style="width: 60px; padding: 4px;">
-                </div>
-                <div>
-                    <label for="select_pares">Pares:</label>
-                    <select id="select_pares" style="padding: 4px;"><option value="">Todos</option></select>
-                </div>
-                <div>
-                    <label for="select_impares">Ímpares:</label>
-                    <select id="select_impares" style="padding: 4px;"><option value="">Todos</option></select>
-                </div>
-                <div>
-                    <label for="select_primos">Primos:</label>
-                    <select id="select_primos" style="padding: 4px;"><option value="">Todos</option></select>
-                </div>
-            </div>
-
-            <div class="actions-panel" style="display: flex; gap: 8px; flex-wrap: wrap;">
-                <button id="btn_clear" style="padding: 10px 16px; cursor: pointer; border: 1px solid #ccc; background: #fff; border-radius: 4px;">Limpar</button>
-                <button id="btn_generate" style="padding: 10px 16px; background: #8e44ad; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Gerar Jogo</button>
-                <button id="btn_save" style="padding: 10px 16px; background: #28a745; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Salvar</button>
-                <button id="btn_download" style="padding: 10px 16px; background: #17a2b8; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Baixar TXT</button>
-            </div>
-        </div>
-
-        <div class="stats-card" style="margin-top: 15px; padding: 12px; background: #fff; border-radius: 8px; border: 1px solid #ddd;">
-            <h4 style="margin: 0 0 5px 0;">Estatísticas do Volante</h4>
-            <div id="stats_info" style="font-size: 14px; color: #333;">
-                Pares: <strong>0</strong> | Ímpares: <strong>0</strong> | Primos: <strong>0</strong> | Soma: <strong>0</strong>
-            </div>
-        </div>
-
-        <div class="games-container" style="margin-top: 20px;">
-            <h3>Jogos Gerados</h3>
-            <div id="generated_games_list"></div>
-        </div>
+    <main class="container">
+        <div id="lottery_grid" class="lottery-grid"></div>
     </main>
 
-    <script src="script.js"></script>
+    <!-- FOOTER -->
+    <footer class="site-footer">
+        <div class="footer-links">
+            <a href="https://sites.google.com/view/gerador-de-jogos-loteria/in%C3%ADcio" target="_blank"><i class="fa-solid fa-shield-halved"></i> Política de Privacidade</a>
+            <a href="terms.html" target="_blank"><i class="fa-solid fa-file-contract"></i> Termos de Uso</a>
+            <a href="about.html" target="_blank"><i class="fa-solid fa-envelope"></i> Sobre Nós / Contato</a>
+        </div>
+        <p>&copy; 2026 Fábio Ribeiro Romelli. Todos os direitos reservados.</p>
+    </footer>
+
+    <!-- SCRIPTS DE DADOS -->
+    <script src="dados_loteria.js"></script>
+    <script src="script_home.js"></script>
+
+    <!-- SCRIPT PRINCIPAL -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const userLang = navigator.language.startsWith('es') ? 'es' : navigator.language.startsWith('en') ? 'en' : 'pt';
+            
+            document.querySelectorAll('.lang-pt, .lang-en, .lang-es').forEach(el => el.style.display = 'none');
+            document.querySelectorAll(`.lang-${userLang}`).forEach(el => el.style.display = 'block');
+
+            // Carrossel
+            let slideIndex = 0;
+            let autoSlideInterval;
+            const slidesContainer = document.getElementById('carouselSlides');
+            const totalSlides = slidesContainer.children.length;
+            const dots = document.querySelectorAll('.dot');
+
+            const updateSlide = (index) => {
+                slideIndex = (index + totalSlides) % totalSlides;
+                slidesContainer.style.transform = `translateX(-${slideIndex * 100}%)`;
+                dots.forEach((dot, i) => dot.classList.toggle('active', i === slideIndex));
+            };
+
+            const startAutoSlide = () => {
+                clearInterval(autoSlideInterval);
+                autoSlideInterval = setInterval(() => updateSlide(slideIndex + 1), 4000);
+            };
+
+            document.getElementById('btnNext').addEventListener('click', () => { updateSlide(slideIndex + 1); startAutoSlide(); });
+            document.getElementById('btnPrev').addEventListener('click', () => { updateSlide(slideIndex - 1); startAutoSlide(); });
+            
+            dots.forEach(dot => {
+                dot.addEventListener('click', (e) => {
+                    updateSlide(parseInt(e.target.dataset.index));
+                    startAutoSlide();
+                });
+            });
+
+            startAutoSlide();
+
+            // Trava VIP
+            const isSubscriber = false; 
+
+            const translations = {
+                pt: { title: "Função Exclusiva VIP 🔒", msg: "Esta função é exclusiva para assinantes! Baixe nosso app na Google Play, assine o plano VIP e libere todas as funções.", btnApp: "Baixar na Play Store", btnClose: "Fechar" },
+                en: { title: "Exclusive VIP Feature 🔒", msg: "This feature is for subscribers only! Download our app on Google Play, subscribe to the VIP plan, and unlock all tools.", btnApp: "Get it on Play Store", btnClose: "Close" },
+                es: { title: "Función Exclusiva VIP 🔒", msg: "¡Esta función es solo para suscriptores! Descarga nuestra app en Google Play, suscríbete al plan VIP y desbloquea todas las herramientas.", btnApp: "Obtener en Play Store", btnClose: "Cerrar" }
+            };
+
+            const txt = translations[userLang];
+
+            const applyVipLocks = () => {
+                const grid = document.getElementById('lottery_grid');
+                if (!grid) return;
+
+                Array.from(grid.children).slice(0, 5).forEach(card => {
+                    card.classList.add('vip-card-locked');
+                    if (!card.querySelector('.vip-badge')) {
+                        const badge = document.createElement('span');
+                        badge.className = 'vip-badge';
+                        badge.innerHTML = '<i class="fa-solid fa-lock"></i> VIP';
+                        card.appendChild(badge);
+                    }
+                });
+            };
+
+            const showVipModal = () => {
+                if (document.getElementById('vip-modal')) return;
+
+                const modal = document.createElement('div');
+                modal.id = 'vip-modal';
+                modal.className = 'vip-toast-overlay';
+                modal.innerHTML = `
+                    <div class="vip-toast-box">
+                        <div style="font-size: 3rem; color: #f39c12; margin-bottom: 10px;">
+                            <i class="fa-solid fa-lock"></i>
+                        </div>
+                        <h3 style="margin: 0 0 10px 0; color: #2c3e50;">${txt.title}</h3>
+                        <p style="color: #666; font-size: 0.95rem; line-height: 1.5; margin-bottom: 20px;">${txt.msg}</p>
+                        <div style="display: flex; gap: 10px; justify-content: center;">
+                            <a href="https://play.google.com/store/apps/details?id=com.fabioribeiroromelli.geradordejogos" target="_blank" style="background: #27ae60; color: white; padding: 10px 18px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 8px;">
+                                <i class="fa-brands fa-google-play"></i> ${txt.btnApp}
+                            </a>
+                            <button id="btnCloseModal" style="background: #e0e0e0; border: none; color: #333; padding: 10px 18px; border-radius: 6px; font-weight: bold; cursor: pointer;">
+                                ${txt.btnClose}
+                            </button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+                document.getElementById('btnCloseModal').onclick = () => modal.remove();
+            };
+
+            setTimeout(applyVipLocks, 500);
+
+            document.addEventListener('click', (e) => {
+                if (isSubscriber) return;
+
+                const grid = document.getElementById('lottery_grid');
+                if (!grid) return;
+
+                const clickedCard = e.target.closest('#lottery_grid > *');
+                if (clickedCard) {
+                    const cardsArray = Array.from(grid.children);
+                    const index = cardsArray.indexOf(clickedCard);
+
+                    if (index >= 0 && index < 5) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        showVipModal();
+                    }
+                }
+            }, true);
+        });
+
+        function handleCredentialResponse(response) {
+            console.log("Encoded JWT ID token: " + response.credential);
+        }
+    </script>
 </body>
 </html>
