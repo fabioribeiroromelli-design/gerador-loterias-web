@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jogos Salvos / Saved Games / Juegos Guardados</title>
+    <title>Jogos Salvos</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -13,32 +13,36 @@
         .btn-lottery:hover { opacity: 0.9; transform: translateY(-2px); }
         .btn-lottery.active { outline: 3px solid #222; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
 
-        .status-box { margin-top: 15px; padding: 12px; border-radius: 6px; font-weight: bold; text-align: center; }
         .section-box { background: #ffffff; padding: 20px; border-radius: 8px; border: 1px solid #e0e0e0; box-shadow: 0 2px 6px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        
         .history-table-container { margin-top: 20px; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); overflow-x: auto; }
         table.history-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }
         table.history-table th, table.history-table td { padding: 12px 14px; border-bottom: 1px solid #ddd; }
         table.history-table th { background-color: #f4f6f9; color: #333; }
         
-        .ball { display: inline-block; background: #27ae60; color: white; width: 28px; height: 28px; line-height: 28px; border-radius: 50%; text-align: center; font-weight: bold; font-size: 12px; margin-right: 4px; }
-        
+        .ball { display: inline-block; background: #27ae60; color: white; width: 28px; height: 28px; line-height: 28px; border-radius: 50%; text-align: center; font-weight: bold; font-size: 12px; margin-right: 4px; margin-bottom: 4px; }
+        .ball.hit { background: #f1c40f; color: #2c3e50; border: 2px solid #d4ac0d; }
+
+        .acertos-info { margin-top: 6px; font-size: 13px; font-weight: bold; color: #2c3e50; }
+
         .btn-action { background: #c0392b; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.8rem; }
         .btn-action:hover { background: #a93226; }
+
+        .btn-check-api { background: #2980b9; color: white; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.9rem; display: flex; align-items: center; gap: 6px; }
+        .btn-check-api:hover { background: #2471a3; }
     </style>
 </head>
 <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f6f9;">
 
     <header class="header-bar" style="background: #800080; color: white; padding: 15px 20px; display: flex; align-items: center; gap: 15px;">
-        <button class="btn-back" onclick="window.location.href='home.html'" style="background: white; color: #800080; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: bold;">← Voltar / Back / Volver</button>
-        <h1 style="margin: 0; font-size: 1.5rem;">Jogos Salvos / Saved Games / Juegos Guardados</h1>
+        <button class="btn-back" onclick="window.location.href='home.html'" style="background: white; color: #800080; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: bold;">← Voltar</button>
+        <h1 style="margin: 0; font-size: 1.5rem;">Jogos Salvos</h1>
     </header>
 
     <main class="container" style="max-width: 1000px; margin: 25px auto; padding: 0 15px;">
         
         <!-- SELEÇÃO RÁPIDA DA LOTERIA -->
         <div class="section-box">
-            <h2 style="margin-top: 0; font-size: 1.2rem; color: #333;"><i class="fa-solid fa-gamepad"></i> Selecione a Loteria / Select Lottery / Seleccione Lotería:</h2>
+            <h2 style="margin-top: 0; font-size: 1.2rem; color: #333;"><i class="fa-solid fa-gamepad"></i> Selecione a Loteria:</h2>
             <div class="grid-loterias">
                 <button class="btn-lottery" id="btn_megasena" onclick="carregarJogosSalvos('megasena')" style="background: #209869;">Mega-Sena</button>
                 <button class="btn-lottery" id="btn_lotofacil" onclick="carregarJogosSalvos('lotofacil')" style="background: #930089;">Lotofácil</button>
@@ -55,16 +59,17 @@
         <!-- TABELA DE JOGOS SALVOS -->
         <div id="history_display" class="history-table-container">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
-                <h3 id="table_title" style="margin: 0; color: #333;">Meus Jogos / My Games / Mis Juegos</h3>
+                <h3 id="table_title" style="margin: 0; color: #333;">Meus Jogos Salvos</h3>
+                <button class="btn-check-api" onclick="conferirComUltimoConcurso(true)"><i class="fa-solid fa-rotate"></i> Atualizar Concurso</button>
             </div>
             
             <table class="history-table">
                 <thead>
                     <tr>
                         <th># / ID</th>
-                        <th>Data / Date / Fecha</th>
-                        <th>Dezenas / Numbers / Números</th>
-                        <th>Ações / Actions / Acciones</th>
+                        <th>Data</th>
+                        <th>Dezenas Guardadas</th>
+                        <th>Ações</th>
                     </tr>
                 </thead>
                 <tbody id="table_body"></tbody>
@@ -75,60 +80,206 @@
     <script>
         let loteriaAtual = 'megasena';
 
-        function carregarJogosSalvos(loteria) {
+        const nomesLoterias = {
+            'megasena': 'Mega-Sena',
+            'lotofacil': 'Lotofácil',
+            'quina': 'Quina',
+            'lotomania': 'Lotomania',
+            'timemania': 'Timemania',
+            'duplasena': 'Dupla Sena',
+            'diadesorte': 'Dia de Sorte',
+            'supersete': 'Super Sete',
+            'maismilionaria': '+Milionária'
+        };
+
+        function normalizar(texto) {
+            return String(texto || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
+        }
+
+        // Obtém o último concurso salvo no localStorage do seu app ou busca via API
+        async function obterUltimoResultado(loteria, forcarAtualizacao = false) {
+            const idNorm = normalizar(loteria);
+
+            // 1. Tenta buscar das chaves vistas na imagem do LocalStorage
+            if (!forcarAtualizacao) {
+                const chaves = [
+                    `resultado_conferido_${idNorm}`,
+                    `ultimo_resultado_${idNorm}`,
+                    `lottery_cache_${nomesLoterias[loteria]}`,
+                    `lottery_cache_${idNorm}`
+                ];
+
+                for (let chave of chaves) {
+                    try {
+                        let item = localStorage.getItem(chave);
+                        if (item) {
+                            let obj = JSON.parse(item);
+                            let dados = obj.data || obj;
+                            let dezenas = dados.dezenas || dados.dezenasSorteadas || dados.dezenasOrdemSorteio;
+                            if (dados && dezenas) {
+                                return {
+                                    concurso: dados.concurso || dados.numero || 'Atual',
+                                    dezenas: dezenas.map(d => String(d).padStart(2, '0'))
+                                };
+                            }
+                        }
+                    } catch(e) {}
+                }
+            }
+
+            // 2. Busca na API se não houver cache local ou se solicitado
+            try {
+                let apiName = idNorm === 'maismilionaria' ? 'milionaria' : idNorm;
+                const res = await fetch(`https://loteriascaixa-api.herokuapp.com/api/${apiName}/latest`);
+                if (!res.ok) throw new Error();
+                const data = await res.json();
+                
+                let dezenasApi = (data.dezenas || data.dezenasOrdemSorteio || []).map(d => String(d).padStart(2, '0'));
+                let resultadoObj = { concurso: data.concurso || data.numero, dezenas: dezenasApi };
+
+                localStorage.setItem(`resultado_conferido_${idNorm}`, JSON.stringify(resultadoObj));
+                return resultadoObj;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function extrairDezenas(jogo) {
+            if (Array.isArray(jogo)) return jogo;
+            if (!jogo || typeof jogo !== 'object') return [];
+            return jogo.numeros || jogo.dezenas || jogo.game || jogo.jogo || [];
+        }
+
+        function buscarJogosLocais(loteriaId) {
+            let jogosDaLoteria = [];
+            const idNorm = normalizar(loteriaId);
+
+            // Tenta buscar no array 'saved_games_list' ou em chaves com o nome da loteria
+            let chaves = ['saved_games_list', 'jogos_salvos', loteriaId, idNorm, `jogos_${idNorm}`];
+
+            chaves.forEach(chave => {
+                try {
+                    let item = localStorage.getItem(chave);
+                    if (!item) return;
+
+                    let parsed = JSON.parse(item);
+
+                    if (Array.isArray(parsed)) {
+                        parsed.forEach(j => {
+                            if (!j) return;
+                            if (chave === 'saved_games_list' || chave === 'jogos_salvos') {
+                                let tipo = normalizar(j.loteria || j.tipo || j.game || '');
+                                if (!tipo.includes(idNorm) && !idNorm.includes(tipo)) return;
+                            }
+                            if (extrairDezenas(j).length > 0) jogosDaLoteria.push(j);
+                        });
+                    } else if (typeof parsed === 'object') {
+                        if (extrairDezenas(parsed).length > 0) jogosDaLoteria.push(parsed);
+                    }
+                } catch(e) {}
+            });
+
+            // Evita jogos duplicados na exibição
+            let vistos = new Set();
+            return jogosDaLoteria.filter(j => {
+                let chaveUnica = extrairDezenas(j).join('-');
+                if (vistos.has(chaveUnica)) return false;
+                vistos.add(chaveUnica);
+                return true;
+            });
+        }
+
+        async function carregarJogosSalvos(loteria, forcarBuscaAPI = false) {
             loteriaAtual = loteria;
             destacarBotaoAtivo(loteria);
 
             const tbody = document.getElementById('table_body');
             const title = document.getElementById('table_title');
             
-            title.textContent = `Jogos Salvos / Saved Games: ${loteria.toUpperCase()}`;
+            const nomeLoteria = nomesLoterias[loteria] || loteria;
+            title.textContent = `Jogos Salvos: ${nomeLoteria.toUpperCase()}`;
             tbody.innerHTML = '';
 
-            // Busca do localStorage (ou outra fonte onde seus jogos gerados são salvos)
-            const chaveStorage = `jogos_${loteria}`;
-            let jogos = [];
-            try {
-                jogos = JSON.parse(localStorage.getItem(chaveStorage)) || [];
-            } catch(e) {
-                jogos = [];
-            }
+            const jogosFiltrados = buscarJogosLocais(loteria);
 
-            if (jogos.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #7f8c8d;">Nenhum jogo salvo encontrado para esta loteria. / No saved games found. / No se encontraron juegos guardados.</td></tr>`;
+            if (jogosFiltrados.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #7f8c8d; padding: 20px;">Nenhum jogo salvo encontrado para esta loteria.</td></tr>`;
                 return;
             }
 
-            jogos.forEach((jogo, index) => {
-                const tr = document.createElement('tr');
-                const dezenasHtml = Array.isArray(jogo.dezenas || jogo) 
-                    ? (jogo.dezenas || jogo).map(d => `<span class="ball">${d}</span>`).join('') 
-                    : '-';
+            const resultadoConcurso = await obterUltimoResultado(loteria, forcarBuscaAPI);
+            const dezenasSorteadasSet = new Set(
+                resultadoConcurso ? resultadoConcurso.dezenas.map(d => String(parseInt(d, 10))) : []
+            );
 
-                const dataJogo = jogo.data || 'N/A';
+            jogosFiltrados.forEach((jogo, index) => {
+                const tr = document.createElement('tr');
+                let dezenasArray = extrairDezenas(jogo);
+
+                let totalAcertos = 0;
+                const dezenasHtml = dezenasArray.map(d => {
+                    const numNormal = String(parseInt(d, 10));
+                    const formatado = String(d).padStart(2, '0');
+                    
+                    let acertou = dezenasSorteadasSet.has(numNormal);
+                    if (acertou) totalAcertos++;
+                    
+                    return `<span class="ball ${acertou ? 'hit' : ''}">${formatado}</span>`;
+                }).join('');
+
+                let infoConcurso = '';
+                if (resultadoConcurso && dezenasSorteadasSet.size > 0) {
+                    infoConcurso = `<div class="acertos-info"><i class="fa-solid fa-trophy" style="color: #f39c12;"></i> Acertos: ${totalAcertos} (Concurso ${resultadoConcurso.concurso})</div>`;
+                } else {
+                    infoConcurso = `<div class="acertos-info" style="color: #7f8c8d; font-weight: normal;">Clique em "Atualizar Concurso" para conferir.</div>`;
+                }
+
+                const dataJogo = jogo.data || jogo.date || new Date().toLocaleDateString('pt-BR');
 
                 tr.innerHTML = `
                     <td style="vertical-align: middle;"><strong>#${index + 1}</strong></td>
                     <td style="vertical-align: middle;">${dataJogo}</td>
-                    <td style="vertical-align: middle;">${dezenasHtml}</td>
                     <td style="vertical-align: middle;">
-                        <button class="btn-action" onclick="excluirJogo('${loteria}', ${index})">Excluir / Delete</button>
+                        ${dezenasHtml}
+                        ${infoConcurso}
+                    </td>
+                    <td style="vertical-align: middle;">
+                        <button class="btn-action" onclick="excluirJogoGeral(${JSON.stringify(jogo).replace(/"/g, '&quot;')})">Excluir</button>
                     </td>
                 `;
                 tbody.appendChild(tr);
             });
         }
 
-        function excluirJogo(loteria, index) {
-            if (!confirm("Deseja realmente excluir este jogo salvo? / Do you really want to delete this saved game?")) return;
+        async function conferirComUltimoConcurso(forcar) {
+            alert("Buscando o resultado do concurso mais recente...");
+            await carregarJogosSalvos(loteriaAtual, forcar);
+        }
+
+        function excluirJogoGeral(jogoParaRemover) {
+            if (!confirm("Deseja realmente excluir este jogo salvo?")) return;
             
-            const chaveStorage = `jogos_${loteria}`;
-            let jogos = JSON.parse(localStorage.getItem(chaveStorage)) || [];
+            let idNorm = normalizar(loteriaAtual);
+            let chaves = ['saved_games_list', 'jogos_salvos', loteriaAtual, idNorm, `jogos_${idNorm}`];
+
+            chaves.forEach(chave => {
+                try {
+                    let item = localStorage.getItem(chave);
+                    if (!item) return;
+
+                    let parsed = JSON.parse(item);
+                    if (Array.isArray(parsed)) {
+                        let filtrados = parsed.filter(j => {
+                            let dezJ = extrairDezenas(j).join(',');
+                            let dezRem = extrairDezenas(jogoParaRemover).join(',');
+                            return dezJ !== dezRem;
+                        });
+                        localStorage.setItem(chave, JSON.stringify(filtrados));
+                    }
+                } catch(e) {}
+            });
             
-            jogos.splice(index, 1);
-            localStorage.setItem(chaveStorage, JSON.stringify(jogos));
-            
-            carregarJogosSalvos(loteria);
+            carregarJogosSalvos(loteriaAtual, false);
         }
 
         function destacarBotaoAtivo(loteria) {
