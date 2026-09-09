@@ -35,6 +35,7 @@
         .btn-clear-all:hover { background: #b71c1c; }
 
         .resultado-box { background: #eef2f7; padding: 12px 15px; border-radius: 6px; border-left: 4px solid #800080; margin-bottom: 15px; font-size: 0.95rem; }
+        .sorteio-linha { display: flex; align-items: center; gap: 8px; margin-top: 4px; flex-wrap: wrap; }
     </style>
 </head>
 <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f6f9;">
@@ -116,8 +117,7 @@
                     `resultado_conferido_${idNorm}`,
                     `ultimo_resultado_${idNorm}`,
                     `lottery_cache_${nomesLoterias[loteria]}`,
-                    `lottery_cache_${idNorm}`,
-                    `lottery_cache_+Milionária`
+                    `lottery_cache_${idNorm}`
                 ];
 
                 for (let chave of chaves) {
@@ -127,7 +127,7 @@
                             let obj = JSON.parse(item);
                             let dados = obj.data || obj;
                             if (dados) {
-                                return formatarDadosConcurso(dados);
+                                return formatarDadosConcurso(dados, idNorm);
                             }
                         }
                     } catch(e) {}
@@ -140,7 +140,7 @@
                 if (!res.ok) throw new Error();
                 const data = await res.json();
                 
-                let resObj = formatarDadosConcurso(data);
+                let resObj = formatarDadosConcurso(data, idNorm);
                 localStorage.setItem(`resultado_conferido_${idNorm}`, JSON.stringify(resObj));
                 return resObj;
             } catch (e) {
@@ -148,17 +148,24 @@
             }
         }
 
-        function formatarDadosConcurso(data) {
+        function formatarDadosConcurso(data, idNorm) {
             let numConcurso = data.concurso || data.numero || 'Atual';
             
-            // Tratamento Dupla Sena
-            if (data.s2 || data.dezenasSorteio2) {
+            // Dupla Sena de forma explícita
+            if (idNorm === 'duplasena' || data.dezenasSorteio2 || data.s2) {
                 let s1 = (data.dezenas || data.dezenasSorteio1 || []).map(d => String(d).padStart(2, '0'));
                 let s2 = (data.dezenasSorteio2 || data.s2 || []).map(d => String(d).padStart(2, '0'));
+                
+                // Se a API devolver s2 vazio mas devolver 12 dezenas juntas no s1, separa ao meio
+                if (s2.length === 0 && s1.length >= 12) {
+                    s2 = s1.slice(6);
+                    s1 = s1.slice(0, 6);
+                }
+
                 return { concurso: numConcurso, dezenas: s1, dezenasSorteio2: s2, ehDuplaSena: true };
             }
 
-            // Tratamento Geral
+            // Padrão
             let dezenas = (data.dezenas || data.dezenasOrdemSorteio || data.dezenasSorteadas || []).map(d => String(d).padStart(2, '0'));
             return { concurso: numConcurso, dezenas: dezenas };
         }
@@ -220,18 +227,24 @@
 
             const resultadoConcurso = await obterUltimoResultado(loteria, forcarBuscaAPI);
 
-            // Atualiza topo com os números do concurso para comparação visual
+            // Exibição do topo separando os dois sorteios da Dupla Sena
             if (resultadoConcurso) {
                 if (resultadoConcurso.ehDuplaSena) {
                     concursoDisplay.innerHTML = `
-                        <strong>Último Concurso (${resultadoConcurso.concurso}):</strong><br>
-                        1º Sorteio: ${resultadoConcurso.dezenas.map(d => `<span class="ball draw-ball">${d}</span>`).join('')}<br>
-                        2º Sorteio: ${resultadoConcurso.dezenasSorteio2.map(d => `<span class="ball draw-ball">${d}</span>`).join('')}
+                        <strong>Último Concurso Dupla Sena (${resultadoConcurso.concurso}):</strong>
+                        <div class="sorteio-linha">
+                            <span style="font-weight:bold; width:85px;">1º Sorteio:</span> 
+                            ${resultadoConcurso.dezenas.map(d => `<span class="ball draw-ball">${d}</span>`).join('')}
+                        </div>
+                        <div class="sorteio-linha">
+                            <span style="font-weight:bold; width:85px;">2º Sorteio:</span> 
+                            ${resultadoConcurso.dezenasSorteio2.map(d => `<span class="ball draw-ball">${d}</span>`).join('')}
+                        </div>
                     `;
                 } else if (normalizar(loteria) === 'supersete') {
                     concursoDisplay.innerHTML = `
-                        <strong>Último Concurso (${resultadoConcurso.concurso}):</strong><br>
-                        Colunas 1 a 7: ${resultadoConcurso.dezenas.map((d, i) => `<span class="ball draw-ball">C${i+1}:${d}</span>`).join('')}
+                        <strong>Último Concurso Super Sete (${resultadoConcurso.concurso}):</strong><br>
+                        ${resultadoConcurso.dezenas.map((d, i) => `<span class="ball draw-ball">C${i+1}:${d}</span>`).join('')}
                     `;
                 } else {
                     concursoDisplay.innerHTML = `
@@ -267,19 +280,16 @@
                     let acertou = false;
 
                     if (isSuperSete) {
-                        // Super Sete: Confere pela mesma coluna (posição)
                         if (resultadoConcurso && resultadoConcurso.dezenas[colIndex] !== undefined) {
                             acertou = (numNormal === String(parseInt(resultadoConcurso.dezenas[colIndex], 10)));
                         }
                     } else if (resultadoConcurso && resultadoConcurso.ehDuplaSena) {
-                        // Dupla Sena: Verifica se acertou em qualquer um dos dois sorteios
                         let inS1 = setS1.has(numNormal);
                         let inS2 = setS2.has(numNormal);
                         if (inS1) acertosS1++;
                         if (inS2) acertosS2++;
                         acertou = inS1 || inS2;
                     } else {
-                        // Loterias Gerais
                         acertou = setS1.has(numNormal);
                         if (acertou) acertosS1++;
                     }
