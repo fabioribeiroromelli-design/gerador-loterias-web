@@ -6,11 +6,54 @@
     <title>Gerador de Jogos - Loterias</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- SCRIPT OFICIAL DO GOOGLE PARA LOGIN VIA GMAIL -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
-    <header class="toolbar">
-        <h1 id="home_title"><i class="fa-solid fa-dice"></i> Loterias Disponíveis / Available Lotteries</h1>
+    <header class="toolbar" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 20px;">
+        <h1 id="home_title" style="margin: 0; font-size: 1.2rem;">
+            <i class="fa-solid fa-dice"></i> Loterias Disponíveis / Available Lotteries
+        </h1>
+
+        <!-- ÁREA DE LOGIN DO USUÁRIO -->
+        <div id="user_auth_area">
+            <div id="g_id_onload"
+                 data-client_id="SEU_CLIENT_ID_DO_GOOGLE.apps.googleusercontent.com"
+                 data-callback="handleCredentialResponse">
+            </div>
+            <div class="g_id_signin" data-type="standard" data-size="medium"></div>
+        </div>
     </header>
+
+    <!-- BANNER DE ANÚNCIO COM QR CODE PARA DOWNLOAD DO APP -->
+    <section class="app-promo-banner" style="background: linear-gradient(135deg, #0d47a1, #1976d2); color: white; padding: 15px 20px; border-radius: 10px; margin: 15px auto; max-width: 1200px; display: flex; align-items: center; justify-content: space-between; gap: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.15); flex-wrap: wrap;">
+        
+        <div style="display: flex; align-items: center; gap: 15px; flex: 1; min-width: 280px;">
+            <i class="fa-brands fa-google-play" style="font-size: 2.8rem; color: #64ffda;"></i>
+            <div>
+                <h2 style="margin: 0; font-size: 1.2rem;">Quer acesso a TODAS as loterias e estatísticas VIP?</h2>
+                <p style="margin: 5px 0 0 0; font-size: 0.9rem; opacity: 0.9;">
+                    Baixe nosso App na Google Play Store, faça sua assinatura e use o mesmo Gmail aqui no site para liberar tudo!
+                </p>
+            </div>
+        </div>
+
+        <!-- ÁREA DO QR CODE E BOTÃO DA PLAY STORE -->
+        <div style="display: flex; align-items: center; gap: 15px; background: rgba(255, 255, 255, 0.1); padding: 10px 15px; border-radius: 8px;">
+            <div style="text-align: center;">
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=90x90&data=https://play.google.com/store/apps/details?id=com.fabioribeiroromelli.geradordejogos" alt="QR Code App" style="border-radius: 6px; background: #fff; padding: 4px; display: block;">
+                <span style="font-size: 0.7rem; color: #64ffda; font-weight: bold; margin-top: 4px; display: block;">Aponte a câmera</span>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <a href="https://play.google.com/store/apps/details?id=com.fabioribeiroromelli.geradordejogos&pli=1" target="_blank" style="background-color: #00c853; color: white; padding: 10px 16px; border-radius: 6px; font-weight: bold; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; font-size: 0.9rem; white-space: nowrap;">
+                    <i class="fa-solid fa-download"></i> Baixar na Play Store
+                </a>
+            </div>
+        </div>
+
+    </section>
 
     <!-- BARRA DE ATALHOS FIXA -->
     <div class="shortcuts-bar">

@@ -6,13 +6,41 @@
     <title>Gerador de Jogos - Volante</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- SCRIPT OFICIAL DO GOOGLE PARA LOGIN VIA GMAIL -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f6f9;">
 
-    <header class="header-bar" style="background: #8e44ad; color: white; padding: 15px 20px; display: flex; align-items: center; gap: 15px;">
-        <button class="btn-back" onclick="window.location.href='home.html'" style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;">← Voltar</button>
-        <h1 id="page_title" style="margin: 0; font-size: 1.5rem;">Gerador de Jogos</h1>
+    <header class="header-bar" style="background: #8e44ad; color: white; padding: 15px 20px; display: flex; align-items: center; justify-content: space-between; gap: 15px;">
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <button class="btn-back" onclick="window.location.href='home.html'" style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;">← Voltar</button>
+            <h1 id="page_title" style="margin: 0; font-size: 1.5rem;">Gerador de Jogos</h1>
+        </div>
+
+        <!-- ÁREA DE LOGIN DO USUÁRIO (GMAIL) -->
+        <div id="user_auth_area">
+            <div id="g_id_onload"
+                 data-client_id="SEU_CLIENT_ID_DO_GOOGLE.apps.googleusercontent.com"
+                 data-callback="handleCredentialResponse">
+            </div>
+            <div class="g_id_signin" data-type="standard" data-size="medium"></div>
+        </div>
     </header>
+
+    <!-- BANNER ANÚNCIO / CONVITE PARA O APP DA PLAY STORE -->
+    <section class="app-promo-banner" style="background: linear-gradient(135deg, #0d47a1, #1976d2); color: white; padding: 12px 20px; border-radius: 8px; margin: 15px auto; max-width: 900px; display: flex; align-items: center; justify-content: space-between; gap: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); flex-wrap: wrap;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <i class="fa-brands fa-google-play" style="font-size: 2rem; color: #64ffda;"></i>
+            <div>
+                <strong style="font-size: 1rem; display: block;">Assine no App e libere no site!</strong>
+                <span style="font-size: 0.85rem; opacity: 0.9;">Baixe nosso aplicativo na Google Play Store, faça a assinatura e acesse aqui com o mesmo Gmail!</span>
+            </div>
+        </div>
+        <a href="https://play.google.com/store/apps/details?id=com.fabioribeiroromelli.geradordejogos&pli=1" target="_blank" style="background-color: #00c853; color: white; padding: 8px 16px; border-radius: 6px; font-weight: bold; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; font-size: 0.9rem;">
+            <i class="fa-solid fa-download"></i> Baixar no Google Play
+        </a>
+    </section>
 
     <nav class="lotteries-bar" style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; padding: 12px; background: #fff; border-bottom: 1px solid #e0e0e0; margin-bottom: 15px;">
         <button class="btn-lottery" data-type="MEGA_SENA" style="background: #27ae60; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold;">Mega-Sena</button>

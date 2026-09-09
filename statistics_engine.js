@@ -5,27 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="dark">
     <title>Estatísticas das Loterias</title>
-    <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        /*
-          Sistema de design deste painel — "Quadro de Apuração"
-          Paleta base:
-            --bg          #121019  fundo principal (tinta escura, não preto puro)
-            --surface     #1c1a26  fundo dos cartões
-            --surface-2   #262432  fundo de elementos internos (trilhos de barra)
-            --border      #363347  linhas divisórias
-            --text        #EDEAE3  texto principal
-            --text-muted  #9a96ab  texto secundário
-            --gold        #E3A83B  destaque (números-chave, seleção ativa)
-          Tipografia:
-            Big Shoulders Display — títulos e números grandes (estilo placar/quadro de sorteio)
-            IBM Plex Sans — texto de interface
-            IBM Plex Mono — valores numéricos tabulares
-        */
+        /* --- Mesmo estilo base do seu painel, com pequenos ajustes --- */
         :root {
             --bg: #121019;
             --surface: #1c1a26;
@@ -42,27 +27,21 @@
             --font-body: 'IBM Plex Sans', sans-serif;
             --font-mono: 'IBM Plex Mono', monospace;
         }
-
         * { box-sizing: border-box; }
-
         body {
             margin: 0;
             padding: 0;
             font-family: var(--font-body);
             background-color: var(--bg);
-            background-image:
-                radial-gradient(circle at 12% 0%, rgba(227, 168, 59, 0.07), transparent 40%),
-                radial-gradient(circle at 88% 10%, rgba(147, 0, 137, 0.12), transparent 45%);
+            background-image: radial-gradient(circle at 12% 0%, rgba(227, 168, 59, 0.07), transparent 40%),
+                              radial-gradient(circle at 88% 10%, rgba(147, 0, 137, 0.12), transparent 45%);
             background-attachment: fixed;
             color: var(--text);
             -webkit-font-smoothing: antialiased;
         }
-
-        /* ---------- Cabeçalho ---------- */
         .header-bar {
             background: linear-gradient(180deg, var(--ink), var(--surface));
             border-bottom: 1px solid var(--border);
-            color: var(--text);
             padding: 18px 24px;
             display: flex;
             align-items: center;
@@ -86,8 +65,6 @@
             white-space: nowrap;
         }
         .btn-back:hover { border-color: var(--gold); background: var(--gold-dim); }
-        .btn-back:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
-
         .header-titles h1 {
             margin: 0;
             font-family: var(--font-display);
@@ -101,11 +78,7 @@
             color: var(--text-muted);
             font-size: 0.9rem;
         }
-
-        /* ---------- Layout geral ---------- */
         .container { max-width: 1080px; margin: 0 auto; padding: 28px 20px 60px; }
-
-        /* ---------- Navegação das loterias ---------- */
         .lottery-grid-nav {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(122px, 1fr));
@@ -131,13 +104,10 @@
             box-shadow: 0 1px 0 rgba(255,255,255,0.12) inset, 0 4px 10px rgba(0,0,0,0.28);
         }
         .lottery-card-btn:hover { transform: translateY(-2px); filter: brightness(1.08); }
-        .lottery-card-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
         .lottery-card-btn.active {
             box-shadow: 0 0 0 3px var(--gold), 0 6px 16px rgba(0,0,0,0.35);
             transform: translateY(-2px);
         }
-
-        /* ---------- Barra de contexto ---------- */
         .context-bar {
             display: flex;
             justify-content: space-between;
@@ -172,8 +142,6 @@
             background: var(--surface-2);
             white-space: nowrap;
         }
-
-        /* ---------- Grade de cartões ---------- */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -190,16 +158,11 @@
         .stat-card:nth-child(2) { animation-delay: .05s; }
         .stat-card:nth-child(3) { animation-delay: .10s; }
         .stat-card:nth-child(4) { animation-delay: .15s; }
-
         @keyframes subir-card {
             from { opacity: 0; transform: translateY(8px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        @media (prefers-reduced-motion: reduce) {
-            .stat-card { animation: none; }
-            .lottery-card-btn, .btn-back { transition: none; }
-        }
-
+        @media (prefers-reduced-motion: reduce) { .stat-card { animation: none; } }
         .stat-card h3 {
             margin: 0 0 4px;
             color: var(--text);
@@ -219,8 +182,6 @@
             padding-bottom: 14px;
             border-bottom: 1px solid var(--border);
         }
-
-        /* Número em destaque */
         .hero-stat { display: flex; align-items: baseline; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
         .hero-stat .hero-number {
             font-family: var(--font-display);
@@ -230,8 +191,6 @@
             line-height: 1;
         }
         .hero-stat .hero-label { color: var(--text-muted); font-size: 0.85rem; line-height: 1.3; }
-
-        /* Barras de distribuição */
         .bar-list {
             list-style: none;
             margin: 0;
@@ -245,7 +204,6 @@
         .bar-list::-webkit-scrollbar { width: 6px; }
         .bar-list::-webkit-scrollbar-track { background: transparent; }
         .bar-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-
         .bar-row { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 6px 10px; align-items: center; }
         .bar-row .bar-label { font-size: 0.85rem; color: var(--text); }
         .bar-row .bar-value {
@@ -262,8 +220,6 @@
             overflow: hidden;
         }
         .bar-row .bar-fill { height: 100%; background: var(--gold); border-radius: 4px; }
-
-        /* Quadrantes */
         .quadrant-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .quadrant-box {
             background: var(--surface-2);
@@ -284,6 +240,100 @@
         .quadrant-box .bar-track { height: 5px; background: var(--surface); border-radius: 3px; overflow: hidden; }
         .quadrant-box .bar-fill { height: 100%; background: var(--gold); border-radius: 3px; }
 
+        /* NOVA GRADE DE NÚMEROS */
+        .number-grid {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 6px;
+            margin: 12px 0;
+        }
+        .number-cell {
+            aspect-ratio: 1 / 1;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 1.1rem;
+            background: var(--surface-2);
+            color: var(--text);
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: transform 0.1s ease, box-shadow 0.1s ease;
+            position: relative;
+        }
+        .number-cell:hover {
+            transform: scale(1.08);
+            box-shadow: 0 0 12px rgba(227, 168, 59, 0.3);
+            z-index: 2;
+        }
+        /* Cores por frequência */
+        .number-cell.hot {
+            background: #E3A83B;
+            color: #121019;
+            border-color: #E3A83B;
+        }
+        .number-cell.cold {
+            background: #3a3a5a;
+            color: #9a96ab;
+            border-color: #3a3a5a;
+        }
+        .number-cell.delay {
+            background: #c0392b;
+            color: #fff;
+            border-color: #c0392b;
+        }
+        .number-cell.mid {
+            background: #6a5a3a;
+            color: #EDEAE3;
+            border-color: #6a5a3a;
+        }
+
+        /* Tooltip para concursos */
+        .tooltip {
+            display: none;
+            position: absolute;
+            background: var(--surface);
+            border: 1px solid var(--gold);
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 0.75rem;
+            color: var(--text);
+            min-width: 120px;
+            max-width: 200px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+            z-index: 10;
+            pointer-events: none;
+            white-space: normal;
+            line-height: 1.4;
+        }
+        .number-cell:hover .tooltip {
+            display: block;
+            bottom: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        /* Cabeçalho dos concursos */
+        .contest-header-row {
+            display: flex;
+            gap: 4px;
+            margin-top: 8px;
+            padding: 4px 0;
+            overflow-x: auto;
+        }
+        .contest-header-row span {
+            min-width: 30px;
+            text-align: center;
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            background: var(--surface-2);
+            padding: 2px 4px;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+
         .rodape-nota {
             margin-top: 26px;
             color: var(--text-muted);
@@ -291,7 +341,6 @@
             text-align: center;
             line-height: 1.5;
         }
-
         .estado-vazio {
             grid-column: 1 / -1;
             text-align: center;
@@ -305,6 +354,10 @@
             .container { padding: 20px 14px 40px; }
             .hero-stat .hero-number { font-size: 2.1rem; }
             .context-bar { padding: 14px 16px; }
+            .number-grid { grid-template-columns: repeat(7, 1fr); }
+        }
+        @media (max-width: 480px) {
+            .number-grid { grid-template-columns: repeat(5, 1fr); }
         }
     </style>
 
@@ -358,7 +411,7 @@
     </main>
 
     <script>
-        // Nomes de exibição oficiais de cada loteria (evita concatenações como "MEGASENA")
+        // --------------------- CONFIGURAÇÃO ---------------------
         const NOMES_LOTERIAS = {
             megasena: 'Mega-Sena',
             lotofacil: 'Lotofácil',
@@ -371,25 +424,39 @@
             maismilionaria: '+Milionária'
         };
 
+        // Mapeamento de quantos números cada loteria possui
+        const TOTAL_NUMEROS = {
+            megasena: 60,
+            lotofacil: 25,
+            quina: 80,
+            lotomania: 100,
+            timemania: 80,
+            duplasena: 50,
+            diadesorte: 31,
+            supersete: 7,   // Super Sete tem 7 colunas, cada uma com 0-9
+            maismilionaria: 50
+        };
+
+        // Nomes dos concursos para exibição (Super Sete é diferente)
+        function getConcursoHeader(draw) {
+            return draw.concurso || draw.numero || draw.id || '?';
+        }
+
+        // --------------------- FUNÇÕES AUXILIARES ---------------------
         function pluralizar(quantidade, singular, plural) {
             return Number(quantidade) === 1 ? singular : plural;
         }
-
         function formatarNumero(valor, casas = 1) {
             const numero = Number(valor);
-            return Number.isFinite(numero)
-                ? numero.toLocaleString('pt-BR', { minimumFractionDigits: casas, maximumFractionDigits: casas })
-                : '0';
+            return Number.isFinite(numero) ? numero.toLocaleString('pt-BR', { minimumFractionDigits: casas, maximumFractionDigits: casas }) : '0';
         }
-
         function formatarInteiro(valor) {
             return Number(valor).toLocaleString('pt-BR');
         }
 
-        // SEU MOTOR DE ESTATÍSTICAS
+        // --------------------- MOTOR DE ESTATÍSTICAS (mesmo do original) ---------------------
         const LotteryStatsEngine = {
             PRIMES: [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97],
-
             getPrimeAnalysis(draws) {
                 const primeCountsPerDraw = {};
                 draws.forEach(draw => {
@@ -402,7 +469,6 @@
                     avgPrimesPerDraw: (Object.entries(primeCountsPerDraw).reduce((acc, [k, v]) => acc + (k * v), 0) / (draws.length || 1)).toFixed(2)
                 };
             },
-
             getEvenOddDetailed(draws) {
                 const patterns = {};
                 draws.forEach(draw => {
@@ -416,7 +482,6 @@
                     .map(([pattern, count]) => ({ pattern, count, percentage: ((count / draws.length) * 100).toFixed(1) }))
                     .sort((a, b) => b.count - a.count);
             },
-
             getConsecutiveAnalysis(draws) {
                 let drawsWithConsecutives = 0;
                 const maxSequences = {};
@@ -425,7 +490,6 @@
                     let hasConsecutive = false;
                     let currentSeq = 1;
                     let maxSeqInDraw = 1;
-
                     for (let i = 0; i < numbers.length - 1; i++) {
                         if (numbers[i + 1] === numbers[i] + 1) {
                             hasConsecutive = true;
@@ -443,7 +507,6 @@
                     sequenceLengths: maxSequences
                 };
             },
-
             getQuadrantAnalysis(draws, totalColumns = 10) {
                 const quadrantCounts = { Q1: 0, Q2: 0, Q3: 0, Q4: 0 };
                 draws.forEach(draw => {
@@ -459,7 +522,6 @@
                 });
                 return quadrantCounts;
             },
-
             generateAdvancedReport(lotteryName, draws) {
                 return {
                     lottery: lotteryName,
@@ -472,59 +534,104 @@
             }
         };
 
-        document.addEventListener('DOMContentLoaded', () => carregarEstatisticas('megasena'));
+        // --------------------- NOVA FUNÇÃO: GRADE DE NÚMEROS ---------------------
+        function gerarGradeNumeros(draws, totalNumeros, lotteryName) {
+            // Contagem de frequência de cada número
+            const freq = {};
+            const ocorrencias = {}; // numero -> lista de concursos (números)
+            const ultimoSorteio = draws.length > 0 ? draws[draws.length - 1] : null;
 
-        function carregarEstatisticas(loteria) {
-            destacarBotaoAtivo(loteria);
-            const container = document.getElementById('stats_container');
-            const title = document.getElementById('stats_title');
-            const subtitle = document.getElementById('stats_subtitle');
-            const badge = document.getElementById('badge_fonte');
-            const nomeExibicao = NOMES_LOTERIAS[loteria] || loteria;
-
-            // Busca os dados (primeiro tenta o LocalStorage) — lógica original, intocada
-            let dados = null;
-            const salvosMemoria = localStorage.getItem(`historico_${loteria}`) || localStorage.getItem(loteria.toUpperCase());
-
-            if (salvosMemoria) {
-                try {
-                    dados = JSON.parse(salvosMemoria);
-                    badge.textContent = 'Fonte: dados salvos localmente';
-                } catch (e) {}
+            // Inicializa
+            for (let i = 1; i <= totalNumeros; i++) {
+                freq[i] = 0;
+                ocorrencias[i] = [];
             }
 
-            if (!dados) {
-                const varStandard = `HISTORICO_${loteria.toUpperCase()}`;
-                const varAlt = `HISTORICO_${loteria.replace('mais', 'mais_').toUpperCase()}`;
-                dados = window[varStandard] || window[varAlt];
-                badge.textContent = 'Fonte: histórico padrão do sistema';
+            // Para Super Sete, os números vão de 0 a 9 e são 7 colunas; mas para este exemplo,
+            // tratamos como números de 0 a 9 (se for Super Sete, totalNumeros será 10? Vou adaptar)
+            // Na verdade, Super Sete tem 7 colunas, cada uma com 0-9. Vou tratar como 10 números.
+            // Se for Super Sete, usaremos 10 números (0-9).
+            if (lotteryName === 'supersete') {
+                // Vamos redefinir totalNumeros para 10 (0-9)
+                totalNumeros = 10;
+                for (let i = 0; i < 10; i++) {
+                    freq[i] = 0;
+                    ocorrencias[i] = [];
+                }
             }
 
-            if (!dados || !Array.isArray(dados) || dados.length === 0) {
-                title.textContent = nomeExibicao;
-                subtitle.textContent = '';
-                badge.textContent = '';
-                container.innerHTML = `
-                    <div class="estado-vazio">
-                        <i class="fa-solid fa-circle-exclamation"></i>
-                        Nenhum dado encontrado para ${nomeExibicao}.
-                    </div>`;
-                return;
-            }
+            // Percorre todos os sorteios
+            draws.forEach((draw, idx) => {
+                const numeros = draw.dezenas || draw.listaDezenas || [];
+                numeros.forEach(n => {
+                    const num = parseInt(n, 10);
+                    if (lotteryName === 'supersete') {
+                        // Para Super Sete, os números são 0-9
+                        if (num >= 0 && num <= 9) {
+                            freq[num] = (freq[num] || 0) + 1;
+                            ocorrencias[num].push(getConcursoHeader(draw));
+                        }
+                    } else {
+                        if (num >= 1 && num <= totalNumeros) {
+                            freq[num] = (freq[num] || 0) + 1;
+                            ocorrencias[num].push(getConcursoHeader(draw));
+                        }
+                    }
+                });
+            });
 
-            // Executa o motor sobre a lista de concursos
-            const report = LotteryStatsEngine.generateAdvancedReport(loteria, dados);
-            title.textContent = nomeExibicao;
-            subtitle.textContent = `${formatarInteiro(report.totalDraws)} ${pluralizar(report.totalDraws, 'concurso analisado', 'concursos analisados')}`;
+            // Calcular média e desvio para definir quente/frio
+            const valores = Object.values(freq);
+            const media = valores.reduce((a, b) => a + b, 0) / (valores.length || 1);
+            const desvio = Math.sqrt(valores.reduce((a, b) => a + (b - media) ** 2, 0) / (valores.length || 1));
 
-            renderizarCards(report);
+            // Construir a grade
+            let gridHtml = '<div class="number-grid">';
+            const numerosKeys = lotteryName === 'supersete' ? Array.from({length: 10}, (_, i) => i) : Array.from({length: totalNumeros}, (_, i) => i + 1);
+
+            numerosKeys.forEach(num => {
+                const count = freq[num] || 0;
+                const concursos = ocorrencias[num] || [];
+                // Classificação
+                let cls = 'mid';
+                if (count > media + desvio * 0.8) cls = 'hot';
+                else if (count < media - desvio * 0.8) cls = 'cold';
+                // Se está em atraso (não sai nos últimos 5 concursos) - simples: se não saiu nos últimos 5
+                const ultimos5 = draws.slice(-5).flatMap(d => d.dezenas || d.listaDezenas || []).map(n => parseInt(n, 10));
+                if (!ultimos5.includes(num)) cls = 'delay';
+
+                // Montar tooltip com os concursos
+                let tooltipText = concursos.length > 0 ? concursos.join(', ') : 'Nunca sorteado';
+                if (tooltipText.length > 40) tooltipText = tooltipText.slice(0, 40) + '…';
+
+                const displayNum = lotteryName === 'supersete' ? num : num.toString().padStart(2, '0');
+                gridHtml += `
+                    <div class="number-cell ${cls}" data-number="${num}">
+                        ${displayNum}
+                        <div class="tooltip">${tooltipText}</div>
+                    </div>
+                `;
+            });
+            gridHtml += '</div>';
+
+            // Cabeçalho dos últimos concursos (opcional)
+            let headerHtml = '<div class="contest-header-row">';
+            const ultimosConcursos = draws.slice(-10).map(d => getConcursoHeader(d));
+            ultimosConcursos.forEach(c => {
+                headerHtml += `<span>${c}</span>`;
+            });
+            headerHtml += '</div>';
+
+            return gridHtml + headerHtml;
         }
 
-        function renderizarCards(report) {
+        // --------------------- RENDERIZAÇÃO DOS CARDS (incluindo a nova grade) ---------------------
+        function renderizarCards(report, draws, lotteryName) {
             const container = document.getElementById('stats_container');
             const totalDraws = report.totalDraws || 1;
+            const totalNumeros = TOTAL_NUMEROS[lotteryName] || 60;
 
-            // 1. Par / Ímpar — mostra a distribuição completa (sem cortar nos 5 primeiros)
+            // 1. Par / Ímpar
             const linhasParImpar = report.evenOddPatterns.map(p => `
                 <li class="bar-row">
                     <span class="bar-label">${p.pattern}</span>
@@ -532,7 +639,7 @@
                     <div class="bar-track"><div class="bar-fill" style="width:${p.percentage}%"></div></div>
                 </li>`).join('');
 
-            // 2. Números Primos
+            // 2. Primos
             const linhasPrimos = Object.entries(report.primes.primeDistribution).map(([k, v]) => {
                 const pct = (v / totalDraws) * 100;
                 return `
@@ -578,7 +685,17 @@
                 </div>`;
             }).join('');
 
+            // 5. GRADE DE NÚMEROS (NOVO)
+            const gradeHtml = gerarGradeNumeros(draws, totalNumeros, lotteryName);
+
             container.innerHTML = `
+                <!-- CARD DA GRADE DE NÚMEROS (DESTAQUE) -->
+                <div class="stat-card" style="grid-column: 1 / -1;">
+                    <h3><i class="fa-solid fa-th"></i> Frequência dos números</h3>
+                    <p class="card-desc">Cada círculo representa um número. Cores: <span style="color:#E3A83B;">■</span> quente (alto), <span style="color:#6a5a3a;">■</span> médio, <span style="color:#3a3a5a;">■</span> frio (baixo), <span style="color:#c0392b;">■</span> em atraso. Passe o mouse para ver os concursos.</p>
+                    ${gradeHtml}
+                </div>
+
                 <div class="stat-card">
                     <h3><i class="fa-solid fa-scale-balanced"></i> Padrões de par e ímpar</h3>
                     <p class="card-desc">Quantos números pares e ímpares saem juntos em cada concurso.</p>
@@ -613,6 +730,54 @@
             `;
         }
 
+        // --------------------- FUNÇÃO PRINCIPAL ---------------------
+        function carregarEstatisticas(loteria) {
+            destacarBotaoAtivo(loteria);
+            const container = document.getElementById('stats_container');
+            const title = document.getElementById('stats_title');
+            const subtitle = document.getElementById('stats_subtitle');
+            const badge = document.getElementById('badge_fonte');
+            const nomeExibicao = NOMES_LOTERIAS[loteria] || loteria;
+
+            // Busca os dados
+            let dados = null;
+            const salvosMemoria = localStorage.getItem(`historico_${loteria}`) || localStorage.getItem(loteria.toUpperCase());
+
+            if (salvosMemoria) {
+                try {
+                    dados = JSON.parse(salvosMemoria);
+                    badge.textContent = 'Fonte: dados salvos localmente';
+                } catch (e) {}
+            }
+
+            if (!dados) {
+                const varStandard = `HISTORICO_${loteria.toUpperCase()}`;
+                const varAlt = `HISTORICO_${loteria.replace('mais', 'mais_').toUpperCase()}`;
+                dados = window[varStandard] || window[varAlt];
+                badge.textContent = 'Fonte: histórico padrão do sistema';
+            }
+
+            if (!dados || !Array.isArray(dados) || dados.length === 0) {
+                title.textContent = nomeExibicao;
+                subtitle.textContent = '';
+                badge.textContent = '';
+                container.innerHTML = `
+                    <div class="estado-vazio">
+                        <i class="fa-solid fa-circle-exclamation"></i>
+                        Nenhum dado encontrado para ${nomeExibicao}.
+                    </div>`;
+                return;
+            }
+
+            // Gera relatório agregado
+            const report = LotteryStatsEngine.generateAdvancedReport(loteria, dados);
+            title.textContent = nomeExibicao;
+            subtitle.textContent = `${formatarInteiro(report.totalDraws)} ${pluralizar(report.totalDraws, 'concurso analisado', 'concursos analisados')}`;
+
+            // Renderiza os cards (incluindo a grade)
+            renderizarCards(report, dados, loteria);
+        }
+
         function destacarBotaoAtivo(loteria) {
             document.querySelectorAll('.lottery-card-btn').forEach(btn => {
                 btn.classList.remove('active');
@@ -624,6 +789,9 @@
                 btn.setAttribute('aria-pressed', 'true');
             }
         }
+
+        // Carrega Mega-Sena por padrão
+        document.addEventListener('DOMContentLoaded', () => carregarEstatisticas('megasena'));
     </script>
 </body>
 </html>
