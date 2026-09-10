@@ -4,10 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gerador de Jogos - Loterias</title>
+    
+    <!-- Estilos Externos & Ícones -->
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Google Sign-In SDK -->
+    <!-- Google Identity Services (GSI) SDK -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
 
     <!-- Google AdSense Script -->
@@ -30,6 +32,7 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
+        // Exportação global da função de verificação no Firestore
         window.verificarAssinaturaFirestore = async function(email) {
             try {
                 const q = query(
@@ -47,6 +50,11 @@
     </script>
 
     <style>
+        /* Oculta o pop-up automático (One Tap) que o Google injeta no topo da página */
+        #credential_picker_container, iframe[src*="accounts.google.com/gsi/iframe"] {
+            display: none !important;
+        }
+
         :root {
             --primary-bg: #4a148c;
             --card-bg: #ffffff;
@@ -248,7 +256,7 @@
             <i class="fa-solid fa-dice"></i> Loterias Disponíveis
         </h1>
 
-        <!-- Único Container do Botão Google -->
+        <!-- Único Container do Botão Google / Perfil do Usuário -->
         <div id="user_auth_area"></div>
     </header>
 
@@ -346,7 +354,7 @@
         </div>
     </section>
 
-    <!-- ATALHOS -->
+    <!-- ATALHOS NAVEGAÇÃO -->
     <div class="shortcuts-bar">
         <button onclick="window.location.href='gerar_jogos.html'"><i class="fa-solid fa-wand-magic-sparkles"></i> Gerar Jogos</button>
         <button onclick="window.location.href='saved_games.html'"><i class="fa-solid fa-bookmark"></i> Jogos Salvos</button>
@@ -369,10 +377,12 @@
         </script>
     </div>
 
+    <!-- MAIN CONTAINER -->
     <main class="container">
         <div id="lottery_grid" class="lottery-grid"></div>
     </main>
 
+    <!-- RODAPÉ -->
     <footer class="site-footer">
         <div class="footer-links">
             <a href="https://sites.google.com/view/gerador-de-jogos-loteria/in%C3%ADcio" target="_blank"><i class="fa-solid fa-shield-halved"></i> Política de Privacidade</a>
@@ -432,7 +442,8 @@
                             client_id: "383374785711-e00t37fkf9q6aqe5imqi0nnh29v2npq4.apps.googleusercontent.com",
                             callback: handleCredentialResponse,
                             auto_select: false,
-                            cancel_on_tap_outside: true
+                            cancel_on_tap_outside: true,
+                            itp_support: true
                         });
                         
                         const btnDiv = document.getElementById('g_id_signin_btn');
@@ -508,10 +519,11 @@
             let slideIndex = 0;
             let autoSlideInterval;
             const slidesContainer = document.getElementById('carouselSlides');
-            const totalSlides = slidesContainer.children.length;
+            const totalSlides = slidesContainer ? slidesContainer.children.length : 0;
             const dots = document.querySelectorAll('.dot');
 
             const updateSlide = (index) => {
+                if (!slidesContainer || totalSlides === 0) return;
                 slideIndex = (index + totalSlides) % totalSlides;
                 slidesContainer.style.transform = `translateX(-${slideIndex * 100}%)`;
                 dots.forEach((dot, i) => dot.classList.toggle('active', i === slideIndex));
@@ -522,8 +534,11 @@
                 autoSlideInterval = setInterval(() => updateSlide(slideIndex + 1), 4000);
             };
 
-            document.getElementById('btnNext').addEventListener('click', () => { updateSlide(slideIndex + 1); startAutoSlide(); });
-            document.getElementById('btnPrev').addEventListener('click', () => { updateSlide(slideIndex - 1); startAutoSlide(); });
+            const btnNext = document.getElementById('btnNext');
+            const btnPrev = document.getElementById('btnPrev');
+
+            if (btnNext) btnNext.addEventListener('click', () => { updateSlide(slideIndex + 1); startAutoSlide(); });
+            if (btnPrev) btnPrev.addEventListener('click', () => { updateSlide(slideIndex - 1); startAutoSlide(); });
             
             dots.forEach(dot => {
                 dot.addEventListener('click', (e) => {
@@ -534,14 +549,14 @@
 
             startAutoSlide();
 
-            // Modal VIP
+            // Modal VIP com Internacionalização (PT / EN / ES)
             const translations = {
                 pt: { title: "Função Exclusiva VIP 🔒", msg: "Esta função é exclusiva para assinantes! Baixe nosso app na Google Play, assine o plano VIP e libere todas as funções.", btnApp: "Baixar na Play Store", btnClose: "Fechar" },
                 en: { title: "Exclusive VIP Feature 🔒", msg: "This feature is for subscribers only! Download our app on Google Play, subscribe to the VIP plan, and unlock all tools.", btnApp: "Get it on Play Store", btnClose: "Close" },
                 es: { title: "Función Exclusiva VIP 🔒", msg: "¡Esta función es solo para suscriptores! Descarga nuestra app en Google Play, suscríbete al plan VIP y desbloquea todas las herramientas.", btnApp: "Obtener en Play Store", btnClose: "Cerrar" }
             };
 
-            const txt = translations[userLang];
+            const txt = translations[userLang] || translations.pt;
 
             const applyVipLocks = () => {
                 if (isSubscriber) return;
