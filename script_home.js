@@ -34,38 +34,38 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-  function initGoogleAuth() {
-    if (window._googleAuthInitialized) return;
-    
-    if (typeof google === 'undefined' || !google.accounts || !google.accounts.id) {
-        return;
+    function initGoogleAuth() {
+        if (window._googleAuthInitialized) return;
+        
+        if (typeof google === 'undefined' || !google.accounts || !google.accounts.id) {
+            return;
+        }
+
+        window._googleAuthInitialized = true;
+
+        let authContainer = document.getElementById('google_auth_container');
+        if (!authContainer) {
+            authContainer = document.createElement('div');
+            authContainer.id = 'google_auth_container';
+            document.body.prepend(authContainer);
+        }
+
+        try {
+            google.accounts.id.initialize({
+                client_id: "383374785711-e00t37fkf9q6aqe5imqi0nnh29v2npq4.apps.googleusercontent.com",
+                callback: handleCredentialResponse,
+                ux_mode: "popup" // Força o modo popup para evitar bloqueios de COOP
+            });
+
+            google.accounts.id.renderButton(
+                authContainer,
+                { theme: "outline", size: "medium", text: "signin_with" }
+            );
+        } catch (error) {
+            console.error("Erro ao inicializar Google Auth:", error);
+            window._googleAuthInitialized = false;
+        }
     }
-
-    window._googleAuthInitialized = true;
-
-    let authContainer = document.getElementById('google_auth_container');
-    if (!authContainer) {
-        authContainer = document.createElement('div');
-        authContainer.id = 'google_auth_container';
-        document.body.prepend(authContainer);
-    }
-
-    try {
-        google.accounts.id.initialize({
-            client_id: "383374785711-e00t37fkf9q6aqe5imqi0nnh29v2npq4.apps.googleusercontent.com",
-            callback: handleCredentialResponse,
-            ux_mode: "popup" // Força o modo popup para evitar bloqueios de COOP
-        });
-
-        google.accounts.id.renderButton(
-            authContainer,
-            { theme: "outline", size: "medium", text: "signin_with" }
-        );
-    } catch (error) {
-        console.error("Erro ao inicializar Google Auth:", error);
-        window._googleAuthInitialized = false;
-    }
-}
 
     window.handleCredentialResponse = function(response) {
         if (!response || !response.credential) {
@@ -332,7 +332,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         `;
     }
 
-    // ===== 6. CARDS ESPECIAIS (Mantidos iguais) =====
+    // ===== 6. CARDS ESPECIAIS (GERADORES) =====
     function renderPremiumCard() {
         return `
             <div class="lottery-card premium-card" onclick="window.location.href='estrategias.html'">
@@ -430,13 +430,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const grid = document.getElementById('lottery_grid');
     if (!grid) return;
 
-    // Pega os dados diretamente do arquivo 'dados_loteria.js' carregado na página
     let results = LOTTERIES.map(lot => fetchUltimoConcursoLocal(lot.name));
 
     // ===== MONTA O GRID: CARDS ESPECIAIS + LOTERIAS =====
     let html = '';
     
-    // 1. Cards Especiais
+    // 1. Injeta os cards de geradores especiais primeiro
     html += renderPremiumCard();
     html += renderAvancadoCard();
     html += renderLotofacilRepeticaoCard();
@@ -444,7 +443,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     html += renderDiadesorteRepeticaoCard();
     html += renderSorteioGloboCard();
 
-    // 2. Loterias (pegos direto do arquivo estático)
+    // 2. Injeta os cards de resultados das loterias
     LOTTERIES.forEach((lot, index) => {
         html += renderCard(lot.name, results[index]);
     });
