@@ -481,7 +481,6 @@ function mostrarDialogoNaoAssinante(nomeUsuario) {
     });
 }
 
-// ===== FUNÇÃO GLOBAL DE CALLBACK DO GOOGLE AUTH =====
 function handleCredentialResponse(response) {
     if (!response || !response.credential) {
         console.error("Nenhuma credencial retornada pelo Google.");
@@ -498,11 +497,11 @@ function handleCredentialResponse(response) {
             console.warn("Não foi possível salvar os dados do usuário no localStorage:", e);
         }
 
-        // Exemplo de verificação se o usuário é assinante (Você pode conectar com seu backend/banco de dados aqui)
-        // Por padrão, se não houver a flag 'is_subscriber' como true no localStorage, exibiremos o diálogo elegante:
+        // Verifica se o usuário é assinante
         const isAssinante = localStorage.getItem("is_subscriber") === "true";
 
         if (!isAssinante) {
+            // Chama o modal elegante ao invés do alert padrão
             mostrarDialogoNaoAssinante(responsePayload.name);
         } else {
             alert(`Bem-vindo de volta, ${responsePayload.name || 'Usuário'}! Login de assinante verificado.`);
@@ -511,7 +510,6 @@ function handleCredentialResponse(response) {
         alert("Não foi possível extrair as informações da conta do Google.");
     }
 }
-
 function parseJwt(token) {
     try {
         const base64Url = token.split('.')[1];
