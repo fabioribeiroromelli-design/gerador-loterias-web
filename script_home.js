@@ -173,45 +173,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     const LOTTERIES = [
-        { name: 'Dia de Sorte', endpoint: 'diadesorte' },
-        { name: 'Dupla Sena', endpoint: 'duplasena' },
-        { name: 'Federal', endpoint: 'federal' },
-        { name: 'Loteca', endpoint: 'loteca' },
-        { name: 'Lotofácil', endpoint: 'lotofacil' },
-        { name: 'Lotomania', endpoint: 'lotomania' },
-        { name: '+Milionária', endpoint: 'maismilionaria' },
-        { name: 'Mega-Sena', endpoint: 'megasena' },
-        { name: 'Quina', endpoint: 'quina' },
-        { name: 'Super Sete', endpoint: 'supersete' },
-        { name: 'Timemania', endpoint: 'timemania' }
+        { name: 'Dia de Sorte' },
+        { name: 'Dupla Sena' },
+        { name: 'Federal' },
+        { name: 'Loteca' },
+        { name: 'Lotofácil' },
+        { name: 'Lotomania' },
+        { name: '+Milionária' },
+        { name: 'Mega-Sena' },
+        { name: 'Quina' },
+        { name: 'Super Sete' },
+        { name: 'Timemania' }
     ];
 
-    const CACHE_KEY = 'loterias_cache_data';
-    const CACHE_TIME_KEY = 'loterias_cache_time';
-    const CACHE_DURATION_MS = 30 * 60 * 1000;
-
-    // ===== 4. FUNÇÃO PARA BUSCAR ÚLTIMO CONCURSO =====
-    async function fetchUltimoConcurso(endpoint, lotteryName) {
-        let data = null;
-        try {
-            const res = await fetch(`https://servicebus2.caixa.gov.br/portaldeloterias/api/${endpoint}`);
-            if (res.ok) data = await res.json();
-        } catch (e) {
-            console.warn(`[${lotteryName}] Tentando API auxiliar...`);
+    // ===== 4. FUNÇÃO PARA PEGAR OS DADOS DIRETO DO ARQUIVO LOCAL (dados_loteria.js) =====
+    function fetchUltimoConcursoLocal(lotteryName) {
+        if (window.DADOS_ULTIMOS_CONCURSOS && window.DADOS_ULTIMOS_CONCURSOS[lotteryName]) {
+            return window.DADOS_ULTIMOS_CONCURSOS[lotteryName];
         }
-
-        if (!data) {
-            try {
-                const resAlt = await fetch(`https://api.guidi.dev.br/loteria/${endpoint}/ultimo`);
-                if (resAlt.ok) data = await resAlt.json();
-            } catch (e) {}
-        }
-
-        if (!data && window.DADOS_ULTIMOS_CONCURSOS && window.DADOS_ULTIMOS_CONCURSOS[lotteryName]) {
-            data = window.DADOS_ULTIMOS_CONCURSOS[lotteryName];
-        }
-
-        return data;
+        return null;
     }
 
     // ===== 5. RENDERIZAÇÃO DOS CARDS DE LOTERIAS =====
@@ -225,10 +205,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <div class="lottery-card" style="border-top-color: ${color}; opacity: 0.8;">
                     <div class="card-header">
                         <h3 style="color: ${color};"><i class="fa-solid ${icon}"></i> ${lotteryName}</h3>
-                        <span class="badge-conc">Erro</span>
+                        <span class="badge-conc">Indisponível</span>
                     </div>
-                    <div class="drawn-numbers">Indisponível</div>
-                    <button class="btn-generate" style="background: ${color};" disabled>Sem Conexão</button>
+                    <div class="drawn-numbers">Sem dados</div>
+                    <button class="btn-generate" style="background: ${color};" disabled>Aguardando Atualização</button>
                 </div>
             `;
         }
@@ -365,7 +345,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         `;
     }
 
-    // ===== 6. CARDS ESPECIAIS =====
+    // ===== 6. CARDS ESPECIAIS (Mantidos iguais) =====
     function renderPremiumCard() {
         return `
             <div class="lottery-card premium-card" onclick="window.location.href='estrategias.html'">
@@ -459,40 +439,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
-    // ===== 8. CARREGAMENTO PRINCIPAL =====
+    // ===== 8. CARREGAMENTO PRINCIPAL INSTANTÂNEO =====
     const grid = document.getElementById('lottery_grid');
     if (!grid) return;
 
-    let cachedTime = null;
-    let cachedDataStr = null;
-    try {
-        cachedTime = localStorage.getItem(CACHE_TIME_KEY);
-        cachedDataStr = localStorage.getItem(CACHE_KEY);
-    } catch (e) {
-        console.warn("Não foi possível acessar o localStorage:", e);
-    }
-
-    const now = Date.now();
-    let results = null;
-
-    if (cachedTime && cachedDataStr && (now - parseInt(cachedTime, 10)) < CACHE_DURATION_MS) {
-        try {
-            results = JSON.parse(cachedDataStr);
-        } catch (e) {
-            results = null;
-        }
-    }
-
-    if (!results) {
-        grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; font-size: 1.2rem; color: #666;"><i class="fa-solid fa-spinner fa-spin"></i> Buscando resultados das loterias...</div>';
-        const promises = LOTTERIES.map(lot => fetchUltimoConcurso(lot.endpoint, lot.name));
-        results = await Promise.all(promises);
-
-        try {
-            localStorage.setItem(CACHE_KEY, JSON.stringify(results));
-            localStorage.setItem(CACHE_TIME_KEY, now.toString());
-        } catch (e) {}
-    }
+    // Pega os dados diretamente do arquivo 'dados_loteria.js' carregado na página
+    let results = LOTTERIES.map(lot => fetchUltimoConcursoLocal(lot.name));
 
     // ===== MONTA O GRID: CARDS ESPECIAIS + LOTERIAS =====
     let html = '';
@@ -505,7 +457,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     html += renderDiadesorteRepeticaoCard();
     html += renderSorteioGloboCard();
 
-    // 2. Loterias (resultados da API)
+    // 2. Loterias (pegos direto do arquivo estático)
     LOTTERIES.forEach((lot, index) => {
         html += renderCard(lot.name, results[index]);
     });

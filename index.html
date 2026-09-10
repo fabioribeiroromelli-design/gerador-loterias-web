@@ -312,8 +312,8 @@
 
     <!-- CARROSSEL DE APLICATIVOS -->
     <section class="carousel-container">
-        <button class="carousel-btn prev" id="btnPrev"><i class="fa-solid fa-chevron-left"></i></button>
-        <button class="carousel-btn next" id="btnNext"><i class="fa-solid fa-chevron-right"></i></button>
+        <button class="carousel-btn prev" id="btnPrev" aria-label="Anterior"><i class="fa-solid fa-chevron-left"></i></button>
+        <button class="carousel-btn next" id="btnNext" aria-label="Próximo"><i class="fa-solid fa-chevron-right"></i></button>
 
         <div class="carousel-slides" id="carouselSlides">
             <div class="carousel-slide">
@@ -567,31 +567,32 @@
             }
         }
 
-       const applyVipLocks = () => {
-    const grid = document.getElementById('lottery_grid');
-    if (!grid) return;
+        let isLockingVip = false;
+        const applyVipLocks = () => {
+            const grid = document.getElementById('lottery_grid');
+            if (!grid) return;
 
-    const cards = Array.from(grid.children).slice(0, 5);
+            const cards = Array.from(grid.children).slice(0, 5);
 
-    // Se estiver logado E for assinante, libera. Caso contrário, tranca!
-    if (currentUser && isSubscriber) {
-        cards.forEach(card => {
-            card.classList.remove('vip-card-locked');
-            const badge = card.querySelector('.vip-badge');
-            if (badge) badge.remove();
-        });
-    } else {
-        cards.forEach(card => {
-            card.classList.add('vip-card-locked');
-            if (!card.querySelector('.vip-badge')) {
-                const badge = document.createElement('span');
-                badge.className = 'vip-badge';
-                badge.innerHTML = '<i class="fa-solid fa-lock"></i> VIP';
-                card.appendChild(badge);
+            // Se estiver logado E for assinante, libera. Caso contrário, tranca!
+            if (currentUser && isSubscriber) {
+                cards.forEach(card => {
+                    card.classList.remove('vip-card-locked');
+                    const badge = card.querySelector('.vip-badge');
+                    if (badge) badge.remove();
+                });
+            } else {
+                cards.forEach(card => {
+                    card.classList.add('vip-card-locked');
+                    if (!card.querySelector('.vip-badge')) {
+                        const badge = document.createElement('span');
+                        badge.className = 'vip-badge';
+                        badge.innerHTML = '<i class="fa-solid fa-lock"></i> VIP';
+                        card.appendChild(badge);
+                    }
+                });
             }
-        });
-    }
-};
+        };
 
         document.addEventListener('DOMContentLoaded', () => {
             updateUIAuth();
@@ -660,12 +661,18 @@
                 document.getElementById('btnCloseModal').onclick = () => modal.remove();
             };
 
-            const observer = new MutationObserver(() => {
-                applyVipLocks();
-            });
-
             const grid = document.getElementById('lottery_grid');
             if (grid) {
+                // Prevenção de loop infinito no MutationObserver desconectando temporariamente durante modificações no DOM
+                const observer = new MutationObserver(() => {
+                    if (isLockingVip) return;
+                    isLockingVip = true;
+                    observer.disconnect();
+                    applyVipLocks();
+                    observer.observe(grid, { childList: true, subtree: true });
+                    isLockingVip = false;
+                });
+
                 observer.observe(grid, { childList: true, subtree: true });
                 applyVipLocks();
 
