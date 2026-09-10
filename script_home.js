@@ -34,51 +34,38 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // ===== 1.1 CONFIGURAÇÃO E LOGIN DO GOOGLE =====
-    function initGoogleAuth() {
-        if (window._googleAuthInitialized) return;
-        
-        if (typeof google === 'undefined' || !google.accounts || !google.accounts.id) {
-            console.warn('Google GSI SDK ainda não foi totalmente carregado.');
-            return;
-        }
-
-        window._googleAuthInitialized = true;
-
-        let authContainer = document.getElementById('google_auth_container');
-        
-        if (!authContainer) {
-            authContainer = document.createElement('div');
-            authContainer.id = 'google_auth_container';
-            authContainer.style.display = 'flex';
-            authContainer.style.justifyContent = 'center';
-            authContainer.style.margin = '10px 0';
-
-            const toolbar = document.querySelector('.toolbar');
-            if (toolbar && toolbar.parentNode) {
-                toolbar.parentNode.insertBefore(authContainer, toolbar);
-            } else {
-                document.body.prepend(authContainer);
-            }
-        }
-
-        authContainer.innerHTML = '';
-
-        try {
-            google.accounts.id.initialize({
-                client_id: "383374785711-e00t37fkf9q6aqe5imqi0nnh29v2npq4.apps.googleusercontent.com",
-                callback: handleCredentialResponse
-            });
-
-            google.accounts.id.renderButton(
-                authContainer,
-                { theme: "outline", size: "medium", text: "signin_with" }
-            );
-        } catch (error) {
-            console.error("Erro ao inicializar Google Auth:", error);
-            window._googleAuthInitialized = false;
-        }
+  function initGoogleAuth() {
+    if (window._googleAuthInitialized) return;
+    
+    if (typeof google === 'undefined' || !google.accounts || !google.accounts.id) {
+        return;
     }
+
+    window._googleAuthInitialized = true;
+
+    let authContainer = document.getElementById('google_auth_container');
+    if (!authContainer) {
+        authContainer = document.createElement('div');
+        authContainer.id = 'google_auth_container';
+        document.body.prepend(authContainer);
+    }
+
+    try {
+        google.accounts.id.initialize({
+            client_id: "383374785711-e00t37fkf9q6aqe5imqi0nnh29v2npq4.apps.googleusercontent.com",
+            callback: handleCredentialResponse,
+            ux_mode: "popup" // Força o modo popup para evitar bloqueios de COOP
+        });
+
+        google.accounts.id.renderButton(
+            authContainer,
+            { theme: "outline", size: "medium", text: "signin_with" }
+        );
+    } catch (error) {
+        console.error("Erro ao inicializar Google Auth:", error);
+        window._googleAuthInitialized = false;
+    }
+}
 
     window.handleCredentialResponse = function(response) {
         if (!response || !response.credential) {

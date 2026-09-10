@@ -19,6 +19,7 @@ let generatedGames = [];
 document.addEventListener('DOMContentLoaded', () => {
     initEvents();
     switchLottery(currentLottery);
+    initGoogleAuthUI(); // Inicializa o login do Google de forma segura
 });
 
 function initEvents() {
@@ -35,10 +36,45 @@ function initEvents() {
         });
     });
 
-    document.getElementById('btn_clear').addEventListener('click', clearSelections);
-    document.getElementById('btn_generate').addEventListener('click', generateGames);
-    document.getElementById('btn_save').addEventListener('click', saveGames);
-    document.getElementById('btn_download').addEventListener('click', downloadTXT);
+    const btnClear = document.getElementById('btn_clear');
+    if (btnClear) btnClear.addEventListener('click', clearSelections);
+
+    const btnGenerate = document.getElementById('btn_generate');
+    if (btnGenerate) btnGenerate.addEventListener('click', generateGames);
+
+    const btnSave = document.getElementById('btn_save');
+    if (btnSave) btnSave.addEventListener('click', saveGames);
+
+    const btnDownload = document.getElementById('btn_download');
+    if (btnDownload) btnDownload.addEventListener('click', downloadTXT);
+}
+
+// Função segura para inicializar o Google Sign-In sem duplicar chamadas
+function initGoogleAuthUI() {
+    if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
+        try {
+            google.accounts.id.initialize({
+                client_id: "383374785711-e00t37fkf9q6aqe5imqi0nnh29v2npq4.apps.googleusercontent.com",
+                callback: handleCredentialResponse,
+                ux_mode: "popup"
+            });
+
+            const authContainer = document.getElementById('google_auth_container');
+            if (authContainer) {
+                google.accounts.id.renderButton(
+                    authContainer,
+                    { theme: "outline", size: "medium", text: "signin_with" }
+                );
+            }
+        } catch (e) {
+            console.error("Erro ao carregar botão do Google:", e);
+        }
+    }
+}
+
+function handleCredentialResponse(response) {
+    console.log("Token ID Google recebido com sucesso.");
+    // Aqui você pode decodificar o JWT se precisar extrair o e-mail do usuário
 }
 
 function switchLottery(type) {
@@ -46,8 +82,11 @@ function switchLottery(type) {
     currentLottery = type;
     const config = LOTTERIES_CONFIG[type];
 
-    document.getElementById('page_title').textContent = `Gerador - ${config.name}`;
-    document.getElementById('volante_title').textContent = `Volante de Seleção (${config.name})`;
+    const pageTitle = document.getElementById('page_title');
+    if (pageTitle) pageTitle.textContent = `Gerador - ${config.name}`;
+
+    const volanteTitle = document.getElementById('volante_title');
+    if (volanteTitle) volanteTitle.textContent = `Volante de Seleção (${config.name})`;
 
     clearSelections();
     buildGrid();
@@ -56,10 +95,10 @@ function switchLottery(type) {
 
 function buildGrid() {
     const grid = document.getElementById('numbers_grid');
+    if (!grid) return;
     grid.innerHTML = '';
     const config = LOTTERIES_CONFIG[currentLottery];
 
-    // Trata o visual específico do Super Sete (7 Colunas de 0 a 9)
     if (config.isSuperSete) {
         grid.style.display = 'grid';
         grid.style.gridTemplateColumns = 'repeat(7, 1fr)';
@@ -84,7 +123,6 @@ function buildGrid() {
         return;
     }
 
-    // Grid Padrão para as demais loterias
     grid.style.display = 'grid';
     grid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(42px, 1fr))';
     grid.style.gap = '8px';
@@ -132,11 +170,13 @@ function toggleNumber(val, btn) {
 
 function updateSummary() {
     const config = LOTTERIES_CONFIG[currentLottery];
+    const summaryInfo = document.getElementById('summary-info');
+    if (!summaryInfo) return;
 
     if (config.isSuperSete) {
         const fixos = Array.from(fixedNumbers).join(', ') || 'Nenhum';
         const excl = Array.from(excludedNumbers).join(', ') || 'Nenhum';
-        document.getElementById('summary-info').innerHTML = `
+        summaryInfo.innerHTML = `
             Fixos: <strong style="color: #28a745;">${fixos}</strong> | 
             Excluídos: <strong style="color: #dc3545;">${excl}</strong>
         `;
@@ -146,7 +186,7 @@ function updateSummary() {
     const fixos = Array.from(fixedNumbers).sort((a,b)=>a-b).map(n => String(n).padStart(2, '0')).join(', ') || 'Nenhum';
     const excl = Array.from(excludedNumbers).sort((a,b)=>a-b).map(n => String(n).padStart(2, '0')).join(', ') || 'Nenhum';
 
-    document.getElementById('summary-info').innerHTML = `
+    summaryInfo.innerHTML = `
         Fixos: <strong style="color: #28a745;">${fixos}</strong> | 
         Excluídos: <strong style="color: #dc3545;">${excl}</strong>
     `;
@@ -155,8 +195,11 @@ function updateSummary() {
 }
 
 function updateStats(numbers) {
+    const statsInfo = document.getElementById('stats_info');
+    if (!statsInfo) return;
+
     if (numbers.length === 0 || typeof numbers[0] === 'string') {
-        document.getElementById('stats_info').innerHTML = 'Pares: <strong>0</strong> | Ímpares: <strong>0</strong> | Primos: <strong>0</strong> | Soma: <strong>0</strong>';
+        statsInfo.innerHTML = 'Pares: <strong>0</strong> | Ímpares: <strong>0</strong> | Primos: <strong>0</strong> | Soma: <strong>0</strong>';
         return;
     }
     const pares = numbers.filter(n => n % 2 === 0).length;
@@ -164,7 +207,7 @@ function updateStats(numbers) {
     const primos = numbers.filter(isPrime).length;
     const soma = numbers.reduce((acc, curr) => acc + curr, 0);
 
-    document.getElementById('stats_info').innerHTML = `
+    statsInfo.innerHTML = `
         Pares: <strong>${pares}</strong> | 
         Ímpares: <strong>${impares}</strong> | 
         Primos: <strong>${primos}</strong> | 
@@ -184,7 +227,8 @@ function clearSelections() {
     fixedNumbers.clear();
     excludedNumbers.clear();
     generatedGames = [];
-    document.getElementById('generated_games_list').innerHTML = '';
+    const genList = document.getElementById('generated_games_list');
+    if (genList) genList.innerHTML = '';
     buildGrid();
     updateSummary();
 }
@@ -195,6 +239,7 @@ function populateFilterSelects() {
 
     ['select_pares', 'select_impares', 'select_primos'].forEach(id => {
         const select = document.getElementById(id);
+        if (!select) return;
         select.innerHTML = '<option value="">Todos</option>';
         for (let i = 0; i <= max; i++) {
             select.innerHTML += `<option value="${i}">${i}</option>`;
@@ -204,16 +249,16 @@ function populateFilterSelects() {
 
 function generateGames() {
     const config = LOTTERIES_CONFIG[currentLottery];
-    const qtdGames = parseInt(document.getElementById('qtd_jogos').value) || 1;
+    const qtdInput = document.getElementById('qtd_jogos');
+    const qtdGames = qtdInput ? parseInt(qtdInput.value) || 1 : 1;
     generatedGames = [];
 
-    // Geração Especial para o Super Sete (1 número sorteado por coluna)
     if (config.isSuperSete) {
         for (let g = 0; g < qtdGames; g++) {
             let gameCols = [];
             for (let col = 1; col <= 7; col++) {
                 let fixedInCol = Array.from(fixedNumbers)
-                    .filter(k => k.startsWith(`C${col}_`))
+                    .filter(k => typeof k === 'string' && k.startsWith(`C${col}_`))
                     .map(k => parseInt(k.split('_')[1]));
 
                 if (fixedInCol.length > 0) {
@@ -233,10 +278,9 @@ function generateGames() {
         return;
     }
 
-    // Geração Padrão para as demais Loterias
-    const reqPares = document.getElementById('select_pares').value;
-    const reqImpares = document.getElementById('select_impares').value;
-    const reqPrimos = document.getElementById('select_primos').value;
+    const reqPares = document.getElementById('select_pares')?.value || "";
+    const reqImpares = document.getElementById('select_impares')?.value || "";
+    const reqPrimos = document.getElementById('select_primos')?.value || "";
 
     const pool = [];
     const start = config.zeroBased ? 0 : 1;
@@ -278,6 +322,7 @@ function generateGames() {
 
 function renderGeneratedGames() {
     const container = document.getElementById('generated_games_list');
+    if (!container) return;
     container.innerHTML = '';
 
     if (generatedGames.length === 0) {

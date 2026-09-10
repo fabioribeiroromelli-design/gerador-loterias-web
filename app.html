@@ -18,14 +18,8 @@
             <h1 id="page_title" style="margin: 0; font-size: 1.5rem;">Gerador de Jogos</h1>
         </div>
 
-        <!-- ÁREA DE LOGIN DO USUÁRIO (GMAIL) -->
-        <div id="user_auth_area">
-            <div id="g_id_onload"
-                 data-client_id="383374785711-e00t37fkf9q6aqe5imqi0nnh29v2npq4.apps.googleusercontent.com"
-                 data-callback="handleCredentialResponse">
-            </div>
-            <div class="g_id_signin" data-type="standard" data-size="medium"></div>
-        </div>
+        <!-- ÁREA DE LOGIN DO USUÁRIO (GMAIL) CENTRALIZADA E CORRIGIDA -->
+        <div id="google_auth_container" style="display: flex; align-items: center;"></div>
     </header>
 
     <!-- BANNER ANÚNCIO / CONVITE PARA O APP DA PLAY STORE -->
@@ -111,10 +105,5 @@
     </main>
 
     <script src="script.js"></script>
-    <script>
-        function handleCredentialResponse(response) {
-            console.log("Encoded JWT ID token: " + response.credential);
-        }
-    </script>
 </body>
 </html>
