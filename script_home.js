@@ -13,6 +13,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         window._googleAuthInitialized = false;
     }
 
+    // Verifica se já existe um usuário logado anteriormente ao carregar a página
+    verificarLoginSalvo();
+
     const existingGsiScript = document.getElementById('google-gsi-script');
     if (!existingGsiScript) {
         const gsi = document.createElement('script');
@@ -43,10 +46,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         window._googleAuthInitialized = true;
 
-        // Procura se já existe um container específico no HTML para o botão do Google (evitando duplicar)
         let authContainer = document.getElementById('google_auth_container');
         if (!authContainer) {
-            // Se não existir, procura por alguma classe padrão ou barra de topo para injetar de forma limpa sem duplicar
             authContainer = document.querySelector('.login-container') || document.querySelector('.toolbar');
             if (!authContainer) {
                 authContainer = document.createElement('div');
@@ -128,20 +129,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     const LOTTERIES = [
-        { name: 'Dia de Sorte' },
-        { name: 'Dupla Sena' },
-        { name: 'Federal' },
-        { name: 'Loteca' },
-        { name: 'Lotofácil' },
-        { name: 'Lotomania' },
-        { name: '+Milionária' },
-        { name: 'Mega-Sena' },
-        { name: 'Quina' },
-        { name: 'Super Sete' },
-        { name: 'Timemania' }
+        { name: 'Dia de Sorte' }, { name: 'Dupla Sena' }, { name: 'Federal' },
+        { name: 'Loteca' }, { name: 'Lotofácil' }, { name: 'Lotomania' },
+        { name: '+Milionária' }, { name: 'Mega-Sena' }, { name: 'Quina' },
+        { name: 'Super Sete' }, { name: 'Timemania' }
     ];
 
-    // ===== 4. FUNÇÃO PARA PEGAR OS DADOS DIRETO DO ARQUIVO LOCAL (dados_loteria.js) =====
     function fetchUltimoConcursoLocal(lotteryName) {
         if (window.DADOS_ULTIMOS_CONCURSOS && window.DADOS_ULTIMOS_CONCURSOS[lotteryName]) {
             return window.DADOS_ULTIMOS_CONCURSOS[lotteryName];
@@ -149,7 +142,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         return null;
     }
 
-    // ===== 5. RENDERIZAÇÃO DOS CARDS DE LOTERIAS =====
     function renderCard(lotteryName, data) {
         const color = COLORS[lotteryName] || '#6c757d';
         const icon = ICONS[lotteryName] || 'fa-hashtag';
@@ -300,7 +292,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         `;
     }
 
-    // ===== 6. CARDS ESPECIAIS (GERADORES) =====
+    // Cards Especiais
     function renderPremiumCard() {
         return `
             <div class="lottery-card premium-card" onclick="window.location.href='estrategias.html'">
@@ -380,7 +372,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         `;
     }
 
-    // ===== 7. FUNÇÃO PARA TOGGLE DA PREMIAÇÃO =====
     window.togglePrizes = function(id) {
         const el = document.getElementById(id);
         const icon = document.getElementById(`icon_${id}`);
@@ -394,15 +385,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
-    // ===== 8. CARREGAMENTO PRINCIPAL INSTANTÂNEO =====
     const grid = document.getElementById('lottery_grid');
     if (!grid) return;
 
     let results = LOTTERIES.map(lot => fetchUltimoConcursoLocal(lot.name));
 
-    // ===== MONTA O GRID: CARDS ESPECIAIS + LOTERIAS =====
     let html = '';
-    
     html += renderPremiumCard();
     html += renderAvancadoCard();
     html += renderLotofacilRepeticaoCard();
@@ -417,9 +405,48 @@ document.addEventListener('DOMContentLoaded', async () => {
     grid.innerHTML = html;
 });
 
-// ===== FUNÇÃO DE DIÁLOGO ELEGANTE PARA NÃO ASSINANTES =====
+// ===== FUNÇÃO PARA ATUALIZAR A INTERFACE QUANDO LOGADO =====
+function atualizarInterfaceUsuario(nome, isAssinante) {
+    let authContainer = document.getElementById('google_auth_container');
+    if (!authContainer) {
+        authContainer = document.querySelector('.login-container') || document.querySelector('.toolbar');
+    }
+
+    if (authContainer) {
+        authContainer.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 0.9rem; font-weight: bold; color: #333;">
+                <i class="fa-solid fa-user-check" style="color: ${isAssinante ? '#209869' : '#e67e22'};"></i>
+                <span>${nome}</span>
+                ${isAssinante ? '<span style="background: #e8f5e9; color: #209869; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem;">Assinante</span>' : '<span style="background: #fff3cd; color: #856404; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem;">Não Assinante</span>'}
+                <button onclick="sairConta()" title="Sair da Conta" style="background: transparent; border: none; color: #d9534f; cursor: pointer; font-size: 0.9rem; margin-left: 6px;">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
+            </div>
+        `;
+    }
+}
+
+// ===== VERIFICAÇÃO DE LOGIN SALVO AO CARREGAR =====
+function verificarLoginSalvo() {
+    const emailSalvo = localStorage.getItem("user_email");
+    const nomeSalvo = localStorage.getItem("user_name");
+    const isAssinante = localStorage.getItem("is_subscriber") === "true";
+
+    if (emailSalvo) {
+        atualizarInterfaceUsuario(nomeSalvo || emailSalvo, isAssinante);
+    }
+}
+
+// ===== FUNÇÃO DE LOGOUT =====
+window.sairConta = function() {
+    localStorage.removeItem("user_email");
+    localStorage.removeItem("user_name");
+    localStorage.removeItem("is_subscriber");
+    location.reload();
+};
+
+// ===== DIÁLOGO ELEGANTE PARA NÃO ASSINANTES =====
 function mostrarDialogoNaoAssinante(nomeUsuario) {
-    // Remove modal anterior se já existir
     const modalAntigo = document.getElementById('modal-assinatura-exclusivo');
     if (modalAntigo) modalAntigo.remove();
 
@@ -497,11 +524,12 @@ function handleCredentialResponse(response) {
             console.warn("Não foi possível salvar os dados do usuário no localStorage:", e);
         }
 
-        // Verifica se o usuário é assinante
         const isAssinante = localStorage.getItem("is_subscriber") === "true";
 
+        // Atualiza a tela imediatamente para exibir o nome do usuário logado
+        atualizarInterfaceUsuario(responsePayload.name || responsePayload.email, isAssinante);
+
         if (!isAssinante) {
-            // Chama o modal elegante ao invés do alert padrão
             mostrarDialogoNaoAssinante(responsePayload.name);
         } else {
             alert(`Bem-vindo de volta, ${responsePayload.name || 'Usuário'}! Login de assinante verificado.`);
@@ -510,6 +538,7 @@ function handleCredentialResponse(response) {
         alert("Não foi possível extrair as informações da conta do Google.");
     }
 }
+
 function parseJwt(token) {
     try {
         const base64Url = token.split('.')[1];
