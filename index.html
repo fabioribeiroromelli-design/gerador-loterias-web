@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Google Sign-In SDK (Com cancel_on_tap_outside para evitar o prompt flutuante duplicado) -->
+    <!-- Google Sign-In SDK -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
 
     <!-- Google AdSense Script -->
@@ -48,7 +48,7 @@
 
     <style>
         :root {
-            --primary-bg: #4a148c; /* Roxo ajustado conforme o print */
+            --primary-bg: #4a148c;
             --card-bg: #ffffff;
             --card-text: #1e293b;
             --accent-color: #0284c7;
@@ -146,7 +146,6 @@
             gap: 8px;
         }
 
-        /* FIX DAS BOLINHAS DO CARROSSEL: Largura corrigida para ficarem redondas */
         .dot {
             display: inline-block;
             width: 12px;
@@ -429,7 +428,6 @@
                     if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
                         clearInterval(checkGoogleInterval);
                         
-                        // Inicializa desativando o One Tap no topo (evita o botão duplicado acima do cabeçalho)
                         google.accounts.id.initialize({
                             client_id: "383374785711-e00t37fkf9q6aqe5imqi0nnh29v2npq4.apps.googleusercontent.com",
                             callback: handleCredentialResponse,
