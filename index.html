@@ -293,7 +293,7 @@
             <i class="fa-solid fa-dice"></i> Loterias Disponíveis
         </h1>
 
-        <!-- Container de Autenticação -->
+        <!-- Container de Autenticação Único -->
         <div id="user_auth_area" style="min-height: 40px; display: flex; align-items: center;"></div>
     </header>
 
@@ -450,9 +450,13 @@
             }
         }
 
+        let isGoogleInitialized = false;
+
         function updateUIAuth() {
             const authContainer = document.getElementById('user_auth_area');
             if (!authContainer) return;
+
+            authContainer.innerHTML = '';
 
             if (currentUser) {
                 authContainer.innerHTML = `
@@ -465,27 +469,33 @@
                     </div>
                 `;
             } else {
-                authContainer.innerHTML = `<div id="g_id_signin_btn"></div>`;
-                
+                const btnDiv = document.createElement('div');
+                btnDiv.id = 'g_id_signin_btn';
+                authContainer.appendChild(btnDiv);
+
                 let tentativasGoogle = 0;
                 const checkGoogleInterval = setInterval(() => {
                     tentativasGoogle++;
 
                     if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
                         clearInterval(checkGoogleInterval);
-                        
-                        google.accounts.id.initialize({
-                            client_id: "383374785711-e00t37fkf9q6aqe5imqi0nnh29v2npq4.apps.googleusercontent.com",
-                            callback: handleCredentialResponse,
-                            auto_select: false,
-                            context: "signin",
-                            ux_mode: "popup"
-                        });
 
-                        const btnDiv = document.getElementById('g_id_signin_btn');
-                        if (btnDiv) {
+                        if (!isGoogleInitialized) {
+                            google.accounts.id.initialize({
+                                client_id: "383374785711-e00t37fkf9q6aqe5imqi0nnh29v2npq4.apps.googleusercontent.com",
+                                callback: handleCredentialResponse,
+                                auto_select: false,
+                                context: "signin",
+                                ux_mode: "popup"
+                            });
+                            isGoogleInitialized = true;
+                        }
+
+                        const targetBtnDiv = document.getElementById('g_id_signin_btn');
+                        if (targetBtnDiv) {
+                            targetBtnDiv.innerHTML = "";
                             google.accounts.id.renderButton(
-                                btnDiv,
+                                targetBtnDiv,
                                 { theme: "outline", size: "medium", locale: "pt-BR", shape: "rectangular", type: "standard" }
                             );
                         }
@@ -574,7 +584,6 @@
 
             const cards = Array.from(grid.children).slice(0, 5);
 
-            // Se estiver logado E for assinante, libera. Caso contrário, tranca!
             if (currentUser && isSubscriber) {
                 cards.forEach(card => {
                     card.classList.remove('vip-card-locked');
@@ -663,7 +672,6 @@
 
             const grid = document.getElementById('lottery_grid');
             if (grid) {
-                // Prevenção de loop infinito no MutationObserver desconectando temporariamente durante modificações no DOM
                 const observer = new MutationObserver(() => {
                     if (isLockingVip) return;
                     isLockingVip = true;

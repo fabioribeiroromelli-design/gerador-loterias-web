@@ -1,6 +1,24 @@
 const fs = require('fs');
 const path = require('path');
 const https = require('https');
+const admin = require('firebase-admin');
+
+// 1. INICIALIZAÇÃO DO FIREBASE ADMIN
+if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+    try {
+        const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+        admin.initializeApp({
+            credential: admin.credential.cert(serviceAccount)
+        });
+        console.log("🔥 Firebase Admin conectado com sucesso!");
+    } catch (e) {
+        console.error("⚠️ Erro ao inicializar Firebase Admin:", e.message);
+    }
+} else {
+    console.warn("⚠️ Variável FIREBASE_SERVICE_ACCOUNT não encontrada. O script atualizará apenas os arquivos JSON.");
+}
+
+const db = admin.apps.length ? admin.firestore() : null;
 
 // Lista de loterias suportadas
 const loterias = [
@@ -71,7 +89,6 @@ function formatarConcurso(data, loteria) {
         dataProximoConcurso: data.dataProximoConcurso || ""
     };
 
-    // Dados adicionais por modalidade
     if (loteria === 'duplasena' && data.listaDezenasSegundoSorteio) {
         resultado.segundoSorteio = data.listaDezenasSegundoSorteio.map(d => parseInt(d, 10));
     }
@@ -96,7 +113,7 @@ async function atualizarLoterias() {
 
     for (const loteria of loterias) {
         const nomeArquivo = `historico_${loteria}.json`;
-        const caminhoArquivo = path.join(__dirname, nomeArquivo);
+        const caminhoArquivo = path.join(__dirname, '..', nomeArquivo);
 
         let historicoLocal = [];
 
@@ -159,16 +176,26 @@ async function atualizarLoterias() {
                     }
                 }
 
-                // Pausa para evitar bloqueio por excesso de requisições
                 await new Promise(r => setTimeout(r, 80));
             }
 
             // Ordena os concursos em ordem crescente
             historicoLocal.sort((a, b) => a.concurso - b.concurso);
 
-            // 5. Salva o arquivo JSON atualizado
+            // 5. Salva no Arquivo JSON
             fs.writeFileSync(caminhoArquivo, JSON.stringify(historicoLocal, null, 2), 'utf-8');
-            console.log(`   ✔ Sucesso: ${novosAdicionados} novo(s) concurso(s) salvo(s) em ${nomeArquivo}.\n`);
+            console.log(`   ✔ Sucesso: ${novosAdicionados} novo(s) concurso(s) salvo(s) em ${nomeArquivo}.`);
+
+            // 6. Atualiza no Firestore
+            if (db) {
+                await db.collection('loterias').doc(loteria).set({
+                    historico: historicoLocal,
+                    ultimoConcurso: historicoLocal[historicoLocal.length - 1],
+                    ultimaAtualizacao: new Date().toISOString()
+                }, { merge: true });
+
+                console.log(`   🔥 Sincronizado no Firestore: document('loterias/${loteria}')\n`);
+            }
 
         } catch (err) {
             console.error(`❌ Erro ao processar ${loteria}: ${err.message}\n`);
