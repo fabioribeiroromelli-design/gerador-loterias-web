@@ -64,11 +64,6 @@
     </script>
 
     <style>
-        /* Oculta o pop-up automático One Tap injetado no topo */
-        #credential_picker_container, iframe[src*="accounts.google.com/gsi/iframe"] {
-            display: none !important;
-        }
-
         :root {
             --primary-bg: #4a148c;
             --card-bg: #ffffff;
@@ -271,7 +266,7 @@
         </h1>
 
         <!-- Container de Autenticação -->
-        <div id="user_auth_area"></div>
+        <div id="user_auth_area" style="min-height: 40px; display: flex; align-items: center;"></div>
     </header>
 
     <!-- ANÚNCIO ADSENSE: TOPO -->
@@ -440,22 +435,19 @@
                     if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
                         clearInterval(checkGoogleInterval);
                         
-                        google.accounts.id.cancel();
-
                         google.accounts.id.initialize({
                             client_id: "383374785711-e00t37fkf9q6aqe5imqi0nnh29v2npq4.apps.googleusercontent.com",
                             callback: handleCredentialResponse,
                             auto_select: false,
-                            use_fedcm_for_prompt: false
+                            context: "signin",
+                            ux_mode: "popup"
                         });
-                        
-                        google.accounts.id.disableAutoSelect();
 
                         const btnDiv = document.getElementById('g_id_signin_btn');
                         if (btnDiv) {
                             google.accounts.id.renderButton(
                                 btnDiv,
-                                { theme: "outline", size: "medium", locale: "pt-BR", shape: "rectangular" }
+                                { theme: "outline", size: "medium", locale: "pt-BR", shape: "rectangular", type: "standard" }
                             );
                         }
                     }
@@ -464,12 +456,6 @@
         }
 
         window.logoutGoogle = function() {
-            if (currentUser && currentUser.email && typeof google !== 'undefined' && google.accounts && google.accounts.id) {
-                google.accounts.id.revoke(currentUser.email, () => {
-                    console.log('Sessão revogada no Google.');
-                });
-            }
-
             currentUser = null;
             isSubscriber = false;
             
