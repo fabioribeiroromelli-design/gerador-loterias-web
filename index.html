@@ -405,58 +405,73 @@
             }
         }
 
-        function updateUIAuth() {
-            const authContainer = document.getElementById('user_auth_area');
-            if (!authContainer) return;
+       // Garante que o estado inicie limpo no carregamento da página
+let currentUser = null;
+let isSubscriber = false;
 
-            if (currentUser) {
-                authContainer.innerHTML = `
-                    <div style="display: flex; align-items: center; gap: 8px; background: rgba(255, 255, 255, 0.15); padding: 5px 12px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.3);">
-                        ${currentUser.picture ? `<img src="${currentUser.picture}" style="width: 26px; height: 26px; border-radius: 50%; object-fit: cover;" alt="Usuário">` : '<i class="fa-solid fa-circle-user" style="font-size: 1.3rem; color: #fff;"></i>'}
-                        <span style="font-size: 0.85rem; font-weight: 600; color: #fff; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${currentUser.name || currentUser.email}</span>
-                        <button onclick="logoutGoogle()" style="background: #e74c3c; color: white; border: none; padding: 4px 8px; border-radius: 12px; cursor: pointer; font-size: 0.75rem; font-weight: bold; margin-left: 4px;" title="Sair">
-                            <i class="fa-solid fa-right-from-bracket"></i>
-                        </button>
-                    </div>
-                `;
-            } else {
-                authContainer.innerHTML = `<div id="g_id_signin_btn"></div>`;
-                
-                const checkGoogleInterval = setInterval(() => {
-                    if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
-                        clearInterval(checkGoogleInterval);
-                        
-                        google.accounts.id.initialize({
-                            client_id: "383374785711-e00t37fkf9q6aqe5imqi0nnh29v2npq4.apps.googleusercontent.com",
-                            callback: handleCredentialResponse,
-                            auto_select: false,
-                            cancel_on_tap_outside: true,
-                            itp_support: true
-                        });
-                        
-                        const btnDiv = document.getElementById('g_id_signin_btn');
-                        if (btnDiv) {
-                            google.accounts.id.renderButton(
-                                btnDiv,
-                                { theme: "outline", size: "medium", locale: "pt-BR", shape: "rectangular" }
-                            );
-                        }
-                    }
-                }, 200);
-            }
-        }
+function updateUIAuth() {
+    const authContainer = document.getElementById('user_auth_area');
+    if (!authContainer) return;
 
-        window.logoutGoogle = function() {
-            currentUser = null;
-            isSubscriber = false;
-
+    if (currentUser) {
+        authContainer.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 8px; background: rgba(255, 255, 255, 0.15); padding: 5px 12px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.3);">
+                ${currentUser.picture ? `<img src="${currentUser.picture}" style="width: 26px; height: 26px; border-radius: 50%; object-fit: cover;" alt="Usuário">` : '<i class="fa-solid fa-circle-user" style="font-size: 1.3rem; color: #fff;"></i>'}
+                <span style="font-size: 0.85rem; font-weight: 600; color: #fff; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${currentUser.name || currentUser.email}</span>
+                <button onclick="logoutGoogle()" style="background: #e74c3c; color: white; border: none; padding: 4px 8px; border-radius: 12px; cursor: pointer; font-size: 0.75rem; font-weight: bold; margin-left: 4px;" title="Sair">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
+            </div>
+        `;
+    } else {
+        authContainer.innerHTML = `<div id="g_id_signin_btn"></div>`;
+        
+        const checkGoogleInterval = setInterval(() => {
             if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
-                google.accounts.id.disableAutoSelect();
-            }
+                clearInterval(checkGoogleInterval);
+                
+                // Desativa o recurso One Tap/Prompt automático
+                google.accounts.id.cancel();
 
-            updateUIAuth();
-            applyVipLocks();
-        };
+                google.accounts.id.initialize({
+                    client_id: "383374785711-e00t37fkf9q6aqe5imqi0nnh29v2npq4.apps.googleusercontent.com",
+                    callback: handleCredentialResponse,
+                    auto_select: false, // Desativa seleção automática
+                    use_fedcm_for_prompt: false
+                });
+                
+                // Força a desativação da seleção automática de contas
+                google.accounts.id.disableAutoSelect();
+
+                const btnDiv = document.getElementById('g_id_signin_btn');
+                if (btnDiv) {
+                    google.accounts.id.renderButton(
+                        btnDiv,
+                        { theme: "outline", size: "medium", locale: "pt-BR", shape: "rectangular" }
+                    );
+                }
+            }
+        }, 200);
+    }
+}
+
+window.logoutGoogle = function() {
+    if (currentUser && currentUser.email && typeof google !== 'undefined' && google.accounts && google.accounts.id) {
+        google.accounts.id.revoke(currentUser.email, () => {
+            console.log('Sessão revogada no Google.');
+        });
+    }
+
+    currentUser = null;
+    isSubscriber = false;
+
+    if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
+        google.accounts.id.disableAutoSelect();
+    }
+
+    updateUIAuth();
+    applyVipLocks();
+};
 
         async function handleCredentialResponse(response) {
             if (!response || !response.credential) return;
