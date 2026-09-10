@@ -21,17 +21,21 @@
         
         .ball { display: inline-block; background: #27ae60; color: white; width: 28px; height: 28px; line-height: 28px; border-radius: 50%; text-align: center; font-weight: bold; font-size: 12px; margin-right: 4px; margin-bottom: 4px; }
         .ball.hit { background: #f1c40f; color: #2c3e50; border: 2px solid #d4ac0d; }
+        .ball.draw-ball { background: #34495e; border: 1px solid #2c3e50; }
 
         .acertos-info { margin-top: 6px; font-size: 13px; font-weight: bold; color: #2c3e50; }
 
         .btn-action { background: #c0392b; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.8rem; }
         .btn-action:hover { background: #a93226; }
-        
-        .btn-clear-all { background: #e74c3c; color: white; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.9rem; display: flex; align-items: center; gap: 6px; transition: background 0.2s; }
-        .btn-clear-all:hover { background: #c0392b; }
 
-        .btn-check-api { background: #2980b9; color: white; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.9rem; display: flex; align-items: center; gap: 6px; transition: background 0.2s; }
+        .btn-check-api { background: #2980b9; color: white; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.9rem; display: flex; align-items: center; gap: 6px; }
         .btn-check-api:hover { background: #2471a3; }
+
+        .btn-clear-all { background: #d32f2f; color: white; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.9rem; display: flex; align-items: center; gap: 6px; }
+        .btn-clear-all:hover { background: #b71c1c; }
+
+        .resultado-box { background: #eef2f7; padding: 12px 15px; border-radius: 6px; border-left: 4px solid #800080; margin-bottom: 15px; font-size: 0.95rem; }
+        .sorteio-linha { display: flex; align-items: center; gap: 8px; margin-top: 4px; flex-wrap: wrap; }
     </style>
 </head>
 <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f6f9;">
@@ -43,19 +47,19 @@
 
     <main class="container" style="max-width: 1000px; margin: 25px auto; padding: 0 15px;">
         
-        <!-- SELEÇÃO DA LOTERIA -->
+        <!-- SELEÇÃO RÁPIDA DA LOTERIA -->
         <div class="section-box">
             <h2 style="margin-top: 0; font-size: 1.2rem; color: #333;"><i class="fa-solid fa-gamepad"></i> Selecione a Loteria:</h2>
             <div class="grid-loterias">
-                <button class="btn-lottery" id="btn_megasena" onclick="mudarLoteria('megasena')" style="background: #209869;">Mega-Sena</button>
-                <button class="btn-lottery" id="btn_lotofacil" onclick="mudarLoteria('lotofacil')" style="background: #930089;">Lotofácil</button>
-                <button class="btn-lottery" id="btn_quina" onclick="mudarLoteria('quina')" style="background: #260085;">Quina</button>
-                <button class="btn-lottery" id="btn_lotomania" onclick="mudarLoteria('lotomania')" style="background: #f78100;">Lotomania</button>
-                <button class="btn-lottery" id="btn_timemania" onclick="mudarLoteria('timemania')" style="background: #008822;">Timemania</button>
-                <button class="btn-lottery" id="btn_duplasena" onclick="mudarLoteria('duplasena')" style="background: #a61324;">Dupla Sena</button>
-                <button class="btn-lottery" id="btn_diadesorte" onclick="mudarLoteria('diadesorte')" style="background: #cb831d;">Dia de Sorte</button>
-                <button class="btn-lottery" id="btn_supersete" onclick="mudarLoteria('supersete')" style="background: #7ba818;">Super Sete</button>
-                <button class="btn-lottery" id="btn_maismilionaria" onclick="mudarLoteria('maismilionaria')" style="background: #1b3582;">+Milionária</button>
+                <button class="btn-lottery" id="btn_megasena" onclick="carregarJogosSalvos('megasena')" style="background: #209869;">Mega-Sena</button>
+                <button class="btn-lottery" id="btn_lotofacil" onclick="carregarJogosSalvos('lotofacil')" style="background: #930089;">Lotofácil</button>
+                <button class="btn-lottery" id="btn_quina" onclick="carregarJogosSalvos('quina')" style="background: #260085;">Quina</button>
+                <button class="btn-lottery" id="btn_lotomania" onclick="carregarJogosSalvos('lotomania')" style="background: #f78100;">Lotomania</button>
+                <button class="btn-lottery" id="btn_timemania" onclick="carregarJogosSalvos('timemania')" style="background: #008822;">Timemania</button>
+                <button class="btn-lottery" id="btn_duplasena" onclick="carregarJogosSalvos('duplasena')" style="background: #a61324;">Dupla Sena</button>
+                <button class="btn-lottery" id="btn_diadesorte" onclick="carregarJogosSalvos('diadesorte')" style="background: #cb831d;">Dia de Sorte</button>
+                <button class="btn-lottery" id="btn_supersete" onclick="carregarJogosSalvos('supersete')" style="background: #7ba818;">Super Sete</button>
+                <button class="btn-lottery" id="btn_maismilionaria" onclick="carregarJogosSalvos('maismilionaria')" style="background: #1b3582;">+Milionária</button>
             </div>
         </div>
 
@@ -64,10 +68,13 @@
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
                 <h3 id="table_title" style="margin: 0; color: #333;">Meus Jogos Salvos</h3>
                 <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                    <button class="btn-check-api" onclick="atualizarConferenciaAPI()"><i class="fa-solid fa-rotate"></i> Conferir Sorteio</button>
-                    <button class="btn-clear-all" onclick="apagarTodosJogos()"><i class="fa-solid fa-trash-can"></i> Apagar Todos</button>
+                    <button class="btn-check-api" onclick="conferirComUltimoConcurso(true)"><i class="fa-solid fa-rotate"></i> Atualizar Concurso</button>
+                    <button class="btn-clear-all" onclick="zerarTudoDefinitivo()"><i class="fa-solid fa-trash-can"></i> Limpar Tudo (Zerar Memória)</button>
                 </div>
             </div>
+
+            <!-- EXIBIÇÃO VISUAL DO ÚLTIMO CONCURSO -->
+            <div id="concurso_display" class="resultado-box">Carregando resultado do último concurso...</div>
             
             <table class="history-table">
                 <thead>
@@ -98,210 +105,79 @@
             'maismilionaria': '+Milionária'
         };
 
-        function normalizar(str) {
-            return String(str || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
+        function normalizar(texto) {
+            return String(texto || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
         }
 
-        // Obtém o último sorteio verificando as chaves do seu localStorage (ex: lottery_cache_Mega-Sena)
-        async function buscarUltimoResultadoAPI(loteria, forcarAtualizacao = false) {
-            const nomeFormatado = nomesLoterias[loteria] || loteria;
-            
-            // 1. Tenta recuperar dos caches salvos pelo aplicativo no LocalStorage
+        async function obterUltimoResultado(loteria, forcarAtualizacao = false) {
+            const idNorm = normalizar(loteria);
+
             if (!forcarAtualizacao) {
-                const chavesCache = [
-                    `resultado_conferido_${loteria}`,
-                    `lottery_cache_${nomeFormatado}`,
-                    `lottery_cache_${loteria}`
+                const chaves = [
+                    `resultado_conferido_${idNorm}`,
+                    `ultimo_resultado_${idNorm}`,
+                    `lottery_cache_${nomesLoterias[loteria]}`,
+                    `lottery_cache_${idNorm}`
                 ];
 
-                for (let c of chavesCache) {
+                for (let chave of chaves) {
                     try {
-                        let cache = localStorage.getItem(c);
-                        if (cache) {
-                            let obj = JSON.parse(cache);
+                        let item = localStorage.getItem(chave);
+                        if (item) {
+                            let obj = JSON.parse(item);
                             let dados = obj.data || obj;
-                            if (dados && (dados.dezenas || dados.dezenasOrdemSorteio)) {
-                                return {
-                                    concurso: dados.concurso || dados.numero,
-                                    dezenas: (dados.dezenas || dados.dezenasOrdemSorteio).map(d => String(d).padStart(2, '0'))
-                                };
+                            if (dados) {
+                                return formatarDadosConcurso(dados, idNorm);
                             }
                         }
                     } catch(e) {}
                 }
             }
 
-            // 2. Busca na API caso não ache localmente ou force a atualização
             try {
-                let apiName = loteria === 'maismilionaria' ? 'milionaria' : loteria;
-                const response = await fetch(`https://loteriascaixa-api.herokuapp.com/api/${apiName}/latest`);
-                if (!response.ok) throw new Error();
+                let apiName = (idNorm === 'maismilionaria' || idNorm === 'milionaria') ? 'maismilionaria' : idNorm;
+                const res = await fetch(`https://loteriascaixa-api.herokuapp.com/api/${apiName}/latest`);
+                if (!res.ok) throw new Error();
+                const data = await res.json();
                 
-                const data = await response.json();
-                let dezenasSorteadas = (data.dezenas || data.dezenasOrdemSorteio || []).map(d => String(d).padStart(2, '0'));
-
-                const resultadoObj = {
-                    concurso: data.concurso || data.numero,
-                    dezenas: dezenasSorteadas
-                };
-
-                localStorage.setItem(`resultado_conferido_${loteria}`, JSON.stringify(resultadoObj));
-                return resultadoObj;
+                let resObj = formatarDadosConcurso(data, idNorm);
+                localStorage.setItem(`resultado_conferido_${idNorm}`, JSON.stringify(resObj));
+                return resObj;
             } catch (e) {
                 return null;
             }
         }
 
+        function formatarDadosConcurso(data, idNorm) {
+            let numConcurso = data.concurso || data.numero || 'Atual';
+            
+            if (idNorm === 'duplasena' || data.dezenasSorteio2 || data.s2) {
+                let s1 = (data.dezenas || data.dezenasSorteio1 || []).map(d => String(d).padStart(2, '0'));
+                let s2 = (data.dezenasSorteio2 || data.s2 || []).map(d => String(d).padStart(2, '0'));
+                
+                if (s2.length === 0 && s1.length >= 12) {
+                    s2 = s1.slice(6);
+                    s1 = s1.slice(0, 6);
+                }
+
+                return { concurso: numConcurso, dezenas: s1, dezenasSorteio2: s2, ehDuplaSena: true };
+            }
+
+            let dezenas = (data.dezenas || data.dezenasOrdemSorteio || data.dezenasSorteadas || []).map(d => String(d).padStart(2, '0'));
+            return { concurso: numConcurso, dezenas: dezenas };
+        }
+
         function extrairDezenas(jogo) {
             if (Array.isArray(jogo)) return jogo;
             if (!jogo || typeof jogo !== 'object') return [];
-            return jogo.dezenas || jogo.numeros || jogo.game || jogo.jogo || [];
+            return jogo.numeros || jogo.dezenas || jogo.game || jogo.jogo || [];
         }
 
-        // Lê os jogos buscando em todas as estruturas que apareceram no seu DevTools
-        function obterJogosDaLoteria(loteriaId) {
-            let jogosEncontrados = [];
+        function buscarJogosLocais(loteriaId) {
+            let jogosDaLoteria = [];
             const idNorm = normalizar(loteriaId);
 
-            let chavesParaBuscar = [
-                loteriaId,
-                idNorm,
-                `jogos_${loteriaId}`,
-                `jogos_${idNorm}`,
-                'saved_games_list',
-                'jogos_salvos'
-            ];
-
-            chavesParaBuscar.forEach(chave => {
-                try {
-                    let item = localStorage.getItem(chave);
-                    if (!item) return;
-
-                    let parsed = JSON.parse(item);
-
-                    // Se a chave guarda um único objeto com array de dezenas
-                    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-                        let dez = extrairDezenas(parsed);
-                        if (dez.length > 0) jogosEncontrados.push(parsed);
-                        return;
-                    }
-
-                    if (Array.isArray(parsed)) {
-                        parsed.forEach(j => {
-                            if (!j) return;
-
-                            // Se for chave global, filtra pelo tipo
-                            if (chave === 'saved_games_list' || chave === 'jogos_salvos') {
-                                let tipo = normalizar(j.loteria || j.tipo || j.game || '');
-                                if (!tipo.includes(idNorm) && !idNorm.includes(tipo)) return;
-                            }
-
-                            let dez = extrairDezenas(j);
-                            if (dez.length > 0) jogosEncontrados.push(j);
-                        });
-                    }
-                } catch(e) {}
-            });
-
-            // Remove duplicados idênticos
-            let unicos = [];
-            let chavesVistas = new Set();
-
-            jogosEncontrados.forEach(j => {
-                let dezStr = extrairDezenas(j).join('-');
-                if (!chavesVistas.has(dezStr)) {
-                    chavesVistas.add(dezStr);
-                    unicos.push(j);
-                }
-            });
-
-            return unicos;
-        }
-
-        async function carregarJogosSalvos(loteria, forcarAPI = false) {
-            loteriaAtual = loteria;
-            destacarBotaoAtivo(loteria);
-
-            const tbody = document.getElementById('table_body');
-            const title = document.getElementById('table_title');
-            
-            const nomeLoteria = nomesLoterias[loteria] || loteria;
-            title.textContent = `Jogos Salvos: ${nomeLoteria.toUpperCase()}`;
-            
-            const listaJogos = obterJogosDaLoteria(loteria);
-
-            if (listaJogos.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #7f8c8d; padding: 20px;">Nenhum jogo salvo encontrado para esta loteria.</td></tr>`;
-                return;
-            }
-
-            const ultimoSorteio = await buscarUltimoResultadoAPI(loteria, forcarAPI);
-            const dezenasSorteadasSet = new Set(ultimoSorteio ? ultimoSorteio.dezenas.map(d => String(parseInt(d, 10))) : []);
-
-            tbody.innerHTML = '';
-
-            listaJogos.forEach((jogo, index) => {
-                const tr = document.createElement('tr');
-                let dezenasArray = extrairDezenas(jogo);
-
-                let totalAcertos = 0;
-                const dezenasHtml = dezenasArray.map(d => {
-                    const numLimpo = String(parseInt(d, 10));
-                    const formatado = String(d).padStart(2, '0');
-                    
-                    let isHit = false;
-                    if (dezenasSorteadasSet.size > 0 && dezenasSorteadasSet.has(numLimpo)) {
-                        isHit = true;
-                        totalAcertos++;
-                    }
-                    
-                    return `<span class="ball ${isHit ? 'hit' : ''}">${formatado}</span>`;
-                }).join('');
-
-                let infoAcertosHtml = '';
-                if (ultimoSorteio && dezenasSorteadasSet.size > 0) {
-                    infoAcertosHtml = `<div class="acertos-info"><i class="fa-solid fa-trophy" style="color: #f39c12;"></i> Acertos: ${totalAcertos} (Concurso ${ultimoSorteio.concurso})</div>`;
-                } else {
-                    infoAcertosHtml = `<div class="acertos-info" style="color: #95a5a6; font-weight: normal;">Clique em "Conferir Sorteio" para atualizar acertos.</div>`;
-                }
-
-                const dataJogo = (jogo && typeof jogo === 'object' && (jogo.data || jogo.date)) ? (jogo.data || jogo.date) : new Date().toLocaleDateString('pt-BR');
-
-                tr.innerHTML = `
-                    <td style="vertical-align: middle;"><strong>#${index + 1}</strong></td>
-                    <td style="vertical-align: middle;">${dataJogo}</td>
-                    <td style="vertical-align: middle;">
-                        ${dezenasHtml}
-                        ${infoAcertosHtml}
-                    </td>
-                    <td style="vertical-align: middle;">
-                        <button class="btn-action" onclick="excluirJogoUnico(${index})">Excluir</button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        function mudarLoteria(loteria) {
-            carregarJogosSalvos(loteria, false);
-        }
-
-        async function atualizarConferenciaAPI() {
-            const nomeLoteria = nomesLoterias[loteriaAtual] || loteriaAtual;
-            alert(`Buscando o concurso mais recente da ${nomeLoteria}...`);
-            await carregarJogosSalvos(loteriaAtual, true);
-            alert(`Conferência atualizada com sucesso!`);
-        }
-
-        function excluirJogoUnico(index) {
-            if (!confirm("Deseja realmente excluir este jogo salvo?")) return;
-
-            const listaAtual = obterJogosDaLoteria(loteriaAtual);
-            const jogoParaRemover = listaAtual[index];
-            if (!jogoParaRemover) return;
-
-            const idNorm = normalizar(loteriaAtual);
-            let chaves = [loteriaAtual, idNorm, `jogos_${loteriaAtual}`, `jogos_${idNorm}`, 'saved_games_list', 'jogos_salvos'];
+            let chaves = ['saved_games_list', 'jogos_salvos', loteriaId, idNorm, `jogos_${idNorm}`, '+Milionária', 'maismilionaria'];
 
             chaves.forEach(chave => {
                 try {
@@ -311,49 +187,178 @@
                     let parsed = JSON.parse(item);
 
                     if (Array.isArray(parsed)) {
-                        let filtrados = parsed.filter(j => {
-                            let dezExistentes = extrairDezenas(j).join(',');
-                            let dezRemover = extrairDezenas(jogoParaRemover).join(',');
-                            return dezExistentes !== dezRemover;
+                        parsed.forEach(j => {
+                            if (!j) return;
+                            if (chave === 'saved_games_list' || chave === 'jogos_salvos') {
+                                let tipo = normalizar(j.loteria || j.tipo || j.game || '');
+                                if (!tipo.includes(idNorm) && !idNorm.includes(tipo)) return;
+                            }
+                            if (extrairDezenas(j).length > 0) jogosDaLoteria.push(j);
                         });
-
-                        if (filtrados.length === 0) {
-                            localStorage.removeItem(chave);
-                        } else {
-                            localStorage.setItem(chave, JSON.stringify(filtrados));
-                        }
+                    } else if (typeof parsed === 'object') {
+                        if (extrairDezenas(parsed).length > 0) jogosDaLoteria.push(parsed);
                     }
                 } catch(e) {}
             });
 
+            let vistos = new Set();
+            return jogosDaLoteria.filter(j => {
+                let chaveUnica = extrairDezenas(j).join('-');
+                if (vistos.has(chaveUnica)) return false;
+                vistos.add(chaveUnica);
+                return true;
+            });
+        }
+
+        async function carregarJogosSalvos(loteria, forcarBuscaAPI = false) {
+            loteriaAtual = loteria;
+            destacarBotaoAtivo(loteria);
+
+            const tbody = document.getElementById('table_body');
+            const title = document.getElementById('table_title');
+            const concursoDisplay = document.getElementById('concurso_display');
+            
+            const nomeLoteria = nomesLoterias[loteria] || loteria;
+            title.textContent = `Jogos Salvos: ${nomeLoteria.toUpperCase()}`;
+            tbody.innerHTML = '';
+
+            const resultadoConcurso = await obterUltimoResultado(loteria, forcarBuscaAPI);
+
+            if (resultadoConcurso) {
+                if (resultadoConcurso.ehDuplaSena) {
+                    concursoDisplay.innerHTML = `
+                        <strong>Último Concurso Dupla Sena (${resultadoConcurso.concurso}):</strong>
+                        <div class="sorteio-linha">
+                            <span style="font-weight:bold; width:85px;">1º Sorteio:</span> 
+                            ${resultadoConcurso.dezenas.map(d => `<span class="ball draw-ball">${d}</span>`).join('')}
+                        </div>
+                        <div class="sorteio-linha">
+                            <span style="font-weight:bold; width:85px;">2º Sorteio:</span> 
+                            ${resultadoConcurso.dezenasSorteio2.map(d => `<span class="ball draw-ball">${d}</span>`).join('')}
+                        </div>
+                    `;
+                } else if (normalizar(loteria) === 'supersete') {
+                    concursoDisplay.innerHTML = `
+                        <strong>Último Concurso Super Sete (${resultadoConcurso.concurso}):</strong><br>
+                        ${resultadoConcurso.dezenas.map((d, i) => `<span class="ball draw-ball">C${i+1}:${d}</span>`).join('')}
+                    `;
+                } else {
+                    concursoDisplay.innerHTML = `
+                        <strong>Último Concurso (${resultadoConcurso.concurso}):</strong> 
+                        ${resultadoConcurso.dezenas.map(d => `<span class="ball draw-ball">${d}</span>`).join('')}
+                    `;
+                }
+            } else {
+                concursoDisplay.innerHTML = `<em>Não foi possível carregar o resultado do concurso. Clique em "Atualizar Concurso".</em>`;
+            }
+
+            const jogosFiltrados = buscarJogosLocais(loteria);
+
+            if (jogosFiltrados.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #7f8c8d; padding: 20px;">Nenhum jogo salvo encontrado para esta loteria.</td></tr>`;
+                return;
+            }
+
+            const isSuperSete = normalizar(loteria) === 'supersete';
+            const setS1 = new Set(resultadoConcurso ? resultadoConcurso.dezenas.map(d => String(parseInt(d, 10))) : []);
+            const setS2 = new Set(resultadoConcurso && resultadoConcurso.dezenasSorteio2 ? resultadoConcurso.dezenasSorteio2.map(d => String(parseInt(d, 10))) : []);
+
+            jogosFiltrados.forEach((jogo, index) => {
+                const tr = document.createElement('tr');
+                let dezenasArray = extrairDezenas(jogo);
+
+                let acertosS1 = 0;
+                let acertosS2 = 0;
+
+                const dezenasHtml = dezenasArray.map((d, colIndex) => {
+                    const numNormal = String(parseInt(d, 10));
+                    const formatado = String(d).padStart(2, '0');
+                    let acertou = false;
+
+                    if (isSuperSete) {
+                        if (resultadoConcurso && resultadoConcurso.dezenas[colIndex] !== undefined) {
+                            acertou = (numNormal === String(parseInt(resultadoConcurso.dezenas[colIndex], 10)));
+                        }
+                    } else if (resultadoConcurso && resultadoConcurso.ehDuplaSena) {
+                        let inS1 = setS1.has(numNormal);
+                        let inS2 = setS2.has(numNormal);
+                        if (inS1) acertosS1++;
+                        if (inS2) acertosS2++;
+                        acertou = inS1 || inS2;
+                    } else {
+                        acertou = setS1.has(numNormal);
+                        if (acertou) acertosS1++;
+                    }
+
+                    let prefixoCol = isSuperSete ? `<small style="font-size:10px;color:#666;">C${colIndex+1}:</small>` : '';
+                    return `${prefixoCol}<span class="ball ${acertou ? 'hit' : ''}">${formatado}</span>`;
+                }).join(' ');
+
+                let infoConcurso = '';
+                if (resultadoConcurso) {
+                    if (resultadoConcurso.ehDuplaSena) {
+                        infoConcurso = `<div class="acertos-info"><i class="fa-solid fa-trophy" style="color: #f39c12;"></i> 1º Sorteio: ${acertosS1} acertos | 2º Sorteio: ${acertosS2} acertos</div>`;
+                    } else {
+                        infoConcurso = `<div class="acertos-info"><i class="fa-solid fa-trophy" style="color: #f39c12;"></i> Acertos: ${acertosS1}</div>`;
+                    }
+                }
+
+                const dataJogo = jogo.data || jogo.date || new Date().toLocaleDateString('pt-BR');
+
+                tr.innerHTML = `
+                    <td style="vertical-align: middle;"><strong>#${index + 1}</strong></td>
+                    <td style="vertical-align: middle;">${dataJogo}</td>
+                    <td style="vertical-align: middle;">
+                        ${dezenasHtml}
+                        ${infoConcurso}
+                    </td>
+                    <td style="vertical-align: middle;">
+                        <button class="btn-action" onclick="excluirJogoGeral(${JSON.stringify(jogo).replace(/"/g, '&quot;')})">Excluir</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function conferirComUltimoConcurso(forcar) {
+            alert("Buscando o resultado do concurso mais recente...");
+            await carregarJogosSalvos(loteriaAtual, forcar);
+        }
+
+        function excluirJogoGeral(jogoParaRemover) {
+            if (!confirm("Deseja realmente excluir este jogo salvo?")) return;
+            
+            let idNorm = normalizar(loteriaAtual);
+            let chaves = ['saved_games_list', 'jogos_salvos', loteriaAtual, idNorm, `jogos_${idNorm}`, '+Milionária', 'maismilionaria'];
+
+            chaves.forEach(chave => {
+                try {
+                    let item = localStorage.getItem(chave);
+                    if (!item) return;
+
+                    let parsed = JSON.parse(item);
+                    if (Array.isArray(parsed)) {
+                        let filtrados = parsed.filter(j => {
+                            let dezJ = extrairDezenas(j).join(',');
+                            let dezRem = extrairDezenas(jogoParaRemover).join(',');
+                            return dezJ !== dezRem;
+                        });
+                        localStorage.setItem(chave, JSON.stringify(filtrados));
+                    }
+                } catch(e) {}
+            });
+            
             carregarJogosSalvos(loteriaAtual, false);
         }
 
-        function apagarTodosJogos() {
-            if (!confirm(`Deseja apagar todos os jogos salvos de ${nomesLoterias[loteriaAtual]}?`)) return;
-
-            const idNorm = normalizar(loteriaAtual);
-            let chaves = [loteriaAtual, idNorm, `jogos_${loteriaAtual}`, `jogos_${idNorm}`];
-
-            chaves.forEach(chave => localStorage.removeItem(chave));
-
-            ['saved_games_list', 'jogos_salvos'].forEach(chaveGlobal => {
-                try {
-                    let item = localStorage.getItem(chaveGlobal);
-                    if (item) {
-                        let arrayGlobal = JSON.parse(item);
-                        if (Array.isArray(arrayGlobal)) {
-                            let filtrados = arrayGlobal.filter(j => {
-                                let tipo = normalizar(j.loteria || j.tipo || j.game || '');
-                                return !tipo.includes(idNorm) && !idNorm.includes(tipo);
-                            });
-                            localStorage.setItem(chaveGlobal, JSON.stringify(filtrados));
-                        }
-                    }
-                } catch(e) {}
-            });
-
-            carregarJogosSalvos(loteriaAtual, false);
+        function zerarTudoDefinitivo() {
+            if (confirm("ATENÇÃO: Deseja APAGAR TODOS os jogos salvos de TODAS as loterias?\nEsta ação limpará totalmente a memória local do seu computador e não poderá ser desfeita.")) {
+                if (confirm("Tem certeza absoluta? Todos os dados gravados serão removidos do PC.")) {
+                    localStorage.clear();
+                    alert("A memória local foi zerada com sucesso!");
+                    carregarJogosSalvos(loteriaAtual, false);
+                }
+            }
         }
 
         function destacarBotaoAtivo(loteria) {
@@ -363,7 +368,7 @@
         }
 
         window.addEventListener('DOMContentLoaded', () => {
-            carregarJogosSalvos('megasena', false);
+            carregarJogosSalvos('megasena');
         });
     </script>
 </body>
