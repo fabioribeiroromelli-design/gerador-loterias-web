@@ -32,16 +32,30 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Função de verificação no Firestore
+        // Função de verificação no Firestore com suporte a boolean e string
         window.verificarAssinaturaFirestore = async function(email) {
             try {
+                const cleanEmail = email.toLowerCase().trim();
                 const q = query(
                     collection(db, "usuarios"), 
-                    where("email", "==", email.toLowerCase().trim()),
-                    where("assinante", "==", true)
+                    where("email", "==", cleanEmail)
                 );
                 const querySnapshot = await getDocs(q);
-                return !querySnapshot.empty;
+                
+                if (querySnapshot.empty) {
+                    console.log("Usuário não encontrado na base de dados.");
+                    return false;
+                }
+
+                let eAssinante = false;
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    if (data.assinante === true || data.assinante === "true") {
+                        eAssinante = true;
+                    }
+                });
+
+                return eAssinante;
             } catch (error) {
                 console.error("Erro ao consultar base de dados:", error);
                 return false;
@@ -388,9 +402,9 @@
 
     <!-- AUTENTICAÇÃO GOOGLE E NAVEGAÇÃO -->
     <script>
-        // Variáveis armazenadas apenas na memória da sessão atual
-        let currentUser = null;
-        let isSubscriber = false;
+        // Restauração da sessão salva no localStorage
+        let currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
+        let isSubscriber = localStorage.getItem('isSubscriber') === 'true';
 
         function parseJwt(token) {
             try {
@@ -405,73 +419,71 @@
             }
         }
 
-       // Garante que o estado inicie limpo no carregamento da página
-let currentUser = null;
-let isSubscriber = false;
+        function updateUIAuth() {
+            const authContainer = document.getElementById('user_auth_area');
+            if (!authContainer) return;
 
-function updateUIAuth() {
-    const authContainer = document.getElementById('user_auth_area');
-    if (!authContainer) return;
-
-    if (currentUser) {
-        authContainer.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 8px; background: rgba(255, 255, 255, 0.15); padding: 5px 12px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.3);">
-                ${currentUser.picture ? `<img src="${currentUser.picture}" style="width: 26px; height: 26px; border-radius: 50%; object-fit: cover;" alt="Usuário">` : '<i class="fa-solid fa-circle-user" style="font-size: 1.3rem; color: #fff;"></i>'}
-                <span style="font-size: 0.85rem; font-weight: 600; color: #fff; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${currentUser.name || currentUser.email}</span>
-                <button onclick="logoutGoogle()" style="background: #e74c3c; color: white; border: none; padding: 4px 8px; border-radius: 12px; cursor: pointer; font-size: 0.75rem; font-weight: bold; margin-left: 4px;" title="Sair">
-                    <i class="fa-solid fa-right-from-bracket"></i>
-                </button>
-            </div>
-        `;
-    } else {
-        authContainer.innerHTML = `<div id="g_id_signin_btn"></div>`;
-        
-        const checkGoogleInterval = setInterval(() => {
-            if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
-                clearInterval(checkGoogleInterval);
+            if (currentUser) {
+                authContainer.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 8px; background: rgba(255, 255, 255, 0.15); padding: 5px 12px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.3);">
+                        ${currentUser.picture ? `<img src="${currentUser.picture}" style="width: 26px; height: 26px; border-radius: 50%; object-fit: cover;" alt="Usuário">` : '<i class="fa-solid fa-circle-user" style="font-size: 1.3rem; color: #fff;"></i>'}
+                        <span style="font-size: 0.85rem; font-weight: 600; color: #fff; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${currentUser.name || currentUser.email}</span>
+                        <button onclick="logoutGoogle()" style="background: #e74c3c; color: white; border: none; padding: 4px 8px; border-radius: 12px; cursor: pointer; font-size: 0.75rem; font-weight: bold; margin-left: 4px;" title="Sair">
+                            <i class="fa-solid fa-right-from-bracket"></i>
+                        </button>
+                    </div>
+                `;
+            } else {
+                authContainer.innerHTML = `<div id="g_id_signin_btn"></div>`;
                 
-                // Desativa o recurso One Tap/Prompt automático
-                google.accounts.id.cancel();
+                const checkGoogleInterval = setInterval(() => {
+                    if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
+                        clearInterval(checkGoogleInterval);
+                        
+                        google.accounts.id.cancel();
 
-                google.accounts.id.initialize({
-                    client_id: "383374785711-e00t37fkf9q6aqe5imqi0nnh29v2npq4.apps.googleusercontent.com",
-                    callback: handleCredentialResponse,
-                    auto_select: false, // Desativa seleção automática
-                    use_fedcm_for_prompt: false
-                });
-                
-                // Força a desativação da seleção automática de contas
-                google.accounts.id.disableAutoSelect();
+                        google.accounts.id.initialize({
+                            client_id: "383374785711-e00t37fkf9q6aqe5imqi0nnh29v2npq4.apps.googleusercontent.com",
+                            callback: handleCredentialResponse,
+                            auto_select: false,
+                            use_fedcm_for_prompt: false
+                        });
+                        
+                        google.accounts.id.disableAutoSelect();
 
-                const btnDiv = document.getElementById('g_id_signin_btn');
-                if (btnDiv) {
-                    google.accounts.id.renderButton(
-                        btnDiv,
-                        { theme: "outline", size: "medium", locale: "pt-BR", shape: "rectangular" }
-                    );
-                }
+                        const btnDiv = document.getElementById('g_id_signin_btn');
+                        if (btnDiv) {
+                            google.accounts.id.renderButton(
+                                btnDiv,
+                                { theme: "outline", size: "medium", locale: "pt-BR", shape: "rectangular" }
+                            );
+                        }
+                    }
+                }, 200);
             }
-        }, 200);
-    }
-}
+        }
 
-window.logoutGoogle = function() {
-    if (currentUser && currentUser.email && typeof google !== 'undefined' && google.accounts && google.accounts.id) {
-        google.accounts.id.revoke(currentUser.email, () => {
-            console.log('Sessão revogada no Google.');
-        });
-    }
+        window.logoutGoogle = function() {
+            if (currentUser && currentUser.email && typeof google !== 'undefined' && google.accounts && google.accounts.id) {
+                google.accounts.id.revoke(currentUser.email, () => {
+                    console.log('Sessão revogada no Google.');
+                });
+            }
 
-    currentUser = null;
-    isSubscriber = false;
+            currentUser = null;
+            isSubscriber = false;
+            
+            // Limpa do armazenamento local
+            localStorage.removeItem('currentUser');
+            localStorage.removeItem('isSubscriber');
 
-    if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
-        google.accounts.id.disableAutoSelect();
-    }
+            if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
+                google.accounts.id.disableAutoSelect();
+            }
 
-    updateUIAuth();
-    applyVipLocks();
-};
+            updateUIAuth();
+            applyVipLocks();
+        };
 
         async function handleCredentialResponse(response) {
             if (!response || !response.credential) return;
@@ -484,12 +496,17 @@ window.logoutGoogle = function() {
                 return;
             }
 
-            if (typeof window.verificarAssinaturaFirestore !== "function") {
-                alert("Conectando ao banco de dados... Tente novamente em alguns instantes.");
-                return;
+            // Aguarda até o carregamento do módulo do Firestore
+            let tentativas = 0;
+            while (typeof window.verificarAssinaturaFirestore !== "function" && tentativas < 20) {
+                await new Promise(r => setTimeout(r, 200));
+                tentativas++;
             }
 
-            const eAssinante = await window.verificarAssinaturaFirestore(userEmail);
+            let eAssinante = false;
+            if (typeof window.verificarAssinaturaFirestore === "function") {
+                eAssinante = await window.verificarAssinaturaFirestore(userEmail);
+            }
 
             currentUser = {
                 email: userEmail,
@@ -497,16 +514,20 @@ window.logoutGoogle = function() {
                 picture: responsePayload.picture || ''
             };
 
-            if (eAssinante) {
-                isSubscriber = true;
-                alert(`Seja bem-vindo(a)! Sua assinatura VIP foi confirmada.`);
-            } else {
-                isSubscriber = false;
-                alert("Aviso: O e-mail informado não possui uma assinatura ativa.");
-            }
+            isSubscriber = eAssinante;
+
+            // Salva sessão localmente no navegador
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            localStorage.setItem('isSubscriber', isSubscriber ? 'true' : 'false');
 
             updateUIAuth();
             applyVipLocks();
+
+            if (isSubscriber) {
+                alert(`Seja bem-vindo(a)! Sua assinatura VIP foi confirmada.`);
+            } else {
+                alert("Aviso: O e-mail informado não possui uma assinatura ativa.");
+            }
         }
 
         const applyVipLocks = () => {
@@ -571,7 +592,7 @@ window.logoutGoogle = function() {
 
             startAutoSlide();
 
-            // Modal VIP Exclusivo em Português
+            // Modal VIP Exclusivo
             const showVipModal = () => {
                 if (document.getElementById('vip-modal')) return;
 
@@ -601,8 +622,10 @@ window.logoutGoogle = function() {
                 document.getElementById('btnCloseModal').onclick = () => modal.remove();
             };
 
-            setTimeout(applyVipLocks, 500);
+            // Aplica estado dos cadeados apos inicializacao da UI
+            setTimeout(applyVipLocks, 600);
 
+            // Bloqueio de cliques para nao-VIPs
             document.addEventListener('click', (e) => {
                 if (isSubscriber) return;
 
