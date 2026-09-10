@@ -416,7 +416,7 @@
             <a href="terms.html" target="_blank"><i class="fa-solid fa-file-contract"></i> Termos de Uso</a>
             <a href="about.html" target="_blank"><i class="fa-solid fa-envelope"></i> Sobre Nós / Contato</a>
         </div>
-        <p>&copy; Todos os direitos reservados.</p>
+        <p>&copy; Todos os direitos reservados. Link oficial: <a href="https://play.google.com/store/apps/details?id=com.fabioribeiroromelli.geradordejogos" target="_blank">Gerador de Jogos</a></p>
     </footer>
 
     <!-- SCRIPTS DE DADOS DA APLICAÇÃO -->
@@ -659,8 +659,15 @@
                 document.getElementById('btnCloseModal').onclick = () => modal.remove();
             };
 
+            const observer = new MutationObserver(() => {
+                applyVipLocks();
+            });
+
             const grid = document.getElementById('lottery_grid');
             if (grid) {
+                observer.observe(grid, { childList: true, subtree: true });
+                applyVipLocks();
+
                 grid.addEventListener('click', (e) => {
                     const card = e.target.closest('.lottery-card, .vip-card-locked');
                     if (card && card.classList.contains('vip-card-locked') && !isSubscriber) {
