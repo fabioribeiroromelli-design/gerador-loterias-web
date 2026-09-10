@@ -17,5 +17,24 @@
       2,
       6
     ]
+  },
+  {
+    "concurso": 388,
+    "dataApuracao": "09/09/2026",
+    "dezenas": [
+      11,
+      17,
+      21,
+      23,
+      34,
+      41
+    ],
+    "acumulou": true,
+    "valorEstimadoProximoConcurso": 93000000,
+    "dataProximoConcurso": "13/09/2026",
+    "trevos": [
+      3,
+      5
+    ]
   }
 ]

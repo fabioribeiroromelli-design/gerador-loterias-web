@@ -21,5 +21,28 @@
       40,
       46
     ]
+  },
+  {
+    "concurso": 3006,
+    "dataApuracao": "09/09/2026",
+    "dezenas": [
+      6,
+      10,
+      18,
+      23,
+      28,
+      33
+    ],
+    "acumulou": true,
+    "valorEstimadoProximoConcurso": 3700000,
+    "dataProximoConcurso": "11/09/2026",
+    "segundoSorteio": [
+      2,
+      4,
+      7,
+      19,
+      25,
+      49
+    ]
   }
 ]
