@@ -8,29 +8,29 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.head.appendChild(fa);
     }
 
-    // Garante que a inicialização do Google ocorra apenas uma vez por sessão da página
-    if (!window._googleAuthInitialized) {
+    // Garante que a flag global de controle exista corretamente
+    if (window._googleAuthInitialized === undefined) {
         window._googleAuthInitialized = false;
+    }
 
-        const existingGsiScript = document.getElementById('google-gsi-script');
-        if (!existingGsiScript) {
-            const gsi = document.createElement('script');
-            gsi.id = 'google-gsi-script';
-            gsi.src = 'https://accounts.google.com/gsi/client';
-            gsi.async = true;
-            gsi.defer = true;
-            gsi.onload = () => {
-                initGoogleAuth();
-            };
-            document.head.appendChild(gsi);
+    const existingGsiScript = document.getElementById('google-gsi-script');
+    if (!existingGsiScript) {
+        const gsi = document.createElement('script');
+        gsi.id = 'google-gsi-script';
+        gsi.src = 'https://accounts.google.com/gsi/client';
+        gsi.async = true;
+        gsi.defer = true;
+        gsi.onload = () => {
+            initGoogleAuth();
+        };
+        document.head.appendChild(gsi);
+    } else {
+        if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
+            initGoogleAuth();
         } else {
-            if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
+            existingGsiScript.addEventListener('load', () => {
                 initGoogleAuth();
-            } else {
-                existingGsiScript.addEventListener('load', () => {
-                    initGoogleAuth();
-                }, { once: true });
-            }
+            }, { once: true });
         }
     }
 
@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             google.accounts.id.initialize({
                 client_id: "383374785711-e00t37fkf9q6aqe5imqi0nnh29v2npq4.apps.googleusercontent.com",
                 callback: handleCredentialResponse,
-                ux_mode: "popup" // Força o modo popup para evitar bloqueios de COOP
+                ux_mode: "popup"
             });
 
             google.accounts.id.renderButton(
@@ -64,43 +64,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         } catch (error) {
             console.error("Erro ao inicializar Google Auth:", error);
             window._googleAuthInitialized = false;
-        }
-    }
-
-    window.handleCredentialResponse = function(response) {
-        if (!response || !response.credential) {
-            console.error("Nenhuma credencial retornada pelo Google.");
-            return;
-        }
-
-        const responsePayload = parseJwt(response.credential);
-
-        if (responsePayload && responsePayload.email) {
-            try {
-                localStorage.setItem("user_email", responsePayload.email);
-                localStorage.setItem("user_name", responsePayload.name || '');
-            } catch (e) {
-                console.warn("Não foi possível salvar os dados do usuário no localStorage:", e);
-            }
-
-            alert(`Olá, ${responsePayload.name || 'Usuário'}!\nLogin realizado com sucesso.\nE-mail: ${responsePayload.email}`);
-        } else {
-            alert("Não foi possível extrair as informações da conta do Google.");
-        }
-    };
-
-    function parseJwt(token) {
-        try {
-            const base64Url = token.split('.')[1];
-            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-            const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
-                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-            }).join(''));
-
-            return JSON.parse(jsonPayload);
-        } catch (e) {
-            console.error("Erro ao decodificar JWT:", e);
-            return null;
         }
     }
 
@@ -435,7 +398,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     // ===== MONTA O GRID: CARDS ESPECIAIS + LOTERIAS =====
     let html = '';
     
-    // 1. Injeta os cards de geradores especiais primeiro
     html += renderPremiumCard();
     html += renderAvancadoCard();
     html += renderLotofacilRepeticaoCard();
@@ -443,10 +405,47 @@ document.addEventListener('DOMContentLoaded', async () => {
     html += renderDiadesorteRepeticaoCard();
     html += renderSorteioGloboCard();
 
-    // 2. Injeta os cards de resultados das loterias
     LOTTERIES.forEach((lot, index) => {
         html += renderCard(lot.name, results[index]);
     });
 
     grid.innerHTML = html;
 });
+
+// ===== FUNÇÃO GLOBAL DE CALLBACK DO GOOGLE AUTH =====
+function handleCredentialResponse(response) {
+    if (!response || !response.credential) {
+        console.error("Nenhuma credencial retornada pelo Google.");
+        return;
+    }
+
+    const responsePayload = parseJwt(response.credential);
+
+    if (responsePayload && responsePayload.email) {
+        try {
+            localStorage.setItem("user_email", responsePayload.email);
+            localStorage.setItem("user_name", responsePayload.name || '');
+        } catch (e) {
+            console.warn("Não foi possível salvar os dados do usuário no localStorage:", e);
+        }
+
+        alert(`Olá, ${responsePayload.name || 'Usuário'}!\nLogin realizado com sucesso.\nE-mail: ${responsePayload.email}`);
+    } else {
+        alert("Não foi possível extrair as informações da conta do Google.");
+    }
+}
+
+function parseJwt(token) {
+    try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+
+        return JSON.parse(jsonPayload);
+    } catch (e) {
+        console.error("Erro ao decodificar JWT:", e);
+        return null;
+    }
+}
