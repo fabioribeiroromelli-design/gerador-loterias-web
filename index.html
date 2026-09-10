@@ -32,7 +32,7 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Exportação global da função de verificação no Firestore
+        // Função de verificação no Firestore
         window.verificarAssinaturaFirestore = async function(email) {
             try {
                 const q = query(
@@ -43,14 +43,14 @@
                 const querySnapshot = await getDocs(q);
                 return !querySnapshot.empty;
             } catch (error) {
-                console.error("Erro ao consultar Firestore:", error);
+                console.error("Erro ao consultar base de dados:", error);
                 return false;
             }
         };
     </script>
 
     <style>
-        /* Oculta o pop-up automático (One Tap) que o Google injeta no topo da página */
+        /* Oculta o pop-up automático One Tap injetado no topo */
         #credential_picker_container, iframe[src*="accounts.google.com/gsi/iframe"] {
             display: none !important;
         }
@@ -256,7 +256,7 @@
             <i class="fa-solid fa-dice"></i> Loterias Disponíveis
         </h1>
 
-        <!-- Único Container do Botão Google / Perfil do Usuário -->
+        <!-- Container de Autenticação -->
         <div id="user_auth_area"></div>
     </header>
 
@@ -273,7 +273,7 @@
         </script>
     </div>
 
-    <!-- CARROSSEL DE APPS -->
+    <!-- CARROSSEL DE APLICATIVOS -->
     <section class="carousel-container">
         <button class="carousel-btn prev" id="btnPrev"><i class="fa-solid fa-chevron-left"></i></button>
         <button class="carousel-btn next" id="btnNext"><i class="fa-solid fa-chevron-right"></i></button>
@@ -282,9 +282,7 @@
             <div class="carousel-slide">
                 <div class="carousel-slide-content">
                     <h3><i class="fa-solid fa-star"></i> Horóscopo</h3>
-                    <p class="lang-pt">Confira as previsões diárias, signos e a astrologia completa no seu celular.</p>
-                    <p class="lang-en">Check daily predictions, horoscope signs and astrology on your phone.</p>
-                    <p class="lang-es">Consulta las predicciones diarias, signos y astrología en tu móvil.</p>
+                    <p>Confira as previsões diárias, signos e a astrologia completa no seu celular.</p>
                     <a href="https://play.google.com/store/apps/details?id=com.fabioribeiroromelli.horoscopo" target="_blank" style="background:#00c853; color:#fff; padding:8px 16px; border-radius:6px; text-decoration:none; font-weight:bold; display:inline-flex; align-items:center; gap:8px;">
                         <i class="fa-brands fa-google-play"></i> Google Play
                     </a>
@@ -295,9 +293,7 @@
             <div class="carousel-slide">
                 <div class="carousel-slide-content">
                     <h3><i class="fa-solid fa-flask"></i> ChemPuzzle</h3>
-                    <p class="lang-pt">Desafie sua mente com enigmas e jogos educativos incríveis!</p>
-                    <p class="lang-en">Challenge your mind with amazing educational puzzles!</p>
-                    <p class="lang-es">¡Desafía tu mente con increíbles acertijos educativos!</p>
+                    <p>Desafie sua mente com enigmas e jogos educativos incríveis!</p>
                     <a href="https://play.google.com/store/apps/details?id=com.fabioribeiroromelli.chempuzzle" target="_blank" style="background:#00c853; color:#fff; padding:8px 16px; border-radius:6px; text-decoration:none; font-weight:bold; display:inline-flex; align-items:center; gap:8px;">
                         <i class="fa-brands fa-google-play"></i> Google Play
                     </a>
@@ -308,9 +304,7 @@
             <div class="carousel-slide">
                 <div class="carousel-slide-content">
                     <h3><i class="fa-solid fa-chess-board"></i> Tabuleiro Clássico</h3>
-                    <p class="lang-pt">Os melhores jogos de tabuleiro reunidos em um único aplicativo leve e divertido.</p>
-                    <p class="lang-en">The best classic board games in one lightweight and fun app.</p>
-                    <p class="lang-es">Los mejores juegos de mesa clásicos en una aplicación ligera y divertida.</p>
+                    <p>Os melhores jogos de tabuleiro reunidos em um único aplicativo leve e divertido.</p>
                     <a href="https://play.google.com/store/apps/details?id=com.fabioribeiroromelli.tabuleiroclssico" target="_blank" style="background:#00c853; color:#fff; padding:8px 16px; border-radius:6px; text-decoration:none; font-weight:bold; display:inline-flex; align-items:center; gap:8px;">
                         <i class="fa-brands fa-google-play"></i> Google Play
                     </a>
@@ -321,9 +315,7 @@
             <div class="carousel-slide">
                 <div class="carousel-slide-content">
                     <h3><i class="fa-solid fa-question-circle"></i> UniQuiz</h3>
-                    <p class="lang-pt">Teste seus conhecimentos gerais com perguntas desafiadoras e divertidas.</p>
-                    <p class="lang-en">Test your general knowledge with challenging and fun questions.</p>
-                    <p class="lang-es">Pon a prueba tus conocimientos generales con preguntas desafiantes y divertidas.</p>
+                    <p>Teste seus conhecimentos gerais com perguntas desafiadoras e divertidas.</p>
                     <a href="https://play.google.com/store/apps/details?id=com.fabioribeiroromelli.uniquiz" target="_blank" style="background:#00c853; color:#fff; padding:8px 16px; border-radius:6px; text-decoration:none; font-weight:bold; display:inline-flex; align-items:center; gap:8px;">
                         <i class="fa-brands fa-google-play"></i> Google Play
                     </a>
@@ -334,9 +326,7 @@
             <div class="carousel-slide">
                 <div class="carousel-slide-content">
                     <h3><i class="fa-solid fa-clover"></i> Gerador de Jogos - Loterias</h3>
-                    <p class="lang-pt">Acesse estatísticas VIP, fechamentos matemáticos e resultados atualizados das loterias!</p>
-                    <p class="lang-en">Access VIP statistics, mathematical combinations, and updated lottery results!</p>
-                    <p class="lang-es">¡Acceda a estadísticas VIP, combinaciones matemáticas y resultados actualizados de lotería!</p>
+                    <p>Acesse estatísticas VIP, fechamentos matemáticos e resultados atualizados das loterias!</p>
                     <a href="https://play.google.com/store/apps/details?id=com.fabioribeiroromelli.geradordejogos" target="_blank" style="background:#00c853; color:#fff; padding:8px 16px; border-radius:6px; text-decoration:none; font-weight:bold; display:inline-flex; align-items:center; gap:8px;">
                         <i class="fa-brands fa-google-play"></i> Google Play
                     </a>
@@ -354,7 +344,7 @@
         </div>
     </section>
 
-    <!-- ATALHOS NAVEGAÇÃO -->
+    <!-- ATALHOS DE NAVEGAÇÃO -->
     <div class="shortcuts-bar">
         <button onclick="window.location.href='gerar_jogos.html'"><i class="fa-solid fa-wand-magic-sparkles"></i> Gerar Jogos</button>
         <button onclick="window.location.href='saved_games.html'"><i class="fa-solid fa-bookmark"></i> Jogos Salvos</button>
@@ -377,7 +367,7 @@
         </script>
     </div>
 
-    <!-- MAIN CONTAINER -->
+    <!-- CONTEÚDO PRINCIPAL -->
     <main class="container">
         <div id="lottery_grid" class="lottery-grid"></div>
     </main>
@@ -389,15 +379,19 @@
             <a href="terms.html" target="_blank"><i class="fa-solid fa-file-contract"></i> Termos de Uso</a>
             <a href="about.html" target="_blank"><i class="fa-solid fa-envelope"></i> Sobre Nós / Contato</a>
         </div>
-        <p>&copy; 2026 Fábio Ribeiro Romelli. Todos os direitos reservados.</p>
+        <p>&copy; Todos os direitos reservados.</p>
     </footer>
 
     <!-- SCRIPTS DE DADOS DA APLICAÇÃO -->
     <script src="dados_loteria.js"></script>
     <script src="script_home.js"></script>
 
-    <!-- LÓGICA DE LOGIN, GOOGLE AUTH & VIP -->
+    <!-- AUTENTICAÇÃO GOOGLE E NAVEGAÇÃO -->
     <script>
+        // Variáveis armazenadas apenas na memória da sessão atual
+        let currentUser = null;
+        let isSubscriber = false;
+
         function parseJwt(token) {
             try {
                 const base64Url = token.split('.')[1];
@@ -411,21 +405,15 @@
             }
         }
 
-        let isSubscriber = localStorage.getItem("is_vip") === "true";
-
         function updateUIAuth() {
             const authContainer = document.getElementById('user_auth_area');
             if (!authContainer) return;
 
-            const email = localStorage.getItem("user_email");
-            const name = localStorage.getItem("user_name");
-            const picture = localStorage.getItem("user_picture");
-
-            if (email) {
+            if (currentUser) {
                 authContainer.innerHTML = `
                     <div style="display: flex; align-items: center; gap: 8px; background: rgba(255, 255, 255, 0.15); padding: 5px 12px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.3);">
-                        ${picture ? `<img src="${picture}" style="width: 26px; height: 26px; border-radius: 50%; object-fit: cover;" alt="User">` : '<i class="fa-solid fa-circle-user" style="font-size: 1.3rem; color: #fff;"></i>'}
-                        <span style="font-size: 0.85rem; font-weight: 600; color: #fff; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${name || email}</span>
+                        ${currentUser.picture ? `<img src="${currentUser.picture}" style="width: 26px; height: 26px; border-radius: 50%; object-fit: cover;" alt="Usuário">` : '<i class="fa-solid fa-circle-user" style="font-size: 1.3rem; color: #fff;"></i>'}
+                        <span style="font-size: 0.85rem; font-weight: 600; color: #fff; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${currentUser.name || currentUser.email}</span>
                         <button onclick="logoutGoogle()" style="background: #e74c3c; color: white; border: none; padding: 4px 8px; border-radius: 12px; cursor: pointer; font-size: 0.75rem; font-weight: bold; margin-left: 4px;" title="Sair">
                             <i class="fa-solid fa-right-from-bracket"></i>
                         </button>
@@ -459,17 +447,15 @@
         }
 
         window.logoutGoogle = function() {
-            localStorage.removeItem("user_email");
-            localStorage.removeItem("user_name");
-            localStorage.removeItem("user_picture");
-            localStorage.setItem("is_vip", "false");
+            currentUser = null;
             isSubscriber = false;
 
             if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
                 google.accounts.id.disableAutoSelect();
             }
 
-            window.location.reload();
+            updateUIAuth();
+            applyVipLocks();
         };
 
         async function handleCredentialResponse(response) {
@@ -484,36 +470,57 @@
             }
 
             if (typeof window.verificarAssinaturaFirestore !== "function") {
-                alert("Conectando ao banco de dados... Tente novamente em 2 segundos.");
+                alert("Conectando ao banco de dados... Tente novamente em alguns instantes.");
                 return;
             }
 
-            localStorage.setItem("user_email", userEmail);
-            localStorage.setItem("user_name", responsePayload.name || '');
-            localStorage.setItem("user_picture", responsePayload.picture || '');
-
             const eAssinante = await window.verificarAssinaturaFirestore(userEmail);
+
+            currentUser = {
+                email: userEmail,
+                name: responsePayload.name || '',
+                picture: responsePayload.picture || ''
+            };
 
             if (eAssinante) {
                 isSubscriber = true;
-                localStorage.setItem("is_vip", "true");
-                alert(`Seja bem-vindo(a), ${responsePayload.name || userEmail}! Sua assinatura VIP foi confirmada.`);
-                window.location.reload();
+                alert(`Seja bem-vindo(a)! Sua assinatura VIP foi confirmada.`);
             } else {
                 isSubscriber = false;
-                localStorage.setItem("is_vip", "false");
-                alert("Aviso: O e-mail logado não possui uma assinatura ativa no aplicativo.");
-                updateUIAuth();
+                alert("Aviso: O e-mail informado não possui uma assinatura ativa.");
             }
+
+            updateUIAuth();
+            applyVipLocks();
         }
+
+        const applyVipLocks = () => {
+            const grid = document.getElementById('lottery_grid');
+            if (!grid) return;
+
+            const cards = Array.from(grid.children).slice(0, 5);
+
+            if (isSubscriber) {
+                cards.forEach(card => {
+                    card.classList.remove('vip-card-locked');
+                    const badge = card.querySelector('.vip-badge');
+                    if (badge) badge.remove();
+                });
+            } else {
+                cards.forEach(card => {
+                    card.classList.add('vip-card-locked');
+                    if (!card.querySelector('.vip-badge')) {
+                        const badge = document.createElement('span');
+                        badge.className = 'vip-badge';
+                        badge.innerHTML = '<i class="fa-solid fa-lock"></i> VIP';
+                        card.appendChild(badge);
+                    }
+                });
+            }
+        };
 
         document.addEventListener('DOMContentLoaded', () => {
             updateUIAuth();
-
-            const userLang = navigator.language.startsWith('es') ? 'es' : navigator.language.startsWith('en') ? 'en' : 'pt';
-            
-            document.querySelectorAll('.lang-pt, .lang-en, .lang-es').forEach(el => el.style.display = 'none');
-            document.querySelectorAll(`.lang-${userLang}`).forEach(el => el.style.display = 'block');
 
             // Lógica do Carrossel
             let slideIndex = 0;
@@ -549,32 +556,7 @@
 
             startAutoSlide();
 
-            // Modal VIP com Internacionalização (PT / EN / ES)
-            const translations = {
-                pt: { title: "Função Exclusiva VIP 🔒", msg: "Esta função é exclusiva para assinantes! Baixe nosso app na Google Play, assine o plano VIP e libere todas as funções.", btnApp: "Baixar na Play Store", btnClose: "Fechar" },
-                en: { title: "Exclusive VIP Feature 🔒", msg: "This feature is for subscribers only! Download our app on Google Play, subscribe to the VIP plan, and unlock all tools.", btnApp: "Get it on Play Store", btnClose: "Close" },
-                es: { title: "Función Exclusiva VIP 🔒", msg: "¡Esta función es solo para suscriptores! Descarga nuestra app en Google Play, suscríbete al plan VIP y desbloquea todas las herramientas.", btnApp: "Obtener en Play Store", btnClose: "Cerrar" }
-            };
-
-            const txt = translations[userLang] || translations.pt;
-
-            const applyVipLocks = () => {
-                if (isSubscriber) return;
-
-                const grid = document.getElementById('lottery_grid');
-                if (!grid) return;
-
-                Array.from(grid.children).slice(0, 5).forEach(card => {
-                    card.classList.add('vip-card-locked');
-                    if (!card.querySelector('.vip-badge')) {
-                        const badge = document.createElement('span');
-                        badge.className = 'vip-badge';
-                        badge.innerHTML = '<i class="fa-solid fa-lock"></i> VIP';
-                        card.appendChild(badge);
-                    }
-                });
-            };
-
+            // Modal VIP Exclusivo em Português
             const showVipModal = () => {
                 if (document.getElementById('vip-modal')) return;
 
@@ -586,14 +568,16 @@
                         <div style="font-size: 3rem; color: #f39c12; margin-bottom: 10px;">
                             <i class="fa-solid fa-lock"></i>
                         </div>
-                        <h3 style="margin: 0 0 10px 0; color: #2c3e50;">${txt.title}</h3>
-                        <p style="color: #666; font-size: 0.95rem; line-height: 1.5; margin-bottom: 20px;">${txt.msg}</p>
+                        <h3 style="margin: 0 0 10px 0; color: #2c3e50;">Função Exclusiva VIP 🔒</h3>
+                        <p style="color: #666; font-size: 0.95rem; line-height: 1.5; margin-bottom: 20px;">
+                            Esta função é exclusiva para assinantes! Baixe nosso app na Google Play, assine o plano VIP e libere todas as funções.
+                        </p>
                         <div style="display: flex; gap: 10px; justify-content: center;">
                             <a href="https://play.google.com/store/apps/details?id=com.fabioribeiroromelli.geradordejogos" target="_blank" style="background: #27ae60; color: white; padding: 10px 18px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 8px;">
-                                <i class="fa-brands fa-google-play"></i> ${txt.btnApp}
+                                <i class="fa-brands fa-google-play"></i> Baixar na Play Store
                             </a>
                             <button id="btnCloseModal" style="background: #e0e0e0; border: none; color: #333; padding: 10px 18px; border-radius: 6px; font-weight: bold; cursor: pointer;">
-                                ${txt.btnClose}
+                                Fechar
                             </button>
                         </div>
                     </div>
