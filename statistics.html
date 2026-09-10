@@ -9,8 +9,19 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Scripts dos históricos para funcionar offline/localmente direto do Bloco de Notas -->
+    <script src="historico_megasena.js"></script>
+    <script src="historico_lotofacil.js"></script>
+    <script src="historico_quina.js"></script>
+    <script src="historico_lotomania.js"></script>
+    <script src="historico_timemania.js"></script>
+    <script src="historico_duplasena.js"></script>
+    <script src="historico_diadesorte.js"></script>
+    <script src="historico_supersete.js"></script>
+    <script src="historico_maismilionaria.js"></script>
+
     <style>
-        /* ----- ESTILOS GERAIS (mesma paleta do app) ----- */
         :root {
             --bg: #121019;
             --surface: #1c1a26;
@@ -22,6 +33,9 @@
             --gold-dim: rgba(227, 168, 59, 0.16);
             --ink: #14131b;
             --danger: #e2704f;
+            --delay: #c0392b;
+            --cold: #3a3a5a;
+            --mid: #6a5a3a;
             --radius: 10px;
             --font-display: 'Big Shoulders Display', sans-serif;
             --font-body: 'IBM Plex Sans', sans-serif;
@@ -29,378 +43,124 @@
         }
         * { box-sizing: border-box; }
         body {
-            margin: 0;
-            padding: 0;
-            font-family: var(--font-body);
+            margin: 0; padding: 0; font-family: var(--font-body);
             background-color: var(--bg);
             background-image: radial-gradient(circle at 12% 0%, rgba(227, 168, 59, 0.07), transparent 40%),
                               radial-gradient(circle at 88% 10%, rgba(147, 0, 137, 0.12), transparent 45%);
-            background-attachment: fixed;
-            color: var(--text);
+            background-attachment: fixed; color: var(--text);
             -webkit-font-smoothing: antialiased;
         }
         .header-bar {
             background: linear-gradient(180deg, var(--ink), var(--surface));
             border-bottom: 1px solid var(--border);
-            padding: 18px 24px;
-            display: flex;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 16px;
+            padding: 18px 24px; display: flex; align-items: center; flex-wrap: wrap; gap: 16px;
         }
         .btn-back {
-            background: transparent;
-            color: var(--text);
-            border: 1px solid var(--border);
-            padding: 9px 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-family: var(--font-body);
-            font-weight: 500;
-            font-size: 0.9rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            transition: border-color .15s ease, background .15s ease;
-            white-space: nowrap;
+            background: transparent; color: var(--text); border: 1px solid var(--border);
+            padding: 9px 16px; border-radius: 8px; cursor: pointer;
+            font-family: var(--font-body); font-weight: 500; font-size: 0.9rem;
+            display: inline-flex; align-items: center; gap: 8px;
+            transition: border-color .15s ease, background .15s ease; white-space: nowrap;
         }
         .btn-back:hover { border-color: var(--gold); background: var(--gold-dim); }
         .header-titles h1 {
-            margin: 0;
-            font-family: var(--font-display);
-            font-weight: 700;
-            font-size: clamp(1.4rem, 1.1rem + 1.2vw, 1.9rem);
-            letter-spacing: 0.01em;
-            line-height: 1.1;
+            margin: 0; font-family: var(--font-display); font-weight: 700;
+            font-size: clamp(1.4rem, 1.1rem + 1.2vw, 1.9rem); letter-spacing: 0.01em; line-height: 1.1;
         }
-        .header-titles p {
-            margin: 4px 0 0;
-            color: var(--text-muted);
-            font-size: 0.9rem;
-        }
+        .header-titles p { margin: 4px 0 0; color: var(--text-muted); font-size: 0.9rem; }
         .container { max-width: 1080px; margin: 0 auto; padding: 28px 20px 60px; }
 
-        /* ----- Navegação das loterias ----- */
         .lottery-grid-nav {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(122px, 1fr));
-            gap: 10px;
-            margin-bottom: 22px;
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(122px, 1fr)); gap: 10px; margin-bottom: 22px;
         }
         .lottery-card-btn {
-            border: none;
-            padding: 14px 10px;
-            border-radius: 8px;
-            color: #fff;
-            font-family: var(--font-display);
-            font-weight: 700;
-            font-size: 1.05rem;
-            letter-spacing: 0.01em;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            min-height: 52px;
-            transition: transform .15s ease, box-shadow .15s ease, filter .15s ease;
+            border: none; padding: 14px 10px; border-radius: 8px; color: #fff;
+            font-family: var(--font-display); font-weight: 700; font-size: 1.05rem;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            text-align: center; min-height: 52px; transition: transform .15s ease, filter .15s ease;
             box-shadow: 0 1px 0 rgba(255,255,255,0.12) inset, 0 4px 10px rgba(0,0,0,0.28);
         }
         .lottery-card-btn:hover { transform: translateY(-2px); filter: brightness(1.08); }
-        .lottery-card-btn.active {
-            box-shadow: 0 0 0 3px var(--gold), 0 6px 16px rgba(0,0,0,0.35);
-            transform: translateY(-2px);
-        }
+        .lottery-card-btn.active { box-shadow: 0 0 0 3px var(--gold), 0 6px 16px rgba(0,0,0,0.35); transform: translateY(-2px); }
 
-        /* ----- Barra de contexto ----- */
         .context-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 12px;
-            background: var(--surface);
-            border: 1px solid var(--border);
-            padding: 16px 20px;
-            border-radius: var(--radius);
-            margin-bottom: 20px;
+            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;
+            gap: 12px; background: var(--surface); border: 1px solid var(--border);
+            padding: 16px 20px; border-radius: var(--radius); margin-bottom: 20px;
         }
-        #stats_title {
-            margin: 0;
-            font-family: var(--font-display);
-            font-weight: 700;
-            font-size: 1.4rem;
-            letter-spacing: 0.01em;
-        }
-        #stats_subtitle {
-            margin: 4px 0 0;
-            color: var(--text-muted);
-            font-size: 0.85rem;
-        }
+        #stats_title { margin: 0; font-family: var(--font-display); font-weight: 700; font-size: 1.4rem; }
+        #stats_subtitle { margin: 4px 0 0; color: var(--text-muted); font-size: 0.85rem; }
         #badge_fonte {
-            font-family: var(--font-body);
-            font-size: 0.78rem;
-            font-weight: 500;
-            color: var(--text-muted);
-            padding: 5px 12px;
-            border-radius: 20px;
-            border: 1px solid var(--border);
-            background: var(--surface-2);
-            white-space: nowrap;
+            font-family: var(--font-body); font-size: 0.78rem; font-weight: 500;
+            color: var(--text-muted); padding: 5px 12px; border-radius: 20px;
+            border: 1px solid var(--border); background: var(--surface-2); white-space: nowrap;
         }
 
-        /* ----- Grade de números (igual ao app) ----- */
-        .number-grid-wrapper {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 20px;
-            margin-bottom: 20px;
+        #stats_container.fade-in { animation: entrar .35s ease; }
+        @keyframes entrar { from { opacity: 0; } to { opacity: 1; } }
+
+        .painel-principal {
+            display: grid; grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr); gap: 20px; margin-bottom: 20px; align-items: start;
         }
-        .number-grid-wrapper h3 {
-            margin: 0 0 4px;
-            font-family: var(--font-display);
-            font-weight: 700;
-            font-size: 1.15rem;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+        @media (max-width: 900px) { .painel-principal { grid-template-columns: 1fr; } }
+
+        .number-grid-wrapper, .stat-card {
+            background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px;
         }
-        .number-grid-wrapper h3 i { color: var(--gold); font-size: 0.95rem; }
-        .number-grid-wrapper .card-desc {
-            margin: 0 0 16px;
-            color: var(--text-muted);
-            font-size: 0.85rem;
-            line-height: 1.4;
-            padding-bottom: 14px;
-            border-bottom: 1px solid var(--border);
+        .number-grid-wrapper h3, .stat-card h3 {
+            margin: 0 0 4px; font-family: var(--font-display); font-weight: 700; font-size: 1.15rem; display: flex; align-items: center; gap: 10px;
+        }
+        .number-grid-wrapper h3 i, .stat-card h3 i { color: var(--gold); font-size: 0.95rem; }
+        .number-grid-wrapper .card-desc, .stat-card .card-desc {
+            margin: 0 0 16px; color: var(--text-muted); font-size: 0.85rem; line-height: 1.4; padding-bottom: 14px; border-bottom: 1px solid var(--border);
         }
 
-        /* Cabeçalho dos concursos (acima da grade) */
-        .contest-header-row {
-            display: flex;
-            gap: 4px;
-            margin-bottom: 12px;
-            padding: 4px 0;
-            overflow-x: auto;
-            flex-wrap: nowrap;
-        }
-        .contest-header-row span {
-            min-width: 32px;
-            text-align: center;
-            font-family: var(--font-mono);
-            font-size: 0.7rem;
-            color: var(--text-muted);
-            background: var(--surface-2);
-            padding: 2px 4px;
-            border-radius: 4px;
-            flex-shrink: 0;
-        }
-
-        /* Grade de números (grid) - agora com células menores */
-        .number-grid {
-            display: grid;
-            gap: 6px;
-            margin-top: 8px;
-            max-width: 100%;
-        }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; }
+        .number-grid { display: grid; gap: 8px; margin-top: 4px; justify-items: center; }
         .number-cell {
-            aspect-ratio: 1 / 1;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: var(--font-display);
-            font-weight: 700;
-            font-size: 0.75rem;   /* tamanho da fonte reduzido */
-            background: var(--surface-2);
-            color: var(--text);
-            border: 1px solid var(--border);
-            cursor: pointer;
-            transition: transform 0.1s ease, box-shadow 0.1s ease;
-            position: relative;
-            width: 100%;
-            padding-bottom: 100%; /* mantém quadrado */
-            height: 0;
-            min-width: 28px;      /* tamanho mínimo */
-            max-width: 48px;      /* tamanho máximo */
+            aspect-ratio: 1 / 1; width: 100%; min-width: 32px; max-width: 60px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; font-family: var(--font-display);
+            font-weight: 700; font-size: 0.8rem; background: var(--surface-2); color: var(--text);
+            border: 1px solid var(--border); cursor: pointer; transition: transform 0.12s ease; position: relative;
         }
-        .number-cell > span {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .number-cell:hover {
-            transform: scale(1.08);
-            box-shadow: 0 0 12px rgba(227, 168, 59, 0.3);
-            z-index: 2;
-        }
-        /* Cores */
-        .number-cell.hot { background: var(--gold); color: #121019; border-color: var(--gold); }
-        .number-cell.cold { background: #3a3a5a; color: #9a96ab; border-color: #3a3a5a; }
-        .number-cell.delay { background: #c0392b; color: #fff; border-color: #c0392b; }
-        .number-cell.mid { background: #6a5a3a; color: #EDEAE3; border-color: #6a5a3a; }
-        /* Tooltip */
+        .number-cell:hover { transform: scale(1.1); box-shadow: 0 0 12px rgba(227, 168, 59, 0.35); z-index: 2; }
+        .number-cell.hot { background: var(--gold); color: var(--ink); border-color: var(--gold); }
+        .number-cell.cold { background: var(--cold); color: var(--text-muted); border-color: var(--cold); }
+        .number-cell.delay { background: var(--delay); color: #fff; border-color: var(--delay); }
+        .number-cell.mid { background: var(--mid); color: var(--text); border-color: var(--mid); }
+
         .tooltip {
-            display: none;
-            position: absolute;
-            background: var(--surface);
-            border: 1px solid var(--gold);
-            border-radius: 8px;
-            padding: 8px 12px;
-            font-size: 0.7rem;
-            color: var(--text);
-            min-width: 120px;
-            max-width: 200px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.6);
-            z-index: 10;
-            pointer-events: none;
-            white-space: normal;
-            line-height: 1.4;
-            bottom: calc(100% + 8px);
-            left: 50%;
-            transform: translateX(-50%);
+            display: none; position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%);
+            background: var(--surface); border: 1px solid var(--gold); border-radius: 8px; padding: 8px 12px;
+            font-family: var(--font-body); font-weight: 400; font-size: 0.72rem; color: var(--text);
+            min-width: 150px; max-width: 220px; box-shadow: 0 8px 24px rgba(0,0,0,0.6); z-index: 10; pointer-events: none;
         }
         .number-cell:hover .tooltip { display: block; }
 
-        /* ----- Cards de estatísticas (grid) ----- */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 18px;
-            margin-top: 20px;
+        .last-draw-panel { border-left: 3px solid var(--gold); }
+        .last-draw-balls { display: flex; flex-direction: column; gap: 8px; max-height: 480px; overflow-y: auto; padding-right: 4px; }
+        .last-draw-ball-row { display: flex; align-items: center; gap: 12px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 7px 12px; }
+        .mini-ball {
+            width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+            font-family: var(--font-display); font-weight: 700; font-size: 0.92rem; border: 1px solid var(--border); background: var(--surface); color: var(--text);
         }
-        .stat-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 22px;
-            animation: subir-card .35s ease both;
-        }
-        .stat-card:nth-child(2) { animation-delay: .05s; }
-        .stat-card:nth-child(3) { animation-delay: .10s; }
-        .stat-card:nth-child(4) { animation-delay: .15s; }
-        @keyframes subir-card {
-            from { opacity: 0; transform: translateY(8px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        @media (prefers-reduced-motion: reduce) { .stat-card { animation: none; } }
-        .stat-card h3 {
-            margin: 0 0 4px;
-            color: var(--text);
-            font-family: var(--font-display);
-            font-weight: 700;
-            font-size: 1.15rem;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .stat-card h3 i { color: var(--gold); font-size: 0.95rem; }
-        .stat-card .card-desc {
-            margin: 0 0 16px;
-            color: var(--text-muted);
-            font-size: 0.85rem;
-            line-height: 1.4;
-            padding-bottom: 14px;
-            border-bottom: 1px solid var(--border);
-        }
-        .hero-stat { display: flex; align-items: baseline; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
-        .hero-stat .hero-number {
-            font-family: var(--font-display);
-            font-weight: 800;
-            font-size: 2.5rem;
-            color: var(--gold);
-            line-height: 1;
-        }
-        .hero-stat .hero-label { color: var(--text-muted); font-size: 0.85rem; line-height: 1.3; }
-        .bar-list {
-            list-style: none;
-            margin: 0;
-            padding: 0 4px 0 0;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            max-height: 230px;
-            overflow-y: auto;
-        }
-        .bar-list::-webkit-scrollbar { width: 6px; }
-        .bar-list::-webkit-scrollbar-track { background: transparent; }
-        .bar-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .mini-ball.hot { background: var(--gold); color: var(--ink); border-color: var(--gold); }
+        .mini-ball.cold { background: var(--cold); color: var(--text-muted); border-color: var(--cold); }
+        .mini-ball.mid { background: var(--mid); color: var(--text); border-color: var(--mid); }
+        .mini-ball.delay { background: var(--delay); color: #fff; border-color: var(--delay); }
+        .ball-status-label { font-size: 0.8rem; color: var(--text-muted); }
+
+        .bar-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; max-height: 230px; overflow-y: auto; }
         .bar-row { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 6px 10px; align-items: center; }
         .bar-row .bar-label { font-size: 0.85rem; color: var(--text); }
-        .bar-row .bar-value {
-            font-family: var(--font-mono);
-            font-size: 0.78rem;
-            color: var(--text-muted);
-            white-space: nowrap;
-        }
-        .bar-row .bar-track {
-            grid-column: 1 / -1;
-            height: 7px;
-            background: var(--surface-2);
-            border-radius: 4px;
-            overflow: hidden;
-        }
+        .bar-row .bar-value { font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-muted); white-space: nowrap; }
+        .bar-row .bar-track { grid-column: 1 / -1; height: 7px; background: var(--surface-2); border-radius: 4px; overflow: hidden; }
         .bar-row .bar-fill { height: 100%; background: var(--gold); border-radius: 4px; }
-        .quadrant-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .quadrant-box {
-            background: var(--surface-2);
-            padding: 14px;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-        }
-        .quadrant-box .q-label { font-size: 0.78rem; color: var(--text-muted); margin-bottom: 6px; }
-        .quadrant-box .q-value {
-            font-family: var(--font-mono);
-            font-weight: 600;
-            font-size: 1.3rem;
-            color: var(--text);
-            display: block;
-            margin-bottom: 2px;
-        }
-        .quadrant-box .q-count { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 8px; }
-        .quadrant-box .bar-track { height: 5px; background: var(--surface); border-radius: 3px; overflow: hidden; }
-        .quadrant-box .bar-fill { height: 100%; background: var(--gold); border-radius: 3px; }
 
-        .rodape-nota {
-            margin-top: 26px;
-            color: var(--text-muted);
-            font-size: 0.78rem;
-            text-align: center;
-            line-height: 1.5;
-        }
-        .estado-vazio {
-            grid-column: 1 / -1;
-            text-align: center;
-            padding: 40px 20px;
-            color: var(--text-muted);
-        }
+        .rodape-nota { margin-top: 26px; color: var(--text-muted); font-size: 0.78rem; text-align: center; line-height: 1.5; }
+        .estado-vazio { grid-column: 1 / -1; text-align: center; padding: 40px 20px; color: var(--text-muted); }
         .estado-vazio i { color: var(--danger); font-size: 1.4rem; display: block; margin-bottom: 10px; }
-
-        @media (max-width: 600px) {
-            .header-bar { padding: 14px 16px; }
-            .container { padding: 20px 14px 40px; }
-            .hero-stat .hero-number { font-size: 2.1rem; }
-            .context-bar { padding: 14px 16px; }
-            .number-grid { gap: 4px; }
-            .number-cell { min-width: 24px; max-width: 38px; font-size: 0.65rem; }
-        }
     </style>
-
-    <!-- Scripts de dados (Fallback) -->
-    <script src="historico_megasena.js"></script>
-    <script src="historico_lotofacil.js"></script>
-    <script src="historico_quina.js"></script>
-    <script src="historico_lotomania.js"></script>
-    <script src="historico_timemania.js"></script>
-    <script src="historico_duplasena.js"></script>
-    <script src="historico_diadesorte.js"></script>
-    <script src="historico_supersetes.js"></script>
-    <script src="historico_maismilionaria.js"></script>
 </head>
 <body>
 
@@ -410,21 +170,21 @@
         </button>
         <div class="header-titles">
             <h1>Estatísticas das loterias</h1>
-            <p>Análise histórica dos concursos oficiais da Caixa</p>
+            <p>Atualizado automaticamente pelo GitHub</p>
         </div>
     </header>
 
     <main class="container">
         <nav class="lottery-grid-nav">
-            <button class="lottery-card-btn" id="btn_megasena" onclick="carregarEstatisticas('megasena')" style="background: #209869;" aria-pressed="false">Mega-Sena</button>
-            <button class="lottery-card-btn" id="btn_lotofacil" onclick="carregarEstatisticas('lotofacil')" style="background: #930089;" aria-pressed="false">Lotofácil</button>
-            <button class="lottery-card-btn" id="btn_quina" onclick="carregarEstatisticas('quina')" style="background: #260085;" aria-pressed="false">Quina</button>
-            <button class="lottery-card-btn" id="btn_lotomania" onclick="carregarEstatisticas('lotomania')" style="background: #f78100;" aria-pressed="false">Lotomania</button>
-            <button class="lottery-card-btn" id="btn_timemania" onclick="carregarEstatisticas('timemania')" style="background: #00ff48; color: #14131b;" aria-pressed="false">Timemania</button>
-            <button class="lottery-card-btn" id="btn_duplasena" onclick="carregarEstatisticas('duplasena')" style="background: #a61324;" aria-pressed="false">Dupla Sena</button>
-            <button class="lottery-card-btn" id="btn_diadesorte" onclick="carregarEstatisticas('diadesorte')" style="background: #cb831d;" aria-pressed="false">Dia de Sorte</button>
-            <button class="lottery-card-btn" id="btn_supersete" onclick="carregarEstatisticas('supersete')" style="background: #a8cf45; color: #14131b;" aria-pressed="false">Super Sete</button>
-            <button class="lottery-card-btn" id="btn_maismilionaria" onclick="carregarEstatisticas('maismilionaria')" style="background: #1b3582;" aria-pressed="false">+Milionária</button>
+            <button class="lottery-card-btn" id="btn_megasena" onclick="carregarEstatisticas('megasena')" style="background: #209869;">Mega-Sena</button>
+            <button class="lottery-card-btn" id="btn_lotofacil" onclick="carregarEstatisticas('lotofacil')" style="background: #930089;">Lotofácil</button>
+            <button class="lottery-card-btn" id="btn_quina" onclick="carregarEstatisticas('quina')" style="background: #260085;">Quina</button>
+            <button class="lottery-card-btn" id="btn_lotomania" onclick="carregarEstatisticas('lotomania')" style="background: #f78100;">Lotomania</button>
+            <button class="lottery-card-btn" id="btn_timemania" onclick="carregarEstatisticas('timemania')" style="background: #00ff48; color: #14131b;">Timemania</button>
+            <button class="lottery-card-btn" id="btn_duplasena" onclick="carregarEstatisticas('duplasena')" style="background: #a61324;">Dupla Sena</button>
+            <button class="lottery-card-btn" id="btn_diadesorte" onclick="carregarEstatisticas('diadesorte')" style="background: #cb831d;">Dia de Sorte</button>
+            <button class="lottery-card-btn" id="btn_supersete" onclick="carregarEstatisticas('supersete')" style="background: #a8cf45; color: #14131b;">Super Sete</button>
+            <button class="lottery-card-btn" id="btn_maismilionaria" onclick="carregarEstatisticas('maismilionaria')" style="background: #1b3582;">+Milionária</button>
         </nav>
 
         <div class="context-bar">
@@ -432,480 +192,193 @@
                 <h2 id="stats_title">Selecione uma loteria</h2>
                 <p id="stats_subtitle"></p>
             </div>
-            <span id="badge_fonte"></span>
+            <span id="badge_fonte">Aguardando...</span>
         </div>
 
-        <!-- Container principal -->
         <div id="stats_container"></div>
 
-        <p class="rodape-nota">As estatísticas refletem sorteios já realizados. Cada novo sorteio é um evento independente e aleatório.</p>
+        <p class="rodape-nota">Dados atualizados automaticamente direto dos arquivos do repositório.</p>
     </main>
 
     <script>
-        // --------------------- CONFIGURAÇÃO ---------------------
         const NOMES_LOTERIAS = {
-            megasena: 'Mega-Sena',
-            lotofacil: 'Lotofácil',
-            quina: 'Quina',
-            lotomania: 'Lotomania',
-            timemania: 'Timemania',
-            duplasena: 'Dupla Sena',
-            diadesorte: 'Dia de Sorte',
-            supersete: 'Super Sete',
-            maismilionaria: '+Milionária'
+            megasena: 'Mega-Sena', lotofacil: 'Lotofácil', quina: 'Quina', lotomania: 'Lotomania',
+            timemania: 'Timemania', duplasena: 'Dupla Sena', diadesorte: 'Dia de Sorte',
+            supersete: 'Super Sete', maismilionaria: '+Milionária'
         };
-
         const TOTAL_NUMEROS = {
-            megasena: 60,
-            lotofacil: 25,
-            quina: 80,
-            lotomania: 100,
-            timemania: 80,
-            duplasena: 50,
-            diadesorte: 31,
-            supersete: 7,    // usado para definir range, mas trataremos como 10 números (0-9)
-            maismilionaria: 50
+            megasena: 60, lotofacil: 25, quina: 80, lotomania: 100, timemania: 80,
+            duplasena: 50, diadesorte: 31, supersete: 7, maismilionaria: 50
         };
-
-        // Colunas da grade (para definir grid-template-columns)
         const COLUNAS_GRADE = {
-            megasena: 10,
-            lotofacil: 5,
-            quina: 10,
-            lotomania: 10,
-            timemania: 10,
-            duplasena: 10,
-            diadesorte: 5,
-            supersete: 10,  // 0 a 9
-            maismilionaria: 10
+            megasena: 10, lotofacil: 5, quina: 10, lotomania: 10, timemania: 10,
+            duplasena: 10, diadesorte: 5, supersete: 10, maismilionaria: 10
         };
 
-        function getConcursoHeader(draw) {
-            return draw.concurso || draw.numero || draw.id || '?';
-        }
+        async function obterHistoricoGitHub(loteria) {
+            const nomeChave = loteria.toLowerCase();
+            const nomeArquivoJS = `historico_${nomeChave}`;
 
-        function pluralizar(quantidade, singular, plural) {
-            return Number(quantidade) === 1 ? singular : plural;
-        }
-        function formatarNumero(valor, casas = 1) {
-            const numero = Number(valor);
-            return Number.isFinite(numero) ? numero.toLocaleString('pt-BR', { minimumFractionDigits: casas, maximumFractionDigits: casas }) : '0';
-        }
-        function formatarInteiro(valor) {
-            return Number(valor).toLocaleString('pt-BR');
-        }
-
-        // --------------------- MOTOR DE ESTATÍSTICAS (mesmo do app) ---------------------
-        const LotteryStatsEngine = {
-            PRIMES: [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97],
-            getPrimeAnalysis(draws) {
-                const primeCountsPerDraw = {};
-                draws.forEach(draw => {
-                    const numbers = (draw.dezenas || draw.listaDezenas || []).map(n => parseInt(n, 10));
-                    const primeCount = numbers.filter(n => this.PRIMES.includes(n)).length;
-                    primeCountsPerDraw[primeCount] = (primeCountsPerDraw[primeCount] || 0) + 1;
-                });
-                return {
-                    primeDistribution: primeCountsPerDraw,
-                    avgPrimesPerDraw: (Object.entries(primeCountsPerDraw).reduce((acc, [k, v]) => acc + (k * v), 0) / (draws.length || 1)).toFixed(2)
-                };
-            },
-            getEvenOddDetailed(draws) {
-                const patterns = {};
-                draws.forEach(draw => {
-                    const numbers = (draw.dezenas || draw.listaDezenas || []).map(n => parseInt(n, 10));
-                    const evens = numbers.filter(n => n % 2 === 0).length;
-                    const odds = numbers.length - evens;
-                    const patternKey = `${evens} ${pluralizar(evens, 'par', 'pares')} / ${odds} ${pluralizar(odds, 'ímpar', 'ímpares')}`;
-                    patterns[patternKey] = (patterns[patternKey] || 0) + 1;
-                });
-                return Object.entries(patterns)
-                    .map(([pattern, count]) => ({ pattern, count, percentage: ((count / draws.length) * 100).toFixed(1) }))
-                    .sort((a, b) => b.count - a.count);
-            },
-            getConsecutiveAnalysis(draws) {
-                let drawsWithConsecutives = 0;
-                const maxSequences = {};
-                draws.forEach(draw => {
-                    const numbers = (draw.dezenas || draw.listaDezenas || []).map(n => parseInt(n, 10)).sort((a, b) => a - b);
-                    let hasConsecutive = false;
-                    let currentSeq = 1;
-                    let maxSeqInDraw = 1;
-                    for (let i = 0; i < numbers.length - 1; i++) {
-                        if (numbers[i + 1] === numbers[i] + 1) {
-                            hasConsecutive = true;
-                            currentSeq++;
-                            if (currentSeq > maxSeqInDraw) maxSeqInDraw = currentSeq;
-                        } else {
-                            currentSeq = 1;
-                        }
-                    }
-                    if (hasConsecutive) drawsWithConsecutives++;
-                    maxSequences[maxSeqInDraw] = (maxSequences[maxSeqInDraw] || 0) + 1;
-                });
-                return {
-                    consecutivePercentage: ((drawsWithConsecutives / (draws.length || 1)) * 100).toFixed(1),
-                    sequenceLengths: maxSequences
-                };
-            },
-            getQuadrantAnalysis(draws, totalColumns = 10) {
-                const quadrantCounts = { Q1: 0, Q2: 0, Q3: 0, Q4: 0 };
-                draws.forEach(draw => {
-                    const numbers = (draw.dezenas || draw.listaDezenas || []).map(n => parseInt(n, 10));
-                    numbers.forEach(n => {
-                        const row = Math.floor((n - 1) / totalColumns);
-                        const col = (n - 1) % totalColumns;
-                        if (row < 3 && col < 5) quadrantCounts.Q1++;
-                        else if (row < 3 && col >= 5) quadrantCounts.Q2++;
-                        else if (row >= 3 && col < 5) quadrantCounts.Q3++;
-                        else quadrantCounts.Q4++;
-                    });
-                });
-                return quadrantCounts;
-            },
-            generateAdvancedReport(lotteryName, draws) {
-                return {
-                    lottery: lotteryName,
-                    totalDraws: draws.length,
-                    primes: this.getPrimeAnalysis(draws),
-                    evenOddPatterns: this.getEvenOddDetailed(draws),
-                    consecutives: this.getConsecutiveAnalysis(draws),
-                    quadrants: this.getQuadrantAnalysis(draws)
-                };
+            // 1. Tenta pegar a variável global (funciona abrindo localmente via Bloco de Notas)
+            const varGlobal = window[nomeArquivoJS] || window[`historico_${nomeChave}`];
+            if (Array.isArray(varGlobal) && varGlobal.length > 0) {
+                return varGlobal;
             }
-        };
 
-        // --------------------- FUNÇÕES DE RENDERIZAÇÃO ---------------------
+            // 2. Tenta fazer requisição no JSON caso esteja publicado na Web / GitHub Pages
+            try {
+                const resposta = await fetch(`${nomeArquivoJS}.json`);
+                if (resposta.ok) {
+                    const historico = await resposta.json();
+                    if (Array.isArray(historico) && historico.length > 0) return historico;
+                }
+            } catch (e) {
+                console.warn("Leitura via fetch não permitida localmente, usando Scripts carregados.", e);
+            }
 
-        // Gera a grade de números com cores (hot/cold/delay) e tooltip
-        function gerarGradeNumeros(draws, lotteryName) {
-            const totalNumeros = TOTAL_NUMEROS[lotteryName] || 60;
-            const colunas = COLUNAS_GRADE[lotteryName] || 10;
-            const isSuperSete = (lotteryName === 'supersete');
+            return [];
+        }
 
-            // Para Super Sete, os números vão de 0 a 9 (10 números)
-            const numeros = isSuperSete ? Array.from({length: 10}, (_, i) => i) : Array.from({length: totalNumeros}, (_, i) => i + 1);
+        function getConcursoHeader(draw) { return draw.concurso || draw.numero || draw.id || '?'; }
+        function getDataConcurso(draw) { return draw.data || draw.dataApuracao || draw.dataSorteio || draw.date || null; }
+        function pluralizar(qtd, sing, plur) { return Number(qtd) === 1 ? sing : plur; }
 
-            // Contagem de frequência
-            const freq = {};
-            const ocorrencias = {}; // número -> lista de concursos
+        function calcularEstatisticasNumeros(draws, loteria) {
+            const isSuperSete = (loteria === 'supersete');
+            const totalNumeros = TOTAL_NUMEROS[loteria] || 60;
+            const numeros = isSuperSete ? Array.from({ length: 10 }, (_, i) => i) : Array.from({ length: totalNumeros }, (_, i) => i + 1);
+            const numeroValido = (n) => isSuperSete ? (n >= 0 && n <= 9) : (n >= 1 && n <= totalNumeros);
+
+            const freq = {}, ocorrencias = {};
             numeros.forEach(n => { freq[n] = 0; ocorrencias[n] = []; });
 
             draws.forEach(draw => {
                 const numerosDraw = (draw.dezenas || draw.listaDezenas || []).map(n => parseInt(n, 10));
                 numerosDraw.forEach(n => {
-                    if (isSuperSete) {
-                        if (n >= 0 && n <= 9) {
-                            freq[n] = (freq[n] || 0) + 1;
-                            ocorrencias[n].push(getConcursoHeader(draw));
-                        }
-                    } else {
-                        if (n >= 1 && n <= totalNumeros) {
-                            freq[n] = (freq[n] || 0) + 1;
-                            ocorrencias[n].push(getConcursoHeader(draw));
-                        }
-                    }
+                    if (numeroValido(n)) { freq[n] = (freq[n] || 0) + 1; ocorrencias[n].push(getConcursoHeader(draw)); }
                 });
             });
 
-            // Calcular média e desvio para classificação
             const valores = Object.values(freq);
             const media = valores.reduce((a, b) => a + b, 0) / (valores.length || 1);
             const desvio = Math.sqrt(valores.reduce((a, b) => a + (b - media) ** 2, 0) / (valores.length || 1));
+            const ultimos5Set = new Set(draws.slice(-5).flatMap(d => (d.dezenas || d.listaDezenas || []).map(n => parseInt(n, 10))));
 
-            // Construir a grade
-            let gridHtml = `<div class="number-grid" style="grid-template-columns: repeat(${colunas}, 1fr);">`;
-            numeros.forEach(num => {
-                const count = freq[num] || 0;
-                const concursos = ocorrencias[num] || [];
-                // Classificação
-                let cls = 'mid';
-                if (count > media + desvio * 0.8) cls = 'hot';
-                else if (count < media - desvio * 0.8) cls = 'cold';
-                // Atraso: não saiu nos últimos 5 concursos
-                const ultimos5 = draws.slice(-5).flatMap(d => d.dezenas || d.listaDezenas || []).map(n => parseInt(n, 10));
-                if (!ultimos5.includes(num)) cls = 'delay';
-
-                const displayNum = isSuperSete ? num : num.toString().padStart(2, '0');
-                let tooltipText = concursos.length > 0 ? concursos.join(', ') : 'Nunca sorteado';
-                if (tooltipText.length > 40) tooltipText = tooltipText.slice(0, 40) + '…';
-
-                gridHtml += `
-                    <div class="number-cell ${cls}" data-number="${num}">
-                        <span>${displayNum}</span>
-                        <div class="tooltip">${tooltipText}</div>
-                    </div>
-                `;
-            });
-            gridHtml += '</div>';
-
-            // Cabeçalho dos últimos concursos (10 primeiros)
-            let headerHtml = '<div class="contest-header-row">';
-            const ultimosConcursos = draws.slice(-10).map(d => getConcursoHeader(d));
-            ultimosConcursos.forEach(c => {
-                headerHtml += `<span>${c}</span>`;
-            });
-            headerHtml += '</div>';
-
-            return { grid: gridHtml, header: headerHtml };
+            return { numeros, freq, ocorrencias, media, desvio, ultimos5Set, isSuperSete, totalNumeros };
         }
 
-        // Gera cards de "Mais frequentes" e "Mais atrasados" (todos ordenados)
-        function gerarCardsTop(draws, lotteryName) {
-            const totalNumeros = TOTAL_NUMEROS[lotteryName] || 60;
-            const isSuperSete = (lotteryName === 'supersete');
-            const numeros = isSuperSete ? Array.from({length: 10}, (_, i) => i) : Array.from({length: totalNumeros}, (_, i) => i + 1);
-            const freq = {};
-            numeros.forEach(n => freq[n] = 0);
-
-            draws.forEach(draw => {
-                const numerosDraw = (draw.dezenas || draw.listaDezenas || []).map(n => parseInt(n, 10));
-                numerosDraw.forEach(n => {
-                    if (isSuperSete) { if (n >= 0 && n <= 9) freq[n] = (freq[n] || 0) + 1; }
-                    else { if (n >= 1 && n <= totalNumeros) freq[n] = (freq[n] || 0) + 1; }
-                });
-            });
-
-            // Ordenar por frequência (decrescente)
-            const sorted = Object.entries(freq).sort((a, b) => b[1] - a[1]);
-            const top5 = sorted.slice(0, 5);
-
-            // Calcular atraso real (quantos concursos desde a última aparição)
-            const ultimoConcursoIndex = draws.length - 1;
-            const atraso = {};
-            numeros.forEach(n => atraso[n] = ultimoConcursoIndex + 1); // padrão: nunca saiu
-
-            draws.forEach((draw, idx) => {
-                const numerosDraw = (draw.dezenas || draw.listaDezenas || []).map(n => parseInt(n, 10));
-                numerosDraw.forEach(n => {
-                    if (isSuperSete) { if (n >= 0 && n <= 9) atraso[n] = ultimoConcursoIndex - idx; }
-                    else { if (n >= 1 && n <= totalNumeros) atraso[n] = ultimoConcursoIndex - idx; }
-                });
-            });
-
-            // Ordenar por atraso (decrescente) e pegar todos (não apenas 5)
-            const atrasoArray = Object.entries(atraso).sort((a, b) => b[1] - a[1]);
-            // Vamos mostrar todos os números com atraso > 0, ou no máximo 15 para não poluir
-            const topAtraso = atrasoArray.filter(item => item[1] > 0).slice(0, 15);
-
-            // Montar HTML dos cards
-            let html = '';
-            // Card Mais frequentes
-            html += `<div class="stat-card">`;
-            html += `<h3><i class="fa-solid fa-fire"></i> Mais frequentes</h3>`;
-            html += `<p class="card-desc">Números que mais saíram em toda a história.</p>`;
-            html += `<ul class="bar-list">`;
-            top5.forEach(([num, count]) => {
-                const display = isSuperSete ? num : num.toString().padStart(2, '0');
-                html += `<li class="bar-row">
-                            <span class="bar-label">${display}</span>
-                            <span class="bar-value">${count} ${pluralizar(count, 'vez', 'vezes')}</span>
-                            <div class="bar-track"><div class="bar-fill" style="width:${(count / (top5[0][1] || 1)) * 100}%"></div></div>
-                        </li>`;
-            });
-            html += `</ul></div>`;
-
-            // Card Mais atrasados (todos ordenados)
-            html += `<div class="stat-card">`;
-            html += `<h3><i class="fa-solid fa-clock"></i> Mais atrasados</h3>`;
-            html += `<p class="card-desc">Números que estão há mais concursos sem sair (do maior para o menor atraso).</p>`;
-            html += `<ul class="bar-list">`;
-            topAtraso.forEach(([num, atrasoVal]) => {
-                const display = isSuperSete ? num : num.toString().padStart(2, '0');
-                html += `<li class="bar-row">
-                            <span class="bar-label">${display}</span>
-                            <span class="bar-value">${atrasoVal} ${pluralizar(atrasoVal, 'concurso', 'concursos')}</span>
-                            <div class="bar-track"><div class="bar-fill" style="width:${(atrasoVal / (topAtraso[0][1] || 1)) * 100}%"></div></div>
-                        </li>`;
-            });
-            html += `</ul></div>`;
-
-            return html;
+        function classificarNumero(num, stats) {
+            const count = stats.freq[num] || 0;
+            let cls = 'mid';
+            if (count > stats.media + stats.desvio * 0.8) cls = 'hot';
+            else if (count < stats.media - stats.desvio * 0.8) cls = 'cold';
+            if (!stats.ultimos5Set.has(Number(num))) cls = 'delay';
+            return cls;
         }
 
-        // Renderiza todos os cards (incluindo grade e top)
-        function renderizarPainel(report, draws, lotteryName) {
-            const container = document.getElementById('stats_container');
-            const totalDraws = report.totalDraws || 1;
-
-            // 1. Grade de números + cabeçalho
-            const { grid, header } = gerarGradeNumeros(draws, lotteryName);
-            const gradeHtml = `
-                <div class="number-grid-wrapper">
-                    <h3><i class="fa-solid fa-th"></i> Frequência dos números</h3>
-                    <p class="card-desc">Cada círculo representa um número. Cores: <span style="color:var(--gold);">■</span> quente, <span style="color:#6a5a3a;">■</span> médio, <span style="color:#3a3a5a;">■</span> frio, <span style="color:#c0392b;">■</span> em atraso. Passe o mouse para ver os concursos.</p>
-                    ${header}
-                    ${grid}
-                </div>
-            `;
-
-            // 2. Cards de "Mais frequentes" e "Mais atrasados"
-            const topCards = gerarCardsTop(draws, lotteryName);
-
-            // 3. Cards de estatísticas (Par/Ímpar, Primos, Consecutivos, Quadrantes)
-            // Par/Ímpar
-            const linhasParImpar = report.evenOddPatterns.map(p => `
-                <li class="bar-row">
-                    <span class="bar-label">${p.pattern}</span>
-                    <span class="bar-value">${p.count} ${pluralizar(p.count, 'concurso', 'concursos')} (${formatarNumero(p.percentage)}%)</span>
-                    <div class="bar-track"><div class="bar-fill" style="width:${p.percentage}%"></div></div>
-                </li>`).join('');
-
-            // Primos
-            const linhasPrimos = Object.entries(report.primes.primeDistribution).map(([k, v]) => {
-                const pct = (v / totalDraws) * 100;
-                return `
-                <li class="bar-row">
-                    <span class="bar-label">${k} ${pluralizar(k, 'número primo', 'números primos')}</span>
-                    <span class="bar-value">${v} ${pluralizar(v, 'concurso', 'concursos')} (${formatarNumero(pct)}%)</span>
-                    <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
-                </li>`;
-            }).join('');
-
-            // Consecutivos
-            const linhasSequencias = Object.entries(report.consecutives.sequenceLengths).map(([k, v]) => {
-                const pct = (v / totalDraws) * 100;
-                const rotulo = Number(k) === 1 ? 'Sem números consecutivos' : `Sequência de ${k} números seguidos`;
-                return `
-                <li class="bar-row">
-                    <span class="bar-label">${rotulo}</span>
-                    <span class="bar-value">${v} ${pluralizar(v, 'concurso', 'concursos')} (${formatarNumero(pct)}%)</span>
-                    <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
-                </li>`;
-            }).join('');
-
-            // Quadrantes
-            const q = report.quadrants;
-            const totalDezenas = (q.Q1 + q.Q2 + q.Q3 + q.Q4) || 1;
-            const maxQuadrante = Math.max(q.Q1, q.Q2, q.Q3, q.Q4, 1);
-            const quadrantesInfo = [
-                { chave: 'Q1', nome: 'Superior esquerdo' },
-                { chave: 'Q2', nome: 'Superior direito' },
-                { chave: 'Q3', nome: 'Inferior esquerdo' },
-                { chave: 'Q4', nome: 'Inferior direito' }
-            ];
-            const quadrantesHtml = quadrantesInfo.map(info => {
-                const valor = q[info.chave];
-                const pctTotal = (valor / totalDezenas) * 100;
-                const pctBarra = (valor / maxQuadrante) * 100;
-                return `
-                <div class="quadrant-box">
-                    <div class="q-label">${info.nome}</div>
-                    <span class="q-value">${formatarNumero(pctTotal)}%</span>
-                    <div class="q-count">${valor} ${pluralizar(valor, 'dezena sorteada', 'dezenas sorteadas')}</div>
-                    <div class="bar-track"><div class="bar-fill" style="width:${pctBarra}%"></div></div>
-                </div>`;
-            }).join('');
-
-            // Montar o container final com todos os cards
-            container.innerHTML = `
-                ${gradeHtml}
-                <div class="stats-grid">
-                    ${topCards}
-                    <div class="stat-card">
-                        <h3><i class="fa-solid fa-scale-balanced"></i> Padrões de par e ímpar</h3>
-                        <p class="card-desc">Quantos números pares e ímpares saem juntos em cada concurso.</p>
-                        <ul class="bar-list">${linhasParImpar}</ul>
-                    </div>
-                    <div class="stat-card">
-                        <h3><i class="fa-solid fa-hashtag"></i> Números primos</h3>
-                        <p class="card-desc">Frequência de números primos (2, 3, 5, 7...) entre as dezenas sorteadas.</p>
-                        <div class="hero-stat">
-                            <span class="hero-number">${formatarNumero(report.primes.avgPrimesPerDraw, 2)}</span>
-                            <span class="hero-label">média de primos por concurso</span>
-                        </div>
-                        <ul class="bar-list">${linhasPrimos}</ul>
-                    </div>
-                    <div class="stat-card">
-                        <h3><i class="fa-solid fa-link"></i> Números consecutivos</h3>
-                        <p class="card-desc">Concursos em que pelo menos dois números seguidos foram sorteados juntos.</p>
-                        <div class="hero-stat">
-                            <span class="hero-number">${formatarNumero(report.consecutives.consecutivePercentage)}%</span>
-                            <span class="hero-label">dos concursos tiveram números consecutivos</span>
-                        </div>
-                        <ul class="bar-list">${linhasSequencias}</ul>
-                    </div>
-                    <div class="stat-card">
-                        <h3><i class="fa-solid fa-chart-pie"></i> Distribuição por quadrantes</h3>
-                        <p class="card-desc">Como as dezenas sorteadas se distribuem nas quatro áreas do volante.</p>
-                        <div class="quadrant-grid">${quadrantesHtml}</div>
-                    </div>
-                </div>
-            `;
+        function formatarTooltip(concursos) {
+            if (!concursos.length) return 'Nunca sorteado.';
+            const recentes = concursos.slice(-5).reverse().join(', ');
+            return `Saiu ${concursos.length} ${pluralizar(concursos.length, 'vez', 'vezes')}. Últimos concursos: ${recentes}.`;
         }
 
-        // --------------------- FUNÇÃO PRINCIPAL ---------------------
-        function carregarEstatisticas(loteria) {
-            destacarBotaoAtivo(loteria);
-            const container = document.getElementById('stats_container');
-            const title = document.getElementById('stats_title');
-            const subtitle = document.getElementById('stats_subtitle');
-            const badge = document.getElementById('badge_fonte');
-            const nomeExibicao = NOMES_LOTERIAS[loteria] || loteria;
+        async function carregarEstatisticas(loteria) {
+            document.querySelectorAll('.lottery-card-btn').forEach(btn => btn.classList.remove('active'));
+            const btnAtivo = document.getElementById('btn_' + loteria);
+            if (btnAtivo) btnAtivo.classList.add('active');
 
-            // Busca os dados - tentativa com múltiplos nomes de variáveis
-            let dados = null;
-            const salvosMemoria = localStorage.getItem(`historico_${loteria}`) || localStorage.getItem(loteria.toUpperCase());
+            const nomeOficial = NOMES_LOTERIAS[loteria] || loteria;
+            document.getElementById('stats_title').innerText = nomeOficial;
+            document.getElementById('badge_fonte').innerText = 'Carregando dados...';
+            document.getElementById('stats_subtitle').innerText = 'Aguarde...';
 
-            if (salvosMemoria) {
-                try {
-                    dados = JSON.parse(salvosMemoria);
-                    badge.textContent = 'Fonte: dados salvos localmente';
-                } catch (e) {}
-            }
+            const draws = await obterHistoricoGitHub(loteria);
 
-            if (!dados) {
-                // Tenta vários nomes de variável
-                const possiveisNomes = [
-                    `HISTORICO_${loteria.toUpperCase()}`,
-                    `HISTORICO_${loteria.toUpperCase()}S`,  // para supersete (HISTORICO_SUPERSETES)
-                    `HISTORICO_${loteria.replace('mais', 'mais_').toUpperCase()}`,
-                    `HISTORICO_SUPER_SETE`
-                ];
-                for (const nomeVar of possiveisNomes) {
-                    if (window[nomeVar]) {
-                        dados = window[nomeVar];
-                        badge.textContent = `Fonte: histórico padrão (${nomeVar})`;
-                        break;
-                    }
-                }
-            }
-
-            if (!dados || !Array.isArray(dados) || dados.length === 0) {
-                title.textContent = nomeExibicao;
-                subtitle.textContent = '';
-                badge.textContent = '';
-                container.innerHTML = `
+            if (!draws || draws.length === 0) {
+                document.getElementById('stats_subtitle').innerText = 'Nenhum histórico encontrado.';
+                document.getElementById('badge_fonte').innerText = 'Aviso: Arquivo Vazio';
+                document.getElementById('stats_container').innerHTML = `
                     <div class="estado-vazio">
-                        <i class="fa-solid fa-circle-exclamation"></i>
-                        Nenhum dado encontrado para ${nomeExibicao}. Verifique se o arquivo de histórico está carregado.
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                        <p>O arquivo de histórico para <strong>${nomeOficial}</strong> não foi localizado.</p>
+                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 6px;">Verifique se os arquivos JavaScript/JSON correspondem ao nome da loteria.</p>
                     </div>`;
                 return;
             }
 
-            // Gera relatório agregado
-            const report = LotteryStatsEngine.generateAdvancedReport(loteria, dados);
-            title.textContent = nomeExibicao;
-            subtitle.textContent = `${formatarInteiro(report.totalDraws)} ${pluralizar(report.totalDraws, 'concurso analisado', 'concursos analisados')}`;
+            const ultimoConcurso = draws[draws.length - 1];
+            const numUltimo = getConcursoHeader(ultimoConcurso);
+            const dataUltima = getDataConcurso(ultimoConcurso);
 
-            // Renderiza o painel completo
-            renderizarPainel(report, dados, loteria);
-        }
+            document.getElementById('stats_subtitle').innerText = `Total de ${draws.length} concursos analisados`;
+            document.getElementById('badge_fonte').innerText = `Atualizado até o Concurso ${numUltimo}${dataUltima ? ' (' + dataUltima + ')' : ''}`;
 
-        function destacarBotaoAtivo(loteria) {
-            document.querySelectorAll('.lottery-card-btn').forEach(btn => {
-                btn.classList.remove('active');
-                btn.setAttribute('aria-pressed', 'false');
+            const stats = calcularEstatisticasNumeros(draws, loteria);
+
+            const colunas = COLUNAS_GRADE[loteria] || 10;
+            let gridHtml = `<div class="number-grid" style="grid-template-columns: repeat(${colunas}, 1fr);">`;
+            stats.numeros.forEach(num => {
+                const cls = classificarNumero(num, stats);
+                const displayNum = stats.isSuperSete ? num : num.toString().padStart(2, '0');
+                const tooltipText = formatarTooltip(stats.ocorrencias[num] || []);
+                gridHtml += `
+                    <div class="number-cell ${cls}" data-number="${num}">
+                        ${displayNum}
+                        <div class="tooltip">${tooltipText}</div>
+                    </div>`;
             });
-            const btn = document.getElementById(`btn_${loteria}`);
-            if (btn) {
-                btn.classList.add('active');
-                btn.setAttribute('aria-pressed', 'true');
-            }
+            gridHtml += '</div>';
+
+            const numerosUltimo = (ultimoConcurso.dezenas || ultimoConcurso.listaDezenas || []).map(n => parseInt(n, 10));
+            let linhasUltimo = '';
+            const rotulos = { hot: 'Número quente', cold: 'Número frio', mid: 'Frequência média', delay: 'Estava em atraso' };
+            
+            [...numerosUltimo].sort((a, b) => a - b).forEach(n => {
+                const cls = classificarNumero(n, stats);
+                const display = stats.isSuperSete ? n : n.toString().padStart(2, '0');
+                linhasUltimo += `<div class="last-draw-ball-row"><span class="mini-ball ${cls}">${display}</span><span class="ball-status-label">${rotulos[cls] || ''}</span></div>`;
+            });
+
+            const top5 = Object.entries(stats.freq).sort((a, b) => b[1] - a[1]).slice(0, 5);
+            const maiorFreq = top5.length ? top5[0][1] : 1;
+            let listaFrequentes = '';
+            top5.forEach(([num, count]) => {
+                const display = stats.isSuperSete ? num : num.toString().padStart(2, '0');
+                const pct = Math.round((count / maiorFreq) * 100);
+                listaFrequentes += `
+                    <li class="bar-row">
+                        <span class="bar-label">Número ${display}</span>
+                        <span class="bar-value">${count} ${pluralizar(count, 'vez', 'vezes')}</span>
+                        <div class="bar-track"><div class="bar-fill" style="width: ${pct}%"></div></div>
+                    </li>`;
+            });
+
+            document.getElementById('stats_container').className = 'fade-in';
+            document.getElementById('stats_container').innerHTML = `
+                <div class="painel-principal">
+                    <div class="number-grid-wrapper">
+                        <h3><i class="fa-solid fa-chart-simple"></i> Frequência dos Números</h3>
+                        <p class="card-desc">Histórico completo gerado e atualizado de forma autônoma.</p>
+                        ${gridHtml}
+                    </div>
+                    <div class="stat-card last-draw-panel">
+                        <h3><i class="fa-solid fa-bullseye"></i> Último Concurso (${numUltimo})</h3>
+                        <p class="card-desc">Resultado oficial apurado em ${dataUltima || 'data recente'}.</p>
+                        <div class="last-draw-balls">${linhasUltimo}</div>
+                    </div>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3><i class="fa-solid fa-fire"></i> Números Mais Frequentes</h3>
+                        <p class="card-desc">Dezenas que mais apareceram no histórico.</p>
+                        <ul class="bar-list">${listaFrequentes}</ul>
+                    </div>
+                </div>`;
         }
 
-        // Carrega Mega-Sena por padrão
-        document.addEventListener('DOMContentLoaded', () => carregarEstatisticas('megasena'));
+        window.addEventListener('DOMContentLoaded', () => {
+            carregarEstatisticas('megasena');
+        });
     </script>
 </body>
 </html>

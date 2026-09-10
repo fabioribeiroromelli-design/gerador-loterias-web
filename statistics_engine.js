@@ -9,8 +9,12 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- SDKs do Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
     <style>
-        /* --- Mesmo estilo base do seu painel, com pequenos ajustes --- */
         :root {
             --bg: #121019;
             --surface: #1c1a26;
@@ -22,6 +26,9 @@
             --gold-dim: rgba(227, 168, 59, 0.16);
             --ink: #14131b;
             --danger: #e2704f;
+            --delay: #c0392b;
+            --cold: #3a3a5a;
+            --mid: #6a5a3a;
             --radius: 10px;
             --font-display: 'Big Shoulders Display', sans-serif;
             --font-body: 'IBM Plex Sans', sans-serif;
@@ -73,12 +80,9 @@
             letter-spacing: 0.01em;
             line-height: 1.1;
         }
-        .header-titles p {
-            margin: 4px 0 0;
-            color: var(--text-muted);
-            font-size: 0.9rem;
-        }
+        .header-titles p { margin: 4px 0 0; color: var(--text-muted); font-size: 0.9rem; }
         .container { max-width: 1080px; margin: 0 auto; padding: 28px 20px 60px; }
+
         .lottery-grid-nav {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(122px, 1fr));
@@ -100,14 +104,12 @@
             justify-content: center;
             text-align: center;
             min-height: 52px;
-            transition: transform .15s ease, box-shadow .15s ease, filter .15s ease;
+            transition: transform .15s ease, filter .15s ease;
             box-shadow: 0 1px 0 rgba(255,255,255,0.12) inset, 0 4px 10px rgba(0,0,0,0.28);
         }
         .lottery-card-btn:hover { transform: translateY(-2px); filter: brightness(1.08); }
-        .lottery-card-btn.active {
-            box-shadow: 0 0 0 3px var(--gold), 0 6px 16px rgba(0,0,0,0.35);
-            transform: translateY(-2px);
-        }
+        .lottery-card-btn.active { box-shadow: 0 0 0 3px var(--gold), 0 6px 16px rgba(0,0,0,0.35); transform: translateY(-2px); }
+
         .context-bar {
             display: flex;
             justify-content: space-between;
@@ -118,19 +120,10 @@
             border: 1px solid var(--border);
             padding: 16px 20px;
             border-radius: var(--radius);
+            margin-bottom: 20px;
         }
-        #stats_title {
-            margin: 0;
-            font-family: var(--font-display);
-            font-weight: 700;
-            font-size: 1.4rem;
-            letter-spacing: 0.01em;
-        }
-        #stats_subtitle {
-            margin: 4px 0 0;
-            color: var(--text-muted);
-            font-size: 0.85rem;
-        }
+        #stats_title { margin: 0; font-family: var(--font-display); font-weight: 700; font-size: 1.4rem; letter-spacing: 0.01em; }
+        #stats_subtitle { margin: 4px 0 0; color: var(--text-muted); font-size: 0.85rem; }
         #badge_fonte {
             font-family: var(--font-body);
             font-size: 0.78rem;
@@ -142,30 +135,29 @@
             background: var(--surface-2);
             white-space: nowrap;
         }
-        .stats-grid {
+
+        #stats_container.fade-in { animation: entrar .35s ease; }
+        @keyframes entrar { from { opacity: 0; } to { opacity: 1; } }
+
+        .painel-principal {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 18px;
-            margin-top: 20px;
+            grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr);
+            gap: 20px;
+            margin-bottom: 20px;
+            align-items: start;
         }
-        .stat-card {
+        @media (max-width: 900px) {
+            .painel-principal { grid-template-columns: 1fr; }
+        }
+
+        .number-grid-wrapper, .stat-card {
             background: var(--surface);
             border: 1px solid var(--border);
             border-radius: var(--radius);
             padding: 22px;
-            animation: subir-card .35s ease both;
         }
-        .stat-card:nth-child(2) { animation-delay: .05s; }
-        .stat-card:nth-child(3) { animation-delay: .10s; }
-        .stat-card:nth-child(4) { animation-delay: .15s; }
-        @keyframes subir-card {
-            from { opacity: 0; transform: translateY(8px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        @media (prefers-reduced-motion: reduce) { .stat-card { animation: none; } }
-        .stat-card h3 {
+        .number-grid-wrapper h3, .stat-card h3 {
             margin: 0 0 4px;
-            color: var(--text);
             font-family: var(--font-display);
             font-weight: 700;
             font-size: 1.15rem;
@@ -173,8 +165,8 @@
             align-items: center;
             gap: 10px;
         }
-        .stat-card h3 i { color: var(--gold); font-size: 0.95rem; }
-        .stat-card .card-desc {
+        .number-grid-wrapper h3 i, .stat-card h3 i { color: var(--gold); font-size: 0.95rem; }
+        .number-grid-wrapper .card-desc, .stat-card .card-desc {
             margin: 0 0 16px;
             color: var(--text-muted);
             font-size: 0.85rem;
@@ -182,195 +174,92 @@
             padding-bottom: 14px;
             border-bottom: 1px solid var(--border);
         }
-        .hero-stat { display: flex; align-items: baseline; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
-        .hero-stat .hero-number {
-            font-family: var(--font-display);
-            font-weight: 800;
-            font-size: 2.5rem;
-            color: var(--gold);
-            line-height: 1;
-        }
-        .hero-stat .hero-label { color: var(--text-muted); font-size: 0.85rem; line-height: 1.3; }
-        .bar-list {
-            list-style: none;
-            margin: 0;
-            padding: 0 4px 0 0;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            max-height: 230px;
-            overflow-y: auto;
-        }
-        .bar-list::-webkit-scrollbar { width: 6px; }
-        .bar-list::-webkit-scrollbar-track { background: transparent; }
-        .bar-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-        .bar-row { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 6px 10px; align-items: center; }
-        .bar-row .bar-label { font-size: 0.85rem; color: var(--text); }
-        .bar-row .bar-value {
-            font-family: var(--font-mono);
-            font-size: 0.78rem;
-            color: var(--text-muted);
-            white-space: nowrap;
-        }
-        .bar-row .bar-track {
-            grid-column: 1 / -1;
-            height: 7px;
-            background: var(--surface-2);
-            border-radius: 4px;
-            overflow: hidden;
-        }
-        .bar-row .bar-fill { height: 100%; background: var(--gold); border-radius: 4px; }
-        .quadrant-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .quadrant-box {
-            background: var(--surface-2);
-            padding: 14px;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-        }
-        .quadrant-box .q-label { font-size: 0.78rem; color: var(--text-muted); margin-bottom: 6px; }
-        .quadrant-box .q-value {
-            font-family: var(--font-mono);
-            font-weight: 600;
-            font-size: 1.3rem;
-            color: var(--text);
-            display: block;
-            margin-bottom: 2px;
-        }
-        .quadrant-box .q-count { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 8px; }
-        .quadrant-box .bar-track { height: 5px; background: var(--surface); border-radius: 3px; overflow: hidden; }
-        .quadrant-box .bar-fill { height: 100%; background: var(--gold); border-radius: 3px; }
 
-        /* NOVA GRADE DE NÚMEROS */
-        .number-grid {
-            display: grid;
-            grid-template-columns: repeat(10, 1fr);
-            gap: 6px;
-            margin: 12px 0;
-        }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; }
+
+        .number-grid { display: grid; gap: 8px; margin-top: 4px; justify-items: center; }
         .number-cell {
             aspect-ratio: 1 / 1;
+            width: 100%;
+            min-width: 32px;
+            max-width: 60px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             font-family: var(--font-display);
             font-weight: 700;
-            font-size: 1.1rem;
+            font-size: 0.8rem;
             background: var(--surface-2);
             color: var(--text);
             border: 1px solid var(--border);
             cursor: pointer;
-            transition: transform 0.1s ease, box-shadow 0.1s ease;
+            transition: transform 0.12s ease, box-shadow 0.12s ease;
             position: relative;
         }
-        .number-cell:hover {
-            transform: scale(1.08);
-            box-shadow: 0 0 12px rgba(227, 168, 59, 0.3);
-            z-index: 2;
-        }
-        /* Cores por frequência */
-        .number-cell.hot {
-            background: #E3A83B;
-            color: #121019;
-            border-color: #E3A83B;
-        }
-        .number-cell.cold {
-            background: #3a3a5a;
-            color: #9a96ab;
-            border-color: #3a3a5a;
-        }
-        .number-cell.delay {
-            background: #c0392b;
-            color: #fff;
-            border-color: #c0392b;
-        }
-        .number-cell.mid {
-            background: #6a5a3a;
-            color: #EDEAE3;
-            border-color: #6a5a3a;
-        }
+        .number-cell:hover { transform: scale(1.1); box-shadow: 0 0 12px rgba(227, 168, 59, 0.35); z-index: 2; }
+        .number-cell.hot { background: var(--gold); color: var(--ink); border-color: var(--gold); }
+        .number-cell.cold { background: var(--cold); color: var(--text-muted); border-color: var(--cold); }
+        .number-cell.delay { background: var(--delay); color: #fff; border-color: var(--delay); }
+        .number-cell.mid { background: var(--mid); color: var(--text); border-color: var(--mid); }
 
-        /* Tooltip para concursos */
         .tooltip {
             display: none;
             position: absolute;
+            bottom: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%);
             background: var(--surface);
             border: 1px solid var(--gold);
             border-radius: 8px;
             padding: 8px 12px;
-            font-size: 0.75rem;
+            font-family: var(--font-body);
+            font-weight: 400;
+            font-size: 0.72rem;
             color: var(--text);
-            min-width: 120px;
-            max-width: 200px;
+            min-width: 150px;
+            max-width: 220px;
             box-shadow: 0 8px 24px rgba(0,0,0,0.6);
             z-index: 10;
             pointer-events: none;
             white-space: normal;
             line-height: 1.4;
         }
-        .number-cell:hover .tooltip {
-            display: block;
-            bottom: calc(100% + 8px);
-            left: 50%;
-            transform: translateX(-50%);
-        }
-        /* Cabeçalho dos concursos */
-        .contest-header-row {
-            display: flex;
-            gap: 4px;
-            margin-top: 8px;
-            padding: 4px 0;
-            overflow-x: auto;
-        }
-        .contest-header-row span {
-            min-width: 30px;
-            text-align: center;
-            font-family: var(--font-mono);
-            font-size: 0.7rem;
-            color: var(--text-muted);
-            background: var(--surface-2);
-            padding: 2px 4px;
-            border-radius: 4px;
-            flex-shrink: 0;
-        }
+        .number-cell:hover .tooltip { display: block; }
 
-        .rodape-nota {
-            margin-top: 26px;
-            color: var(--text-muted);
-            font-size: 0.78rem;
-            text-align: center;
-            line-height: 1.5;
+        .last-draw-panel { border-left: 3px solid var(--gold); }
+        .last-draw-balls { display: flex; flex-direction: column; gap: 8px; max-height: 480px; overflow-y: auto; padding-right: 4px; }
+        .last-draw-balls::-webkit-scrollbar { width: 6px; }
+        .last-draw-balls::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .last-draw-ball-row {
+            display: flex; align-items: center; gap: 12px;
+            background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 7px 12px;
         }
-        .estado-vazio {
-            grid-column: 1 / -1;
-            text-align: center;
-            padding: 40px 20px;
-            color: var(--text-muted);
+        .mini-ball {
+            width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            font-family: var(--font-display); font-weight: 700; font-size: 0.92rem;
+            border: 1px solid var(--border); background: var(--surface); color: var(--text);
         }
+        .mini-ball.hot { background: var(--gold); color: var(--ink); border-color: var(--gold); }
+        .mini-ball.cold { background: var(--cold); color: var(--text-muted); border-color: var(--cold); }
+        .mini-ball.mid { background: var(--mid); color: var(--text); border-color: var(--mid); }
+        .mini-ball.delay { background: var(--delay); color: #fff; border-color: var(--delay); }
+        .ball-status-label { font-size: 0.8rem; color: var(--text-muted); }
+
+        .bar-list { list-style: none; margin: 0; padding: 0 4px 0 0; display: flex; flex-direction: column; gap: 10px; max-height: 230px; overflow-y: auto; }
+        .bar-list::-webkit-scrollbar { width: 6px; }
+        .bar-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .bar-row { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 6px 10px; align-items: center; }
+        .bar-row .bar-label { font-size: 0.85rem; color: var(--text); }
+        .bar-row .bar-value { font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-muted); white-space: nowrap; }
+        .bar-row .bar-track { grid-column: 1 / -1; height: 7px; background: var(--surface-2); border-radius: 4px; overflow: hidden; }
+        .bar-row .bar-fill { height: 100%; background: var(--gold); border-radius: 4px; }
+
+        .rodape-nota { margin-top: 26px; color: var(--text-muted); font-size: 0.78rem; text-align: center; line-height: 1.5; }
+        .estado-vazio { grid-column: 1 / -1; text-align: center; padding: 40px 20px; color: var(--text-muted); }
         .estado-vazio i { color: var(--danger); font-size: 1.4rem; display: block; margin-bottom: 10px; }
-
-        @media (max-width: 600px) {
-            .header-bar { padding: 14px 16px; }
-            .container { padding: 20px 14px 40px; }
-            .hero-stat .hero-number { font-size: 2.1rem; }
-            .context-bar { padding: 14px 16px; }
-            .number-grid { grid-template-columns: repeat(7, 1fr); }
-        }
-        @media (max-width: 480px) {
-            .number-grid { grid-template-columns: repeat(5, 1fr); }
-        }
     </style>
-
-    <!-- Scripts de dados (Fallback) -->
-    <script src="historico_megasena.js"></script>
-    <script src="historico_lotofacil.js"></script>
-    <script src="historico_quina.js"></script>
-    <script src="historico_lotomania.js"></script>
-    <script src="historico_timemania.js"></script>
-    <script src="historico_duplasena.js"></script>
-    <script src="historico_diadesorte.js"></script>
-    <script src="historico_supersete.js"></script>
-    <script src="historico_maismilionaria.js"></script>
 </head>
 <body>
 
@@ -380,21 +269,21 @@
         </button>
         <div class="header-titles">
             <h1>Estatísticas das loterias</h1>
-            <p>Análise histórica dos concursos oficiais da Caixa</p>
+            <p>Análise histórica com salvamento local inteligente</p>
         </div>
     </header>
 
     <main class="container">
         <nav class="lottery-grid-nav">
-            <button class="lottery-card-btn" id="btn_megasena" onclick="carregarEstatisticas('megasena')" style="background: #209869;" aria-pressed="false">Mega-Sena</button>
-            <button class="lottery-card-btn" id="btn_lotofacil" onclick="carregarEstatisticas('lotofacil')" style="background: #930089;" aria-pressed="false">Lotofácil</button>
-            <button class="lottery-card-btn" id="btn_quina" onclick="carregarEstatisticas('quina')" style="background: #260085;" aria-pressed="false">Quina</button>
-            <button class="lottery-card-btn" id="btn_lotomania" onclick="carregarEstatisticas('lotomania')" style="background: #f78100;" aria-pressed="false">Lotomania</button>
-            <button class="lottery-card-btn" id="btn_timemania" onclick="carregarEstatisticas('timemania')" style="background: #00ff48; color: #14131b;" aria-pressed="false">Timemania</button>
-            <button class="lottery-card-btn" id="btn_duplasena" onclick="carregarEstatisticas('duplasena')" style="background: #a61324;" aria-pressed="false">Dupla Sena</button>
-            <button class="lottery-card-btn" id="btn_diadesorte" onclick="carregarEstatisticas('diadesorte')" style="background: #cb831d;" aria-pressed="false">Dia de Sorte</button>
-            <button class="lottery-card-btn" id="btn_supersete" onclick="carregarEstatisticas('supersete')" style="background: #a8cf45; color: #14131b;" aria-pressed="false">Super Sete</button>
-            <button class="lottery-card-btn" id="btn_maismilionaria" onclick="carregarEstatisticas('maismilionaria')" style="background: #1b3582;" aria-pressed="false">+Milionária</button>
+            <button class="lottery-card-btn" id="btn_megasena" onclick="carregarEstatisticas('megasena')" style="background: #209869;">Mega-Sena</button>
+            <button class="lottery-card-btn" id="btn_lotofacil" onclick="carregarEstatisticas('lotofacil')" style="background: #930089;">Lotofácil</button>
+            <button class="lottery-card-btn" id="btn_quina" onclick="carregarEstatisticas('quina')" style="background: #260085;">Quina</button>
+            <button class="lottery-card-btn" id="btn_lotomania" onclick="carregarEstatisticas('lotomania')" style="background: #f78100;">Lotomania</button>
+            <button class="lottery-card-btn" id="btn_timemania" onclick="carregarEstatisticas('timemania')" style="background: #00ff48; color: #14131b;">Timemania</button>
+            <button class="lottery-card-btn" id="btn_duplasena" onclick="carregarEstatisticas('duplasena')" style="background: #a61324;">Dupla Sena</button>
+            <button class="lottery-card-btn" id="btn_diadesorte" onclick="carregarEstatisticas('diadesorte')" style="background: #cb831d;">Dia de Sorte</button>
+            <button class="lottery-card-btn" id="btn_supersete" onclick="carregarEstatisticas('supersete')" style="background: #a8cf45; color: #14131b;">Super Sete</button>
+            <button class="lottery-card-btn" id="btn_maismilionaria" onclick="carregarEstatisticas('maismilionaria')" style="background: #1b3582;">+Milionária</button>
         </nav>
 
         <div class="context-bar">
@@ -402,396 +291,220 @@
                 <h2 id="stats_title">Selecione uma loteria</h2>
                 <p id="stats_subtitle"></p>
             </div>
-            <span id="badge_fonte"></span>
+            <span id="badge_fonte">Aguardando...</span>
         </div>
 
-        <div id="stats_container" class="stats-grid"></div>
+        <div id="stats_container"></div>
 
-        <p class="rodape-nota">As estatísticas refletem sorteios já realizados. Cada novo sorteio é um evento independente e aleatório.</p>
+        <p class="rodape-nota">As estatísticas utilizam cache local no navegador. Caso ocorra um novo sorteio oficial, limpe os dados ou atualize diretamente pela base.</p>
     </main>
 
     <script>
-        // --------------------- CONFIGURAÇÃO ---------------------
         const NOMES_LOTERIAS = {
-            megasena: 'Mega-Sena',
-            lotofacil: 'Lotofácil',
-            quina: 'Quina',
-            lotomania: 'Lotomania',
-            timemania: 'Timemania',
-            duplasena: 'Dupla Sena',
-            diadesorte: 'Dia de Sorte',
-            supersete: 'Super Sete',
-            maismilionaria: '+Milionária'
+            megasena: 'Mega-Sena', lotofacil: 'Lotofácil', quina: 'Quina', lotomania: 'Lotomania',
+            timemania: 'Timemania', duplasena: 'Dupla Sena', diadesorte: 'Dia de Sorte',
+            supersete: 'Super Sete', maismilionaria: '+Milionária'
         };
-
-        // Mapeamento de quantos números cada loteria possui
         const TOTAL_NUMEROS = {
-            megasena: 60,
-            lotofacil: 25,
-            quina: 80,
-            lotomania: 100,
-            timemania: 80,
-            duplasena: 50,
-            diadesorte: 31,
-            supersete: 7,   // Super Sete tem 7 colunas, cada uma com 0-9
-            maismilionaria: 50
+            megasena: 60, lotofacil: 25, quina: 80, lotomania: 100, timemania: 80,
+            duplasena: 50, diadesorte: 31, supersete: 7, maismilionaria: 50
+        };
+        const COLUNAS_GRADE = {
+            megasena: 10, lotofacil: 5, quina: 10, lotomania: 10, timemania: 10,
+            duplasena: 10, diadesorte: 5, supersete: 10, maismilionaria: 10
         };
 
-        // Nomes dos concursos para exibição (Super Sete é diferente)
-        function getConcursoHeader(draw) {
-            return draw.concurso || draw.numero || draw.id || '?';
-        }
-
-        // --------------------- FUNÇÕES AUXILIARES ---------------------
-        function pluralizar(quantidade, singular, plural) {
-            return Number(quantidade) === 1 ? singular : plural;
-        }
-        function formatarNumero(valor, casas = 1) {
-            const numero = Number(valor);
-            return Number.isFinite(numero) ? numero.toLocaleString('pt-BR', { minimumFractionDigits: casas, maximumFractionDigits: casas }) : '0';
-        }
-        function formatarInteiro(valor) {
-            return Number(valor).toLocaleString('pt-BR');
-        }
-
-        // --------------------- MOTOR DE ESTATÍSTICAS (mesmo do original) ---------------------
-        const LotteryStatsEngine = {
-            PRIMES: [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97],
-            getPrimeAnalysis(draws) {
-                const primeCountsPerDraw = {};
-                draws.forEach(draw => {
-                    const numbers = (draw.dezenas || draw.listaDezenas || []).map(n => parseInt(n, 10));
-                    const primeCount = numbers.filter(n => this.PRIMES.includes(n)).length;
-                    primeCountsPerDraw[primeCount] = (primeCountsPerDraw[primeCount] || 0) + 1;
-                });
-                return {
-                    primeDistribution: primeCountsPerDraw,
-                    avgPrimesPerDraw: (Object.entries(primeCountsPerDraw).reduce((acc, [k, v]) => acc + (k * v), 0) / (draws.length || 1)).toFixed(2)
-                };
-            },
-            getEvenOddDetailed(draws) {
-                const patterns = {};
-                draws.forEach(draw => {
-                    const numbers = (draw.dezenas || draw.listaDezenas || []).map(n => parseInt(n, 10));
-                    const evens = numbers.filter(n => n % 2 === 0).length;
-                    const odds = numbers.length - evens;
-                    const patternKey = `${evens} ${pluralizar(evens, 'par', 'pares')} / ${odds} ${pluralizar(odds, 'ímpar', 'ímpares')}`;
-                    patterns[patternKey] = (patterns[patternKey] || 0) + 1;
-                });
-                return Object.entries(patterns)
-                    .map(([pattern, count]) => ({ pattern, count, percentage: ((count / draws.length) * 100).toFixed(1) }))
-                    .sort((a, b) => b.count - a.count);
-            },
-            getConsecutiveAnalysis(draws) {
-                let drawsWithConsecutives = 0;
-                const maxSequences = {};
-                draws.forEach(draw => {
-                    const numbers = (draw.dezenas || draw.listaDezenas || []).map(n => parseInt(n, 10)).sort((a, b) => a - b);
-                    let hasConsecutive = false;
-                    let currentSeq = 1;
-                    let maxSeqInDraw = 1;
-                    for (let i = 0; i < numbers.length - 1; i++) {
-                        if (numbers[i + 1] === numbers[i] + 1) {
-                            hasConsecutive = true;
-                            currentSeq++;
-                            if (currentSeq > maxSeqInDraw) maxSeqInDraw = currentSeq;
-                        } else {
-                            currentSeq = 1;
-                        }
+        // Função que busca do Cache Local (localStorage) ou do Firebase se não existir
+        async function obterHistoricoFirebase(loteria) {
+            const cacheKey = `cache_loterias_${loteria}`;
+            
+            // 1. Tenta buscar do armazenamento local do navegador primeiro
+            const dadosLocais = localStorage.getItem(cacheKey);
+            if (dadosLocais) {
+                try {
+                    const historicoParsed = JSON.parse(dadosLocais);
+                    if (Array.isArray(historicoParsed) && historicoParsed.length > 0) {
+                        console.log(`Carregando ${loteria} do Cache Local do Navegador.`);
+                        return { historico: historicoParsed, origem: 'Cache Local' };
                     }
-                    if (hasConsecutive) drawsWithConsecutives++;
-                    maxSequences[maxSeqInDraw] = (maxSequences[maxSeqInDraw] || 0) + 1;
-                });
-                return {
-                    consecutivePercentage: ((drawsWithConsecutives / (draws.length || 1)) * 100).toFixed(1),
-                    sequenceLengths: maxSequences
-                };
-            },
-            getQuadrantAnalysis(draws, totalColumns = 10) {
-                const quadrantCounts = { Q1: 0, Q2: 0, Q3: 0, Q4: 0 };
-                draws.forEach(draw => {
-                    const numbers = (draw.dezenas || draw.listaDezenas || []).map(n => parseInt(n, 10));
-                    numbers.forEach(n => {
-                        const row = Math.floor((n - 1) / totalColumns);
-                        const col = (n - 1) % totalColumns;
-                        if (row < 3 && col < 5) quadrantCounts.Q1++;
-                        else if (row < 3 && col >= 5) quadrantCounts.Q2++;
-                        else if (row >= 3 && col < 5) quadrantCounts.Q3++;
-                        else quadrantCounts.Q4++;
-                    });
-                });
-                return quadrantCounts;
-            },
-            generateAdvancedReport(lotteryName, draws) {
-                return {
-                    lottery: lotteryName,
-                    totalDraws: draws.length,
-                    primes: this.getPrimeAnalysis(draws),
-                    evenOddPatterns: this.getEvenOddDetailed(draws),
-                    consecutives: this.getConsecutiveAnalysis(draws),
-                    quadrants: this.getQuadrantAnalysis(draws)
-                };
-            }
-        };
-
-        // --------------------- NOVA FUNÇÃO: GRADE DE NÚMEROS ---------------------
-        function gerarGradeNumeros(draws, totalNumeros, lotteryName) {
-            // Contagem de frequência de cada número
-            const freq = {};
-            const ocorrencias = {}; // numero -> lista de concursos (números)
-            const ultimoSorteio = draws.length > 0 ? draws[draws.length - 1] : null;
-
-            // Inicializa
-            for (let i = 1; i <= totalNumeros; i++) {
-                freq[i] = 0;
-                ocorrencias[i] = [];
-            }
-
-            // Para Super Sete, os números vão de 0 a 9 e são 7 colunas; mas para este exemplo,
-            // tratamos como números de 0 a 9 (se for Super Sete, totalNumeros será 10? Vou adaptar)
-            // Na verdade, Super Sete tem 7 colunas, cada uma com 0-9. Vou tratar como 10 números.
-            // Se for Super Sete, usaremos 10 números (0-9).
-            if (lotteryName === 'supersete') {
-                // Vamos redefinir totalNumeros para 10 (0-9)
-                totalNumeros = 10;
-                for (let i = 0; i < 10; i++) {
-                    freq[i] = 0;
-                    ocorrencias[i] = [];
+                } catch (e) {
+                    console.error("Erro ao ler cache local:", e);
                 }
             }
 
-            // Percorre todos os sorteios
-            draws.forEach((draw, idx) => {
-                const numeros = draw.dezenas || draw.listaDezenas || [];
-                numeros.forEach(n => {
-                    const num = parseInt(n, 10);
-                    if (lotteryName === 'supersete') {
-                        // Para Super Sete, os números são 0-9
-                        if (num >= 0 && num <= 9) {
-                            freq[num] = (freq[num] || 0) + 1;
-                            ocorrencias[num].push(getConcursoHeader(draw));
-                        }
-                    } else {
-                        if (num >= 1 && num <= totalNumeros) {
-                            freq[num] = (freq[num] || 0) + 1;
-                            ocorrencias[num].push(getConcursoHeader(draw));
-                        }
+            // 2. Se não tiver no cache, busca do Firebase Firestore
+            try {
+                if (typeof db === 'undefined') {
+                    console.error("Instância 'db' do Firestore não encontrada.");
+                    return { historico: [], origem: 'Erro' };
+                }
+
+                console.log(`Baixando ${loteria} do Firebase Firestore...`);
+                const docRef = db.collection('loterias').doc(loteria);
+                const docSnap = await docRef.get();
+
+                if (docSnap.exists) {
+                    const dados = docSnap.data();
+                    const historico = dados.historico || [];
+
+                    // Salva no localStorage do navegador para as próximas vezes
+                    if (historico.length > 0) {
+                        localStorage.setItem(cacheKey, JSON.stringify(historico));
                     }
+
+                    return { historico, origem: 'Firebase (Salvo no Cache)' };
+                } else {
+                    console.warn(`Nenhum documento encontrado para ${loteria} no Firebase.`);
+                    return { historico: [], origem: 'Vazio' };
+                }
+            } catch (error) {
+                console.error("Erro ao buscar dados do Firebase:", error);
+                return { historico: [], origem: 'Erro' };
+            }
+        }
+
+        function getConcursoHeader(draw) { return draw.concurso || draw.numero || draw.id || '?'; }
+        function getDataConcurso(draw) { return draw.data || draw.dataApuracao || draw.dataSorteio || draw.date || null; }
+        function pluralizar(qtd, sing, plur) { return Number(qtd) === 1 ? sing : plur; }
+
+        function calcularEstatisticasNumeros(draws, loteria) {
+            const isSuperSete = (loteria === 'supersete');
+            const totalNumeros = TOTAL_NUMEROS[loteria] || 60;
+            const numeros = isSuperSete ? Array.from({ length: 10 }, (_, i) => i) : Array.from({ length: totalNumeros }, (_, i) => i + 1);
+            const numeroValido = (n) => isSuperSete ? (n >= 0 && n <= 9) : (n >= 1 && n <= totalNumeros);
+
+            const freq = {}, ocorrencias = {};
+            numeros.forEach(n => { freq[n] = 0; ocorrencias[n] = []; });
+
+            draws.forEach(draw => {
+                const numerosDraw = (draw.dezenas || draw.listaDezenas || []).map(n => parseInt(n, 10));
+                numerosDraw.forEach(n => {
+                    if (numeroValido(n)) { freq[n] = (freq[n] || 0) + 1; ocorrencias[n].push(getConcursoHeader(draw)); }
                 });
             });
 
-            // Calcular média e desvio para definir quente/frio
             const valores = Object.values(freq);
             const media = valores.reduce((a, b) => a + b, 0) / (valores.length || 1);
             const desvio = Math.sqrt(valores.reduce((a, b) => a + (b - media) ** 2, 0) / (valores.length || 1));
+            const ultimos5Set = new Set(draws.slice(-5).flatMap(d => (d.dezenas || d.listaDezenas || []).map(n => parseInt(n, 10))));
 
-            // Construir a grade
-            let gridHtml = '<div class="number-grid">';
-            const numerosKeys = lotteryName === 'supersete' ? Array.from({length: 10}, (_, i) => i) : Array.from({length: totalNumeros}, (_, i) => i + 1);
-
-            numerosKeys.forEach(num => {
-                const count = freq[num] || 0;
-                const concursos = ocorrencias[num] || [];
-                // Classificação
-                let cls = 'mid';
-                if (count > media + desvio * 0.8) cls = 'hot';
-                else if (count < media - desvio * 0.8) cls = 'cold';
-                // Se está em atraso (não sai nos últimos 5 concursos) - simples: se não saiu nos últimos 5
-                const ultimos5 = draws.slice(-5).flatMap(d => d.dezenas || d.listaDezenas || []).map(n => parseInt(n, 10));
-                if (!ultimos5.includes(num)) cls = 'delay';
-
-                // Montar tooltip com os concursos
-                let tooltipText = concursos.length > 0 ? concursos.join(', ') : 'Nunca sorteado';
-                if (tooltipText.length > 40) tooltipText = tooltipText.slice(0, 40) + '…';
-
-                const displayNum = lotteryName === 'supersete' ? num : num.toString().padStart(2, '0');
-                gridHtml += `
-                    <div class="number-cell ${cls}" data-number="${num}">
-                        ${displayNum}
-                        <div class="tooltip">${tooltipText}</div>
-                    </div>
-                `;
-            });
-            gridHtml += '</div>';
-
-            // Cabeçalho dos últimos concursos (opcional)
-            let headerHtml = '<div class="contest-header-row">';
-            const ultimosConcursos = draws.slice(-10).map(d => getConcursoHeader(d));
-            ultimosConcursos.forEach(c => {
-                headerHtml += `<span>${c}</span>`;
-            });
-            headerHtml += '</div>';
-
-            return gridHtml + headerHtml;
+            return { numeros, freq, ocorrencias, media, desvio, ultimos5Set, isSuperSete, totalNumeros };
         }
 
-        // --------------------- RENDERIZAÇÃO DOS CARDS (incluindo a nova grade) ---------------------
-        function renderizarCards(report, draws, lotteryName) {
-            const container = document.getElementById('stats_container');
-            const totalDraws = report.totalDraws || 1;
-            const totalNumeros = TOTAL_NUMEROS[lotteryName] || 60;
-
-            // 1. Par / Ímpar
-            const linhasParImpar = report.evenOddPatterns.map(p => `
-                <li class="bar-row">
-                    <span class="bar-label">${p.pattern}</span>
-                    <span class="bar-value">${p.count} ${pluralizar(p.count, 'concurso', 'concursos')} (${formatarNumero(p.percentage)}%)</span>
-                    <div class="bar-track"><div class="bar-fill" style="width:${p.percentage}%"></div></div>
-                </li>`).join('');
-
-            // 2. Primos
-            const linhasPrimos = Object.entries(report.primes.primeDistribution).map(([k, v]) => {
-                const pct = (v / totalDraws) * 100;
-                return `
-                <li class="bar-row">
-                    <span class="bar-label">${k} ${pluralizar(k, 'número primo', 'números primos')}</span>
-                    <span class="bar-value">${v} ${pluralizar(v, 'concurso', 'concursos')} (${formatarNumero(pct)}%)</span>
-                    <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
-                </li>`;
-            }).join('');
-
-            // 3. Consecutivos
-            const linhasSequencias = Object.entries(report.consecutives.sequenceLengths).map(([k, v]) => {
-                const pct = (v / totalDraws) * 100;
-                const rotulo = Number(k) === 1 ? 'Sem números consecutivos' : `Sequência de ${k} números seguidos`;
-                return `
-                <li class="bar-row">
-                    <span class="bar-label">${rotulo}</span>
-                    <span class="bar-value">${v} ${pluralizar(v, 'concurso', 'concursos')} (${formatarNumero(pct)}%)</span>
-                    <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
-                </li>`;
-            }).join('');
-
-            // 4. Quadrantes
-            const q = report.quadrants;
-            const totalDezenas = (q.Q1 + q.Q2 + q.Q3 + q.Q4) || 1;
-            const maxQuadrante = Math.max(q.Q1, q.Q2, q.Q3, q.Q4, 1);
-            const quadrantesInfo = [
-                { chave: 'Q1', nome: 'Superior esquerdo' },
-                { chave: 'Q2', nome: 'Superior direito' },
-                { chave: 'Q3', nome: 'Inferior esquerdo' },
-                { chave: 'Q4', nome: 'Inferior direito' }
-            ];
-            const quadrantesHtml = quadrantesInfo.map(info => {
-                const valor = q[info.chave];
-                const pctTotal = (valor / totalDezenas) * 100;
-                const pctBarra = (valor / maxQuadrante) * 100;
-                return `
-                <div class="quadrant-box">
-                    <div class="q-label">${info.nome}</div>
-                    <span class="q-value">${formatarNumero(pctTotal)}%</span>
-                    <div class="q-count">${valor} ${pluralizar(valor, 'dezena sorteada', 'dezenas sorteadas')}</div>
-                    <div class="bar-track"><div class="bar-fill" style="width:${pctBarra}%"></div></div>
-                </div>`;
-            }).join('');
-
-            // 5. GRADE DE NÚMEROS (NOVO)
-            const gradeHtml = gerarGradeNumeros(draws, totalNumeros, lotteryName);
-
-            container.innerHTML = `
-                <!-- CARD DA GRADE DE NÚMEROS (DESTAQUE) -->
-                <div class="stat-card" style="grid-column: 1 / -1;">
-                    <h3><i class="fa-solid fa-th"></i> Frequência dos números</h3>
-                    <p class="card-desc">Cada círculo representa um número. Cores: <span style="color:#E3A83B;">■</span> quente (alto), <span style="color:#6a5a3a;">■</span> médio, <span style="color:#3a3a5a;">■</span> frio (baixo), <span style="color:#c0392b;">■</span> em atraso. Passe o mouse para ver os concursos.</p>
-                    ${gradeHtml}
-                </div>
-
-                <div class="stat-card">
-                    <h3><i class="fa-solid fa-scale-balanced"></i> Padrões de par e ímpar</h3>
-                    <p class="card-desc">Quantos números pares e ímpares saem juntos em cada concurso.</p>
-                    <ul class="bar-list">${linhasParImpar}</ul>
-                </div>
-
-                <div class="stat-card">
-                    <h3><i class="fa-solid fa-hashtag"></i> Números primos</h3>
-                    <p class="card-desc">Frequência de números primos (2, 3, 5, 7...) entre as dezenas sorteadas.</p>
-                    <div class="hero-stat">
-                        <span class="hero-number">${formatarNumero(report.primes.avgPrimesPerDraw, 2)}</span>
-                        <span class="hero-label">média de primos por concurso</span>
-                    </div>
-                    <ul class="bar-list">${linhasPrimos}</ul>
-                </div>
-
-                <div class="stat-card">
-                    <h3><i class="fa-solid fa-link"></i> Números consecutivos</h3>
-                    <p class="card-desc">Concursos em que pelo menos dois números seguidos foram sorteados juntos.</p>
-                    <div class="hero-stat">
-                        <span class="hero-number">${formatarNumero(report.consecutives.consecutivePercentage)}%</span>
-                        <span class="hero-label">dos concursos tiveram números consecutivos</span>
-                    </div>
-                    <ul class="bar-list">${linhasSequencias}</ul>
-                </div>
-
-                <div class="stat-card">
-                    <h3><i class="fa-solid fa-chart-pie"></i> Distribuição por quadrantes</h3>
-                    <p class="card-desc">Como as dezenas sorteadas se distribuem nas quatro áreas do volante.</p>
-                    <div class="quadrant-grid">${quadrantesHtml}</div>
-                </div>
-            `;
+        function classificarNumero(num, stats) {
+            const count = stats.freq[num] || 0;
+            let cls = 'mid';
+            if (count > stats.media + stats.desvio * 0.8) cls = 'hot';
+            else if (count < stats.media - stats.desvio * 0.8) cls = 'cold';
+            if (!stats.ultimos5Set.has(Number(num))) cls = 'delay';
+            return cls;
         }
 
-        // --------------------- FUNÇÃO PRINCIPAL ---------------------
-        function carregarEstatisticas(loteria) {
-            destacarBotaoAtivo(loteria);
-            const container = document.getElementById('stats_container');
-            const title = document.getElementById('stats_title');
-            const subtitle = document.getElementById('stats_subtitle');
-            const badge = document.getElementById('badge_fonte');
-            const nomeExibicao = NOMES_LOTERIAS[loteria] || loteria;
+        function formatarTooltip(concursos) {
+            if (!concursos.length) return 'Nunca sorteado.';
+            const recentes = concursos.slice(-5).reverse().join(', ');
+            return `Saiu ${concursos.length} ${pluralizar(concursos.length, 'vez', 'vezes')}. Últimos concursos: ${recentes}.`;
+        }
 
-            // Busca os dados
-            let dados = null;
-            const salvosMemoria = localStorage.getItem(`historico_${loteria}`) || localStorage.getItem(loteria.toUpperCase());
+        async function carregarEstatisticas(loteria) {
+            document.querySelectorAll('.lottery-card-btn').forEach(btn => btn.classList.remove('active'));
+            const btnAtivo = document.getElementById('btn_' + loteria);
+            if (btnAtivo) btnAtivo.classList.add('active');
 
-            if (salvosMemoria) {
-                try {
-                    dados = JSON.parse(salvosMemoria);
-                    badge.textContent = 'Fonte: dados salvos localmente';
-                } catch (e) {}
-            }
+            const nomeOficial = NOMES_LOTERIAS[loteria] || loteria;
+            document.getElementById('stats_title').innerText = nomeOficial;
+            document.getElementById('badge_fonte').innerText = 'Verificando dados...';
+            document.getElementById('stats_subtitle').innerText = 'Carregando estatísticas...';
 
-            if (!dados) {
-                const varStandard = `HISTORICO_${loteria.toUpperCase()}`;
-                const varAlt = `HISTORICO_${loteria.replace('mais', 'mais_').toUpperCase()}`;
-                dados = window[varStandard] || window[varAlt];
-                badge.textContent = 'Fonte: histórico padrão do sistema';
-            }
+            // Chama a função que gerencia o cache local / Firebase
+            const resultado = await obterHistoricoFirebase(loteria);
+            const draws = resultado.historico;
+            const origemDados = resultado.origem;
 
-            if (!dados || !Array.isArray(dados) || dados.length === 0) {
-                title.textContent = nomeExibicao;
-                subtitle.textContent = '';
-                badge.textContent = '';
-                container.innerHTML = `
+            if (!draws || draws.length === 0) {
+                document.getElementById('stats_subtitle').innerText = 'Nenhum histórico encontrado.';
+                document.getElementById('badge_fonte').innerText = 'Aviso: Dados Vazios';
+                document.getElementById('stats_container').innerHTML = `
                     <div class="estado-vazio">
-                        <i class="fa-solid fa-circle-exclamation"></i>
-                        Nenhum dado encontrado para ${nomeExibicao}.
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                        <p>Não há histórico salvo para <strong>${nomeOficial}</strong>.</p>
                     </div>`;
                 return;
             }
 
-            // Gera relatório agregado
-            const report = LotteryStatsEngine.generateAdvancedReport(loteria, dados);
-            title.textContent = nomeExibicao;
-            subtitle.textContent = `${formatarInteiro(report.totalDraws)} ${pluralizar(report.totalDraws, 'concurso analisado', 'concursos analisados')}`;
+            const ultimoConcurso = draws[draws.length - 1];
+            const numUltimo = getConcursoHeader(ultimoConcurso);
+            const dataUltima = getDataConcurso(ultimoConcurso);
 
-            // Renderiza os cards (incluindo a grade)
-            renderizarCards(report, dados, loteria);
-        }
+            document.getElementById('stats_subtitle').innerText = `Total de ${draws.length} concursos analisados`;
+            document.getElementById('badge_fonte').innerText = `Fonte: ${origemDados} (Concurso ${numUltimo})`;
 
-        function destacarBotaoAtivo(loteria) {
-            document.querySelectorAll('.lottery-card-btn').forEach(btn => {
-                btn.classList.remove('active');
-                btn.setAttribute('aria-pressed', 'false');
+            const stats = calcularEstatisticasNumeros(draws, loteria);
+
+            const colunas = COLUNAS_GRADE[loteria] || 10;
+            let gridHtml = `<div class="number-grid" style="grid-template-columns: repeat(${colunas}, 1fr);">`;
+            stats.numeros.forEach(num => {
+                const cls = classificarNumero(num, stats);
+                const displayNum = stats.isSuperSete ? num : num.toString().padStart(2, '0');
+                const tooltipText = formatarTooltip(stats.ocorrencias[num] || []);
+                gridHtml += `
+                    <div class="number-cell ${cls}" data-number="${num}">
+                        ${displayNum}
+                        <div class="tooltip">${tooltipText}</div>
+                    </div>`;
             });
-            const btn = document.getElementById(`btn_${loteria}`);
-            if (btn) {
-                btn.classList.add('active');
-                btn.setAttribute('aria-pressed', 'true');
-            }
+            gridHtml += '</div>';
+
+            const numerosUltimo = (ultimoConcurso.dezenas || ultimoConcurso.listaDezenas || []).map(n => parseInt(n, 10));
+            let linhasUltimo = '';
+            const rotulos = { hot: 'Número quente', cold: 'Número frio', mid: 'Frequência média', delay: 'Estava em atraso' };
+            
+            [...numerosUltimo].sort((a, b) => a - b).forEach(n => {
+                const cls = classificarNumero(n, stats);
+                const display = stats.isSuperSete ? n : n.toString().padStart(2, '0');
+                linhasUltimo += `<div class="last-draw-ball-row"><span class="mini-ball ${cls}">${display}</span><span class="ball-status-label">${rotulos[cls] || ''}</span></div>`;
+            });
+
+            const top5 = Object.entries(stats.freq).sort((a, b) => b[1] - a[1]).slice(0, 5);
+            const maiorFreq = top5.length ? top5[0][1] : 1;
+            let listaFrequentes = '';
+            top5.forEach(([num, count]) => {
+                const display = stats.isSuperSete ? num : num.toString().padStart(2, '0');
+                const pct = Math.round((count / maiorFreq) * 100);
+                listaFrequentes += `
+                    <li class="bar-row">
+                        <span class="bar-label">Número ${display}</span>
+                        <span class="bar-value">${count} ${pluralizar(count, 'vez', 'vezes')}</span>
+                        <div class="bar-track"><div class="bar-fill" style="width: ${pct}%"></div></div>
+                    </li>`;
+            });
+
+            document.getElementById('stats_container').className = 'fade-in';
+            document.getElementById('stats_container').innerHTML = `
+                <div class="painel-principal">
+                    <div class="number-grid-wrapper">
+                        <h3><i class="fa-solid fa-chart-simple"></i> Frequência dos Números</h3>
+                        <p class="card-desc">Histórico completo de saídas por dezena. Carregado instantaneamente do navegador.</p>
+                        ${gridHtml}
+                    </div>
+                    <div class="stat-card last-draw-panel">
+                        <h3><i class="fa-solid fa-bullseye"></i> Último Concurso (${numUltimo})</h3>
+                        <p class="card-desc">Resultado oficial apurado em ${dataUltima || 'data recente'}.</p>
+                        <div class="last-draw-balls">${linhasUltimo}</div>
+                    </div>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3><i class="fa-solid fa-fire"></i> Números Mais Frequentes</h3>
+                        <p class="card-desc">Dezenas que mais apareceram no histórico.</p>
+                        <ul class="bar-list">${listaFrequentes}</ul>
+                    </div>
+                </div>`;
         }
 
-        // Carrega Mega-Sena por padrão
-        document.addEventListener('DOMContentLoaded', () => carregarEstatisticas('megasena'));
+        window.addEventListener('DOMContentLoaded', () => {
+            carregarEstatisticas('megasena');
+        });
     </script>
 </body>
 </html>

@@ -7,12 +7,48 @@
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Google Sign-In SDK -->
+    <!-- Google Sign-In SDK (Com cancel_on_tap_outside para evitar o prompt flutuante duplicado) -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+    <!-- Google AdSense Script -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script>
+
+    <!-- FIREBASE SDK (Módulos v10) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBc1Ab14Fo6Ua-u3i1SDudf4EfVijVmONY",
+            authDomain: "gerador-loterias-web.firebaseapp.com",
+            projectId: "gerador-loterias-web",
+            storageBucket: "gerador-loterias-web.firebasestorage.app",
+            messagingSenderId: "539211828205",
+            appId: "1:539211828205:web:138dc9c6f09169bde2b5e4"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        window.verificarAssinaturaFirestore = async function(email) {
+            try {
+                const q = query(
+                    collection(db, "usuarios"), 
+                    where("email", "==", email.toLowerCase().trim()),
+                    where("assinante", "==", true)
+                );
+                const querySnapshot = await getDocs(q);
+                return !querySnapshot.empty;
+            } catch (error) {
+                console.error("Erro ao consultar Firestore:", error);
+                return false;
+            }
+        };
+    </script>
 
     <style>
         :root {
-            --primary-bg: #0f172a;
+            --primary-bg: #4a148c; /* Roxo ajustado conforme o print */
             --card-bg: #ffffff;
             --card-text: #1e293b;
             --accent-color: #0284c7;
@@ -38,7 +74,13 @@
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
 
-        /* CARROSSEL */
+        .ad-container {
+            max-width: 1200px;
+            margin: 20px auto;
+            text-align: center;
+            overflow: hidden;
+        }
+
         .carousel-container {
             position: relative;
             max-width: 1200px;
@@ -93,19 +135,33 @@
         .carousel-btn:hover { background: rgba(0,0,0,0.8); }
         .carousel-btn.prev { left: 10px; }
         .carousel-btn.next { right: 10px; }
-        .carousel-dots { text-align: center; padding: 10px; background: rgba(0,0,0,0.2); }
+        
+        .carousel-dots { 
+            text-align: center; 
+            padding: 12px; 
+            background: rgba(0,0,0,0.2); 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* FIX DAS BOLINHAS DO CARROSSEL: Largura corrigida para ficarem redondas */
         .dot {
             display: inline-block;
-            width: 10px;
-            height: 10px;
-            margin: 0 5px;
-            background-color: #bbb;
+            width: 12px;
+            height: 12px;
+            margin: 0 2px;
+            background-color: #cbd5e1;
             border-radius: 50%;
             cursor: pointer;
+            transition: all 0.3s ease;
         }
-        .dot.active { background-color: #38bdf8; }
+        .dot.active { 
+            background-color: #38bdf8; 
+            transform: scale(1.2);
+        }
 
-        /* SHORTCUTS */
         .shortcuts-bar {
             display: flex;
             justify-content: center;
@@ -130,7 +186,6 @@
         }
         .shortcuts-bar button:hover { background: #334155; }
 
-        /* ESTILO PARA DEIXAR OS CARDS DE LOTERIA BRANCOS */
         .lottery-grid > div, .lottery-card {
             background-color: #ffffff !important;
             color: #1e293b !important;
@@ -138,7 +193,6 @@
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
         }
 
-        /* VIP BADGE & MODAL */
         .vip-card-locked { position: relative !important; }
         .vip-badge {
             position: absolute;
@@ -174,7 +228,6 @@
             box-shadow: 0 10px 25px rgba(0,0,0,0.3);
         }
 
-        /* FOOTER */
         .site-footer {
             background-color: var(--primary-bg);
             color: var(--muted-text);
@@ -192,27 +245,33 @@
 <body>
 
     <header class="toolbar">
-        <h1 id="home_title" style="margin: 0; font-size: 1.2rem;">
+        <h1 id="home_title" style="margin: 0; font-size: 1.2rem; display: flex; align-items: center; gap: 8px;">
             <i class="fa-solid fa-dice"></i> Loterias Disponíveis
         </h1>
 
-        <div id="user_auth_area">
-            <div id="g_id_onload"
-                 data-client_id="383374785711-e00t37fkf9q6aqe5imqi0nnh29v2npq4.apps.googleusercontent.com"
-                 data-callback="handleCredentialResponse">
-            </div>
-            <div class="g_id_signin" data-type="standard" data-size="medium" data-locale="pt-BR"></div>
-        </div>
+        <!-- Único Container do Botão Google -->
+        <div id="user_auth_area"></div>
     </header>
 
-    <!-- CARROSSEL -->
+    <!-- ANÚNCIO ADSENSE: TOPO -->
+    <div class="ad-container">
+        <ins class="adsbygoogle"
+             style="display:block"
+             data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+             data-ad-slot="1234567890"
+             data-ad-format="auto"
+             data-full-width-responsive="true"></ins>
+        <script>
+             (adsbygoogle = window.adsbygoogle || []).push({});
+        </script>
+    </div>
+
+    <!-- CARROSSEL DE APPS -->
     <section class="carousel-container">
         <button class="carousel-btn prev" id="btnPrev"><i class="fa-solid fa-chevron-left"></i></button>
         <button class="carousel-btn next" id="btnNext"><i class="fa-solid fa-chevron-right"></i></button>
 
         <div class="carousel-slides" id="carouselSlides">
-            
-            <!-- Slide 1: Horóscopo -->
             <div class="carousel-slide">
                 <div class="carousel-slide-content">
                     <h3><i class="fa-solid fa-star"></i> Horóscopo</h3>
@@ -226,7 +285,6 @@
                 <img src="horoscopo.png" alt="Horóscopo" class="carousel-slide-img">
             </div>
 
-            <!-- Slide 2: ChemPuzzle (Química) -->
             <div class="carousel-slide">
                 <div class="carousel-slide-content">
                     <h3><i class="fa-solid fa-flask"></i> ChemPuzzle</h3>
@@ -240,7 +298,6 @@
                 <img src="ic_mascote_ia.png" alt="ChemPuzzle" class="carousel-slide-img">
             </div>
 
-            <!-- Slide 3: Tabuleiro Clássico -->
             <div class="carousel-slide">
                 <div class="carousel-slide-content">
                     <h3><i class="fa-solid fa-chess-board"></i> Tabuleiro Clássico</h3>
@@ -254,7 +311,6 @@
                 <img src="imagemjogoxadrez.png" alt="Tabuleiro Clássico" class="carousel-slide-img">
             </div>
 
-            <!-- Slide 4: UniQuiz -->
             <div class="carousel-slide">
                 <div class="carousel-slide-content">
                     <h3><i class="fa-solid fa-question-circle"></i> UniQuiz</h3>
@@ -268,7 +324,6 @@
                 <img src="imagemuniquizdoapp.png" alt="UniQuiz" class="carousel-slide-img">
             </div>
 
-            <!-- Slide 5: Gerador de Jogos (Loterias) -->
             <div class="carousel-slide">
                 <div class="carousel-slide-content">
                     <h3><i class="fa-solid fa-clover"></i> Gerador de Jogos - Loterias</h3>
@@ -281,7 +336,6 @@
                 </div>
                 <img src="banner2.png" alt="Gerador de Jogos" class="carousel-slide-img">
             </div>
-
         </div>
 
         <div class="carousel-dots" id="carouselDots">
@@ -293,7 +347,7 @@
         </div>
     </section>
 
-    <!-- SHORTCUTS -->
+    <!-- ATALHOS -->
     <div class="shortcuts-bar">
         <button onclick="window.location.href='gerar_jogos.html'"><i class="fa-solid fa-wand-magic-sparkles"></i> Gerar Jogos</button>
         <button onclick="window.location.href='saved_games.html'"><i class="fa-solid fa-bookmark"></i> Jogos Salvos</button>
@@ -303,11 +357,23 @@
         <button onclick="window.open('https://www.youtube.com/channel/UCPbhr02AfVb2nd5pm12BxTw/live', '_blank')"><i class="fa-solid fa-tv"></i> Sorteio ao Vivo</button>
     </div>
 
+    <!-- ANÚNCIO ADSENSE: MEIO -->
+    <div class="ad-container">
+        <ins class="adsbygoogle"
+             style="display:block"
+             data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+             data-ad-slot="0987654321"
+             data-ad-format="auto"
+             data-full-width-responsive="true"></ins>
+        <script>
+             (adsbygoogle = window.adsbygoogle || []).push({});
+        </script>
+    </div>
+
     <main class="container">
         <div id="lottery_grid" class="lottery-grid"></div>
     </main>
 
-    <!-- FOOTER -->
     <footer class="site-footer">
         <div class="footer-links">
             <a href="https://sites.google.com/view/gerador-de-jogos-loteria/in%C3%ADcio" target="_blank"><i class="fa-solid fa-shield-halved"></i> Política de Privacidade</a>
@@ -317,19 +383,130 @@
         <p>&copy; 2026 Fábio Ribeiro Romelli. Todos os direitos reservados.</p>
     </footer>
 
-    <!-- SCRIPTS DE DADOS -->
+    <!-- SCRIPTS DE DADOS DA APLICAÇÃO -->
     <script src="dados_loteria.js"></script>
     <script src="script_home.js"></script>
 
-    <!-- SCRIPT PRINCIPAL -->
+    <!-- LÓGICA DE LOGIN, GOOGLE AUTH & VIP -->
     <script>
+        function parseJwt(token) {
+            try {
+                const base64Url = token.split('.')[1];
+                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
+                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                }).join(''));
+                return JSON.parse(jsonPayload);
+            } catch (e) {
+                return null;
+            }
+        }
+
+        let isSubscriber = localStorage.getItem("is_vip") === "true";
+
+        function updateUIAuth() {
+            const authContainer = document.getElementById('user_auth_area');
+            if (!authContainer) return;
+
+            const email = localStorage.getItem("user_email");
+            const name = localStorage.getItem("user_name");
+            const picture = localStorage.getItem("user_picture");
+
+            if (email) {
+                authContainer.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 8px; background: rgba(255, 255, 255, 0.15); padding: 5px 12px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.3);">
+                        ${picture ? `<img src="${picture}" style="width: 26px; height: 26px; border-radius: 50%; object-fit: cover;" alt="User">` : '<i class="fa-solid fa-circle-user" style="font-size: 1.3rem; color: #fff;"></i>'}
+                        <span style="font-size: 0.85rem; font-weight: 600; color: #fff; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${name || email}</span>
+                        <button onclick="logoutGoogle()" style="background: #e74c3c; color: white; border: none; padding: 4px 8px; border-radius: 12px; cursor: pointer; font-size: 0.75rem; font-weight: bold; margin-left: 4px;" title="Sair">
+                            <i class="fa-solid fa-right-from-bracket"></i>
+                        </button>
+                    </div>
+                `;
+            } else {
+                authContainer.innerHTML = `<div id="g_id_signin_btn"></div>`;
+                
+                const checkGoogleInterval = setInterval(() => {
+                    if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
+                        clearInterval(checkGoogleInterval);
+                        
+                        // Inicializa desativando o One Tap no topo (evita o botão duplicado acima do cabeçalho)
+                        google.accounts.id.initialize({
+                            client_id: "383374785711-e00t37fkf9q6aqe5imqi0nnh29v2npq4.apps.googleusercontent.com",
+                            callback: handleCredentialResponse,
+                            auto_select: false,
+                            cancel_on_tap_outside: true
+                        });
+                        
+                        const btnDiv = document.getElementById('g_id_signin_btn');
+                        if (btnDiv) {
+                            google.accounts.id.renderButton(
+                                btnDiv,
+                                { theme: "outline", size: "medium", locale: "pt-BR", shape: "rectangular" }
+                            );
+                        }
+                    }
+                }, 200);
+            }
+        }
+
+        window.logoutGoogle = function() {
+            localStorage.removeItem("user_email");
+            localStorage.removeItem("user_name");
+            localStorage.removeItem("user_picture");
+            localStorage.setItem("is_vip", "false");
+            isSubscriber = false;
+
+            if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
+                google.accounts.id.disableAutoSelect();
+            }
+
+            window.location.reload();
+        };
+
+        async function handleCredentialResponse(response) {
+            if (!response || !response.credential) return;
+
+            const responsePayload = parseJwt(response.credential);
+            const userEmail = responsePayload?.email;
+
+            if (!userEmail) {
+                alert("Não foi possível obter o e-mail da conta Google.");
+                return;
+            }
+
+            if (typeof window.verificarAssinaturaFirestore !== "function") {
+                alert("Conectando ao banco de dados... Tente novamente em 2 segundos.");
+                return;
+            }
+
+            localStorage.setItem("user_email", userEmail);
+            localStorage.setItem("user_name", responsePayload.name || '');
+            localStorage.setItem("user_picture", responsePayload.picture || '');
+
+            const eAssinante = await window.verificarAssinaturaFirestore(userEmail);
+
+            if (eAssinante) {
+                isSubscriber = true;
+                localStorage.setItem("is_vip", "true");
+                alert(`Seja bem-vindo(a), ${responsePayload.name || userEmail}! Sua assinatura VIP foi confirmada.`);
+                window.location.reload();
+            } else {
+                isSubscriber = false;
+                localStorage.setItem("is_vip", "false");
+                alert("Aviso: O e-mail logado não possui uma assinatura ativa no aplicativo.");
+                updateUIAuth();
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
+            updateUIAuth();
+
             const userLang = navigator.language.startsWith('es') ? 'es' : navigator.language.startsWith('en') ? 'en' : 'pt';
             
             document.querySelectorAll('.lang-pt, .lang-en, .lang-es').forEach(el => el.style.display = 'none');
             document.querySelectorAll(`.lang-${userLang}`).forEach(el => el.style.display = 'block');
 
-            // Carrossel
+            // Lógica do Carrossel
             let slideIndex = 0;
             let autoSlideInterval;
             const slidesContainer = document.getElementById('carouselSlides');
@@ -359,9 +536,7 @@
 
             startAutoSlide();
 
-            // Trava VIP
-            const isSubscriber = false; 
-
+            // Modal VIP
             const translations = {
                 pt: { title: "Função Exclusiva VIP 🔒", msg: "Esta função é exclusiva para assinantes! Baixe nosso app na Google Play, assine o plano VIP e libere todas as funções.", btnApp: "Baixar na Play Store", btnClose: "Fechar" },
                 en: { title: "Exclusive VIP Feature 🔒", msg: "This feature is for subscribers only! Download our app on Google Play, subscribe to the VIP plan, and unlock all tools.", btnApp: "Get it on Play Store", btnClose: "Close" },
@@ -371,6 +546,8 @@
             const txt = translations[userLang];
 
             const applyVipLocks = () => {
+                if (isSubscriber) return;
+
                 const grid = document.getElementById('lottery_grid');
                 if (!grid) return;
 
@@ -433,10 +610,6 @@
                 }
             }, true);
         });
-
-        function handleCredentialResponse(response) {
-            console.log("Encoded JWT ID token: " + response.credential);
-        }
     </script>
 </body>
 </html>

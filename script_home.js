@@ -8,25 +8,43 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.head.appendChild(fa);
     }
 
-    if (!document.getElementById('google-gsi-script')) {
-        const gsi = document.createElement('script');
-        gsi.id = 'google-gsi-script';
-        gsi.src = 'https://accounts.google.com/gsi/client';
-        gsi.async = true;
-        gsi.defer = true;
-        gsi.onload = () => {
-            initGoogleAuth();
-        };
-        document.head.appendChild(gsi);
-    } else {
-        initGoogleAuth();
+    // Garante que a inicialização do Google ocorra apenas uma vez por sessão da página
+    if (!window._googleAuthInitialized) {
+        window._googleAuthInitialized = false;
+
+        const existingGsiScript = document.getElementById('google-gsi-script');
+        if (!existingGsiScript) {
+            const gsi = document.createElement('script');
+            gsi.id = 'google-gsi-script';
+            gsi.src = 'https://accounts.google.com/gsi/client';
+            gsi.async = true;
+            gsi.defer = true;
+            gsi.onload = () => {
+                initGoogleAuth();
+            };
+            document.head.appendChild(gsi);
+        } else {
+            if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
+                initGoogleAuth();
+            } else {
+                existingGsiScript.addEventListener('load', () => {
+                    initGoogleAuth();
+                }, { once: true });
+            }
+        }
     }
 
     // ===== 1.1 CONFIGURAÇÃO E LOGIN DO GOOGLE =====
     function initGoogleAuth() {
-        if (typeof google === 'undefined') return;
+        if (window._googleAuthInitialized) return;
+        
+        if (typeof google === 'undefined' || !google.accounts || !google.accounts.id) {
+            console.warn('Google GSI SDK ainda não foi totalmente carregado.');
+            return;
+        }
 
-        // Procura se já existe um container no HTML
+        window._googleAuthInitialized = true;
+
         let authContainer = document.getElementById('google_auth_container');
         
         if (!authContainer) {
@@ -44,46 +62,60 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
 
-        // Garante que não vai renderizar mais de uma vez
         authContainer.innerHTML = '';
 
-        // Inicializa o OAuth do Google com o seu Client ID
-        google.accounts.id.initialize({
-            client_id: "383374785711-e00t37fkf9q6aqe5imqi0nnh29v2npq4.apps.googleusercontent.com",
-            callback: handleCredentialResponse
-        });
+        try {
+            google.accounts.id.initialize({
+                client_id: "383374785711-e00t37fkf9q6aqe5imqi0nnh29v2npq4.apps.googleusercontent.com",
+                callback: handleCredentialResponse
+            });
 
-        // Renderiza apenas um botão oficial
-        google.accounts.id.renderButton(
-            authContainer,
-            { theme: "outline", size: "medium", text: "signin_with" }
-        );
+            google.accounts.id.renderButton(
+                authContainer,
+                { theme: "outline", size: "medium", text: "signin_with" }
+            );
+        } catch (error) {
+            console.error("Erro ao inicializar Google Auth:", error);
+            window._googleAuthInitialized = false;
+        }
     }
 
-    // Função global para processar o token retornado pelo Google
     window.handleCredentialResponse = function(response) {
+        if (!response || !response.credential) {
+            console.error("Nenhuma credencial retornada pelo Google.");
+            return;
+        }
+
         const responsePayload = parseJwt(response.credential);
 
-        console.log("ID do Usuário:", responsePayload.sub);
-        console.log("Nome:", responsePayload.name);
-        console.log("E-mail:", responsePayload.email);
+        if (responsePayload && responsePayload.email) {
+            try {
+                localStorage.setItem("user_email", responsePayload.email);
+                localStorage.setItem("user_name", responsePayload.name || '');
+            } catch (e) {
+                console.warn("Não foi possível salvar os dados do usuário no localStorage:", e);
+            }
 
-        localStorage.setItem("user_email", responsePayload.email);
-        localStorage.setItem("user_name", responsePayload.name);
-
-        alert(`Olá, ${responsePayload.name}!\nLogin realizado com sucesso.\nE-mail: ${responsePayload.email}`);
+            alert(`Olá, ${responsePayload.name || 'Usuário'}!\nLogin realizado com sucesso.\nE-mail: ${responsePayload.email}`);
+        } else {
+            alert("Não foi possível extrair as informações da conta do Google.");
+        }
     };
 
-    // Função utilitária para decodificar JWT
     function parseJwt(token) {
-        var base64Url = token.split('.')[1];
-        var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        var jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
-            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-        }).join(''));
+        try {
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
 
-        return JSON.parse(jsonPayload);
-    };
+            return JSON.parse(jsonPayload);
+        } catch (e) {
+            console.error("Erro ao decodificar JWT:", e);
+            return null;
+        }
+    }
 
     // ===== 2. BARRA DE ATALHOS =====
     function createShortcuts() {
@@ -431,10 +463,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     const grid = document.getElementById('lottery_grid');
     if (!grid) return;
 
-    const cachedTime = localStorage.getItem(CACHE_TIME_KEY);
-    const cachedDataStr = localStorage.getItem(CACHE_KEY);
-    const now = Date.now();
+    let cachedTime = null;
+    let cachedDataStr = null;
+    try {
+        cachedTime = localStorage.getItem(CACHE_TIME_KEY);
+        cachedDataStr = localStorage.getItem(CACHE_KEY);
+    } catch (e) {
+        console.warn("Não foi possível acessar o localStorage:", e);
+    }
 
+    const now = Date.now();
     let results = null;
 
     if (cachedTime && cachedDataStr && (now - parseInt(cachedTime, 10)) < CACHE_DURATION_MS) {

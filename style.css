@@ -1020,3 +1020,22 @@ img {
         transform: translate(-10px, -12px) scale(1.05) rotate(22deg);
     }
 }
+
+/* ============================================================
+   CORREÇÃO PARA ESPAÇOS EM BRANCO DE ANÚNCIOS (GOOGLE ADSENSE)
+   ============================================================ */
+.ad-container {
+    max-width: 1200px;
+    margin: var(--spacing-md) auto;
+    text-align: center;
+    width: 100%;
+    overflow: hidden;
+}
+
+/* Oculta completamente o espaço do anúncio caso ele venha vazio/sem conteúdo */
+.ad-container:empty,
+.ad-container ins.adsbygoogle[data-ad-status="unfilled"] {
+    display: none !important;
+    margin: 0 !important;
+    min-height: 0 !important;
+}
