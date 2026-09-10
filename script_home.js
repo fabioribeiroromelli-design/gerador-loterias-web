@@ -57,12 +57,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         try {
-            google.accounts.id.initialize({
-                client_id: "539211828205-imvbic560qdvmgqvfp474dl7cfrc250u.apps.googleusercontent.com",
-                callback: handleCredentialResponse,
-                ux_mode: "popup"
-            });
-
+           google.accounts.id.initialize({
+    client_id: "383374785711-e00t37fkf9q6aqe5imqi0nnh29v2npq4.apps.googleusercontent.com",
+    callback: handleCredentialResponse,
+    ux_mode: "popup"
+});
             google.accounts.id.renderButton(
                 authContainer,
                 { theme: "outline", size: "medium", text: "signin_with" }
