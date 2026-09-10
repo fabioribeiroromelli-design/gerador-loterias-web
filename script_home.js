@@ -1,24 +1,11 @@
 document.addEventListener('DOMContentLoaded', async () => {
-    // ===== 1. INJETAR FONT AWESOME, FIREBASE E GOOGLE AUTH =====
+    // ===== 1. INJETAR FONTAWESOME E BIBLIOTECA GOOGLE AUTH =====
     if (!document.getElementById('fa-icons')) {
         const fa = document.createElement('link');
         fa.id = 'fa-icons';
         fa.rel = 'stylesheet';
         fa.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css';
         document.head.appendChild(fa);
-    }
-
-    // Injeta os scripts do Firebase (App e Firestore) se ainda não existirem
-    if (!document.getElementById('firebase-app-script')) {
-        const fbApp = document.createElement('script');
-        fbApp.id = 'firebase-app-script';
-        fbApp.src = 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js';
-        document.head.appendChild(fbApp);
-
-        const fbStore = document.createElement('script');
-        fbStore.id = 'firebase-firestore-script';
-        fbStore.src = 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js';
-        document.head.appendChild(fbStore);
     }
 
     // Garante que a flag global de controle exista corretamente
@@ -59,19 +46,22 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         window._googleAuthInitialized = true;
 
+        // Procura um container específico para o login ou cria de forma segura sem afetar o grid principal
         let authContainer = document.getElementById('google_auth_container');
         if (!authContainer) {
             authContainer = document.querySelector('.login-container') || document.querySelector('.toolbar');
             if (!authContainer) {
                 authContainer = document.createElement('div');
                 authContainer.id = 'google_auth_container';
-                document.body.prepend(authContainer);
+                // Adiciona no topo da toolbar ou header para não quebrar as telas de loterias
+                const toolbar = document.querySelector('.toolbar') || document.body;
+                toolbar.prepend(authContainer);
             }
         }
 
         try {
             google.accounts.id.initialize({
-                client_id: "539211828205-imvbic560qdvmgqvfp474dl7cfrc250u.apps.googleusercontent.com",
+                client_id: "383374785711-e00t37fkf9q6aqe5imqi0nnh29v2npq4.apps.googleusercontent.com",
                 callback: handleCredentialResponse,
                 ux_mode: "popup"
             });
@@ -281,7 +271,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.72rem; color: #555; margin: 6px 0; border-top: 1px dashed #eee; padding-top: 4px;">
                     <span>Próx. Estimado: <strong style="color: ${color};">${estimativaFormatada}</strong></span>
-                    {dataProximo ? `<span>Data: <strong>${dataProximo}</strong></span>` : ''}
+                    ${dataProximo ? `<span>Data: <strong>${dataProximo}</strong></span>` : ''}
                 </div>
 
                 ${rateioHtml ? `
@@ -417,40 +407,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     grid.innerHTML = html;
 });
 
-// ===== INICIALIZAÇÃO DO FIREBASE (CONFIGURE COM OS DADOS DO SEU PROJETO) =====
-const firebaseConfig = {
-    apiKey: "SUA_API_KEY",
-    authDomain: "SEU_AUTH_DOMAIN",
-    projectId: "SEU_PROJECT_ID",
-    storageBucket: "SEU_STORAGE_BUCKET",
-    messagingSenderId: "SEU_MESSAGING_SENDER_ID",
-    appId: "SEU_APP_ID"
-};
-
-if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
-}
-const db = firebase.firestore();
-
-// ===== FUNÇÃO PARA VERIFICAR NO FIREBASE SE O E-MAIL É ASSINANTE =====
-async function verificarAssinaturaNoFirebase(email) {
-    try {
-        // Altere 'assinantes' para o nome exato da sua coleção no Firestore
-        const docRef = db.collection("assinantes").doc(email.toLowerCase().trim());
-        const doc = await docRef.get();
-
-        if (doc.exists) {
-            const dados = doc.data();
-            // Retorna true se houver campo ativo/assinatura válida
-            return dados.ativo === true || dados.isSubscriber === true;
-        }
-        return false;
-    } catch (e) {
-        console.error("Erro ao verificar assinatura no Firebase:", e);
-        return false;
-    }
-}
-
 // ===== FUNÇÃO PARA ATUALIZAR A INTERFACE QUANDO LOGADO =====
 function atualizarInterfaceUsuario(nome, isAssinante) {
     let authContainer = document.getElementById('google_auth_container');
@@ -554,7 +510,7 @@ function mostrarDialogoNaoAssinante(nomeUsuario) {
     });
 }
 
-async function handleCredentialResponse(response) {
+function handleCredentialResponse(response) {
     if (!response || !response.credential) {
         console.error("Nenhuma credencial retornada pelo Google.");
         return;
@@ -563,27 +519,22 @@ async function handleCredentialResponse(response) {
     const responsePayload = parseJwt(response.credential);
 
     if (responsePayload && responsePayload.email) {
-        const emailUser = responsePayload.email;
-        const nomeUser = responsePayload.name || '';
-
-        // Consulta o Firebase em tempo real para verificar se o e-mail tem assinatura
-        const isAssinante = await verificarAssinaturaNoFirebase(emailUser);
-
         try {
-            localStorage.setItem("user_email", emailUser);
-            localStorage.setItem("user_name", nomeUser);
-            localStorage.setItem("is_subscriber", isAssinante ? "true" : "false");
+            localStorage.setItem("user_email", responsePayload.email);
+            localStorage.setItem("user_name", responsePayload.name || '');
         } catch (e) {
             console.warn("Não foi possível salvar os dados do usuário no localStorage:", e);
         }
 
-        // Atualiza a tela imediatamente para exibir o status correto
-        atualizarInterfaceUsuario(nomeUser || emailUser, isAssinante);
+        const isAssinante = localStorage.getItem("is_subscriber") === "true";
+
+        // Atualiza a tela imediatamente para exibir o nome do usuário logado
+        atualizarInterfaceUsuario(responsePayload.name || responsePayload.email, isAssinante);
 
         if (!isAssinante) {
-            mostrarDialogoNaoAssinante(nomeUser);
+            mostrarDialogoNaoAssinante(responsePayload.name);
         } else {
-            alert(`Bem-vindo de volta, ${nomeUser || 'Usuário'}! Login de assinante verificado.`);
+            alert(`Bem-vindo de volta, ${responsePayload.name || 'Usuário'}! Login de assinante verificado.`);
         }
     } else {
         alert("Não foi possível extrair as informações da conta do Google.");
