@@ -43,11 +43,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         window._googleAuthInitialized = true;
 
+        // Procura se já existe um container específico no HTML para o botão do Google (evitando duplicar)
         let authContainer = document.getElementById('google_auth_container');
         if (!authContainer) {
-            authContainer = document.createElement('div');
-            authContainer.id = 'google_auth_container';
-            document.body.prepend(authContainer);
+            // Se não existir, procura por alguma classe padrão ou barra de topo para injetar de forma limpa sem duplicar
+            authContainer = document.querySelector('.login-container') || document.querySelector('.toolbar');
+            if (!authContainer) {
+                authContainer = document.createElement('div');
+                authContainer.id = 'google_auth_container';
+                document.body.prepend(authContainer);
+            }
         }
 
         try {
@@ -412,6 +417,70 @@ document.addEventListener('DOMContentLoaded', async () => {
     grid.innerHTML = html;
 });
 
+// ===== FUNÇÃO DE DIÁLOGO ELEGANTE PARA NÃO ASSINANTES =====
+function mostrarDialogoNaoAssinante(nomeUsuario) {
+    // Remove modal anterior se já existir
+    const modalAntigo = document.getElementById('modal-assinatura-exclusivo');
+    if (modalAntigo) modalAntigo.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'modal-assinatura-exclusivo';
+    overlay.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(5px);
+        display: flex; justify-content: center; align-items: center; z-index: 99999;
+        animation: fadeIn 0.3s ease;
+    `;
+
+    overlay.innerHTML = `
+        <div style="
+            background: #ffffff; width: 90%; max-width: 420px; border-radius: 16px;
+            padding: 30px 24px; text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+            font-family: inherit; position: relative; border-top: 6px solid #209869;
+        ">
+            <div style="
+                width: 65px; height: 65px; background: #e8f5e9; color: #209869; border-radius: 50%;
+                display: flex; align-items: center; justify-content: center; font-size: 30px;
+                margin: 0 auto 20px auto; box-shadow: 0 4px 10px rgba(32, 152, 105, 0.2);
+            ">
+                <i class="fa-solid fa-crown"></i>
+            </div>
+            
+            <h3 style="color: #1a1a1a; margin: 0 0 10px 0; font-size: 1.4rem;">Olá, ${nomeUsuario || 'Visitante'}!</h3>
+            <p style="color: #555; font-size: 0.95rem; line-height: 1.5; margin-bottom: 24px;">
+                Identificamos que você ainda não possui uma assinatura ativa do aplicativo. Para desbloquear todas as estratégias avançadas e recursos exclusivos, baixe nosso app e assine um plano!
+            </p>
+            
+            <a href="https://play.google.com/store/apps/details?id=com.fabioribeiroromelli.geradordejogos" target="_blank" style="
+                display: block; background: #209869; color: white; text-decoration: none;
+                padding: 14px 20px; border-radius: 30px; font-weight: bold; font-size: 1rem;
+                box-shadow: 0 4px 15px rgba(32, 152, 105, 0.4); margin-bottom: 12px; transition: background 0.2s;
+            ">
+                <i class="fa-brands fa-google-play"></i> Baixar App e Assinar
+            </a>
+
+            <button id="fechar_modal_assinatura" style="
+                background: transparent; border: none; color: #888; font-size: 0.9rem;
+                cursor: pointer; padding: 8px; font-weight: 600; text-decoration: underline;
+            ">
+                Continuar apenas navegando
+            </button>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    document.getElementById('fechar_modal_assinatura').addEventListener('click', () => {
+        overlay.remove();
+    });
+
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+            overlay.remove();
+        }
+    });
+}
+
 // ===== FUNÇÃO GLOBAL DE CALLBACK DO GOOGLE AUTH =====
 function handleCredentialResponse(response) {
     if (!response || !response.credential) {
@@ -429,7 +498,15 @@ function handleCredentialResponse(response) {
             console.warn("Não foi possível salvar os dados do usuário no localStorage:", e);
         }
 
-        alert(`Olá, ${responsePayload.name || 'Usuário'}!\nLogin realizado com sucesso.\nE-mail: ${responsePayload.email}`);
+        // Exemplo de verificação se o usuário é assinante (Você pode conectar com seu backend/banco de dados aqui)
+        // Por padrão, se não houver a flag 'is_subscriber' como true no localStorage, exibiremos o diálogo elegante:
+        const isAssinante = localStorage.getItem("is_subscriber") === "true";
+
+        if (!isAssinante) {
+            mostrarDialogoNaoAssinante(responsePayload.name);
+        } else {
+            alert(`Bem-vindo de volta, ${responsePayload.name || 'Usuário'}! Login de assinante verificado.`);
+        }
     } else {
         alert("Não foi possível extrair as informações da conta do Google.");
     }
