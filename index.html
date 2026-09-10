@@ -12,8 +12,8 @@
     <!-- Google Identity Services (GSI) SDK -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
 
-    <!-- Google AdSense Script -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script>
+    <!-- Google AdSense Script (Verificação Automática do Site) -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2348094023361642" crossorigin="anonymous"></script>
 
     <!-- FIREBASE SDK (Módulos v10) -->
     <script type="module">
@@ -34,13 +34,7 @@
         const db = getFirestore(app);
         const auth = getAuth(app);
 
-        // *** CORREÇÃO PRINCIPAL DO LOGIN ***
-        // O botão do Google (Google Identity Services) só devolve um token do Google,
-        // ele NÃO loga o usuário dentro do Firebase sozinho. Se as Regras de Segurança
-        // do Firestore exigirem "request.auth != null" (o padrão mais comum e mais
-        // seguro), qualquer consulta feita sem este passo é BLOQUEADA com erro de
-        // "permissões insuficientes" — por isso o cadeado nunca abria, mesmo para
-        // quem já era assinante de verdade no banco de dados.
+        // Autenticação Firebase com Google
         window.autenticarFirebaseComGoogle = async function (googleIdToken) {
             try {
                 const credential = GoogleAuthProvider.credential(googleIdToken);
@@ -49,7 +43,6 @@
                 return true;
             } catch (error) {
                 console.error("[Firebase Auth] ERRO ao autenticar no Firebase com o token do Google:", error);
-                console.error("[Firebase Auth] Verifique se o provedor 'Google' está ATIVADO em: Console do Firebase > Authentication > Sign-in method.");
                 return false;
             }
         };
@@ -63,7 +56,7 @@
             }
         };
 
-        // Função de verificação no Firestore com suporte a boolean e string
+        // Função de verificação no Firestore
         window.verificarAssinaturaFirestore = async function(email) {
             try {
                 const cleanEmail = email.toLowerCase().trim();
@@ -76,24 +69,21 @@
                 const querySnapshot = await getDocs(q);
                 
                 if (querySnapshot.empty) {
-                    console.log("[Firestore] Nenhum documento encontrado em 'usuarios' com este e-mail. Confira se o e-mail está gravado exatamente assim no banco.");
+                    console.log("[Firestore] Nenhum documento encontrado em 'usuarios' com este e-mail.");
                     return false;
                 }
 
                 let eAssinante = false;
                 querySnapshot.forEach((doc) => {
                     const data = doc.data();
-                    console.log("[Firestore] Documento encontrado:", doc.id, data);
                     if (data.assinante === true || data.assinante === "true") {
                         eAssinante = true;
                     }
                 });
 
-                console.log("[Firestore] Resultado final -> é assinante?", eAssinante);
                 return eAssinante;
             } catch (error) {
                 console.error("[Firestore] ERRO ao consultar a base de dados:", error);
-                console.error("[Firestore] Isso normalmente indica que as Regras de Segurança do Firestore bloquearam a leitura. Veja as instruções enviadas junto com este arquivo.");
                 return false;
             }
         };
@@ -311,7 +301,7 @@
     <div class="ad-container">
         <ins class="adsbygoogle"
              style="display:block"
-             data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+             data-ad-client="ca-pub-2348094023361642"
              data-ad-slot="1234567890"
              data-ad-format="auto"
              data-full-width-responsive="true"></ins>
@@ -405,7 +395,7 @@
     <div class="ad-container">
         <ins class="adsbygoogle"
              style="display:block"
-             data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+             data-ad-client="ca-pub-2348094023361642"
              data-ad-slot="0987654321"
              data-ad-format="auto"
              data-full-width-responsive="true"></ins>
@@ -435,17 +425,12 @@
 
     <!-- AUTENTICAÇÃO GOOGLE E NAVEGAÇÃO -->
     <script>
-        // Restauração da sessão salva no localStorage
-        // *** CORREÇÃO: protegido com try/catch. Se o valor salvo estivesse
-        // corrompido, o JSON.parse antigo lançava um erro logo no carregamento
-        // da página e travava TODO o restante deste script (nada de login,
-        // nada de cadeado, nada de carrossel funcionava depois disso). ***
         let currentUser = null;
         try {
             const storedUser = localStorage.getItem('currentUser');
             currentUser = storedUser ? JSON.parse(storedUser) : null;
         } catch (e) {
-            console.error("[Auth] Dado 'currentUser' corrompido no localStorage — limpando para evitar travar a página.", e);
+            console.error("[Auth] Dado 'currentUser' corrompido no localStorage.", e);
             localStorage.removeItem('currentUser');
             currentUser = null;
         }
@@ -482,11 +467,6 @@
             } else {
                 authContainer.innerHTML = `<div id="g_id_signin_btn"></div>`;
                 
-                // *** CORREÇÃO: antes esse intervalo rodava para sempre em silêncio
-                // se o script do Google não carregasse (bloqueador de anúncio,
-                // rede, etc.) — a área de login ficava vazia para sempre, dando a
-                // impressão de que "não aparece nada". Agora, depois de ~5s sem
-                // sucesso, mostra um aviso em vez de ficar travado esperando. ***
                 let tentativasGoogle = 0;
                 const checkGoogleInterval = setInterval(() => {
                     tentativasGoogle++;
@@ -511,8 +491,8 @@
                         }
                     } else if (tentativasGoogle > 25) {
                         clearInterval(checkGoogleInterval);
-                        console.error("[Auth] O script do Google Identity Services (accounts.google.com/gsi/client) não carregou. Verifique bloqueadores de anúncio/extensões ou a conexão, e confirme o domínio nas 'Authorized JavaScript origins' do Google Cloud Console.");
-                        authContainer.innerHTML = `<span style="font-size:0.75rem; color:#ffcdd2;" title="Recarregue a página ou desative bloqueadores de anúncio">Erro ao carregar login do Google</span>`;
+                        console.error("[Auth] O script do Google Identity Services não carregou.");
+                        authContainer.innerHTML = `<span style="font-size:0.75rem; color:#ffcdd2;">Erro ao carregar login do Google</span>`;
                     }
                 }, 200);
             }
@@ -522,7 +502,6 @@
             currentUser = null;
             isSubscriber = false;
             
-            // Limpa do armazenamento local
             localStorage.removeItem('currentUser');
             localStorage.removeItem('isSubscriber');
 
@@ -549,28 +528,18 @@
                 return;
             }
 
-            // Aguarda até o carregamento do módulo do Firestore
             let tentativas = 0;
             while (typeof window.verificarAssinaturaFirestore !== "function" && tentativas < 20) {
                 await new Promise(r => setTimeout(r, 200));
                 tentativas++;
             }
 
-            // *** CORREÇÃO: antes, se o módulo do Firebase não carregasse a
-            // tempo, o código seguia em frente calculando "não é assinante"
-            // sem avisar o motivo real. Agora avisa e para, em vez de mostrar
-            // uma mensagem enganosa de "assinatura não encontrada". ***
             if (typeof window.verificarAssinaturaFirestore !== "function") {
-                console.error("[Auth] O módulo do Firebase não carregou a tempo (5s). Verifique sua internet ou bloqueadores de script.");
+                console.error("[Auth] O módulo do Firebase não carregou a tempo.");
                 alert("Não foi possível conectar ao servidor para validar sua assinatura. Verifique sua internet e tente novamente.");
                 return;
             }
 
-            // *** CORREÇÃO PRINCIPAL: autentica no Firebase com o token do Google
-            // ANTES de consultar o Firestore, para que as Regras de Segurança
-            // reconheçam a consulta como vinda de um usuário logado
-            // (request.auth != null). Sem isso, a consulta abaixo tende a ser
-            // bloqueada e "eAssinante" sempre volta como false. ***
             if (typeof window.autenticarFirebaseComGoogle === "function") {
                 await window.autenticarFirebaseComGoogle(response.credential);
             }
@@ -585,7 +554,6 @@
 
             isSubscriber = eAssinante;
 
-            // Salva sessão localmente no navegador
             localStorage.setItem('currentUser', JSON.stringify(currentUser));
             localStorage.setItem('isSubscriber', isSubscriber ? 'true' : 'false');
 
@@ -691,40 +659,17 @@
                 document.getElementById('btnCloseModal').onclick = () => modal.remove();
             };
 
-            // Aplica estado dos cadeados apos inicializacao da UI
-            setTimeout(applyVipLocks, 600);
-
-            // *** CORREÇÃO: reaplica os cadeados automaticamente sempre que
-            // novos cards forem inseridos em #lottery_grid (por dados_loteria.js
-            // / script_home.js), não importa quanto tempo esses scripts
-            // demorem. Antes, se os cards chegassem depois dos 600ms do
-            // setTimeout acima, ficavam sem cadeado (ou o desbloqueio do VIP
-            // não era refletido neles). ***
             const grid = document.getElementById('lottery_grid');
             if (grid) {
-                const gridObserver = new MutationObserver(() => applyVipLocks());
-                gridObserver.observe(grid, { childList: true });
-            }
-
-            // Bloqueio de cliques para nao-VIPs
-            document.addEventListener('click', (e) => {
-                if (isSubscriber) return;
-
-                const grid = document.getElementById('lottery_grid');
-                if (!grid) return;
-
-                const clickedCard = e.target.closest('#lottery_grid > *');
-                if (clickedCard) {
-                    const cardsArray = Array.from(grid.children);
-                    const index = cardsArray.indexOf(clickedCard);
-
-                    if (index >= 0 && index < 5) {
+                grid.addEventListener('click', (e) => {
+                    const card = e.target.closest('.lottery-card, .vip-card-locked');
+                    if (card && card.classList.contains('vip-card-locked') && !isSubscriber) {
                         e.preventDefault();
                         e.stopPropagation();
                         showVipModal();
                     }
-                }
-            }, true);
+                }, true);
+            }
         });
     </script>
 </body>
