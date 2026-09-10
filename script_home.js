@@ -1,22 +1,182 @@
-// ===== 4. FUNÇÃO PARA PEGAR OS DADOS DIRETO DO ARQUIVO LOCAL (dados_loteria.js) =====
-    function fetchUltimoConcursoLocal(lotteryName) {
-        if (!window.DADOS_ULTIMOS_CONCURSOS) return null;
-        
-        // Tenta buscar pelo nome exato ou variações comuns (maiúsculas/minúsculas)
-        const chavesPossiveis = [
-            lotteryName,
-            lotteryName.toLowerCase(),
-            lotteryName.toUpperCase(),
-            lotteryName.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+document.addEventListener('DOMContentLoaded', async () => {
+    // ===== 1. INJETAR FONTAWESOME E BIBLIOTECA GOOGLE AUTH =====
+    if (!document.getElementById('fa-icons')) {
+        const fa = document.createElement('link');
+        fa.id = 'fa-icons';
+        fa.rel = 'stylesheet';
+        fa.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css';
+        document.head.appendChild(fa);
+    }
+
+    // Garante que a inicialização do Google ocorra apenas uma vez por sessão da página
+    if (!window._googleAuthInitialized) {
+        window._googleAuthInitialized = false;
+
+        const existingGsiScript = document.getElementById('google-gsi-script');
+        if (!existingGsiScript) {
+            const gsi = document.createElement('script');
+            gsi.id = 'google-gsi-script';
+            gsi.src = 'https://accounts.google.com/gsi/client';
+            gsi.async = true;
+            gsi.defer = true;
+            gsi.onload = () => {
+                initGoogleAuth();
+            };
+            document.head.appendChild(gsi);
+        } else {
+            if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
+                initGoogleAuth();
+            } else {
+                existingGsiScript.addEventListener('load', () => {
+                    initGoogleAuth();
+                }, { once: true });
+            }
+        }
+    }
+
+  function initGoogleAuth() {
+    if (window._googleAuthInitialized) return;
+    
+    if (typeof google === 'undefined' || !google.accounts || !google.accounts.id) {
+        return;
+    }
+
+    window._googleAuthInitialized = true;
+
+    let authContainer = document.getElementById('google_auth_container');
+    if (!authContainer) {
+        authContainer = document.createElement('div');
+        authContainer.id = 'google_auth_container';
+        document.body.prepend(authContainer);
+    }
+
+    try {
+        google.accounts.id.initialize({
+            client_id: "383374785711-e00t37fkf9q6aqe5imqi0nnh29v2npq4.apps.googleusercontent.com",
+            callback: handleCredentialResponse,
+            ux_mode: "popup" // Força o modo popup para evitar bloqueios de COOP
+        });
+
+        google.accounts.id.renderButton(
+            authContainer,
+            { theme: "outline", size: "medium", text: "signin_with" }
+        );
+    } catch (error) {
+        console.error("Erro ao inicializar Google Auth:", error);
+        window._googleAuthInitialized = false;
+    }
+}
+
+    window.handleCredentialResponse = function(response) {
+        if (!response || !response.credential) {
+            console.error("Nenhuma credencial retornada pelo Google.");
+            return;
+        }
+
+        const responsePayload = parseJwt(response.credential);
+
+        if (responsePayload && responsePayload.email) {
+            try {
+                localStorage.setItem("user_email", responsePayload.email);
+                localStorage.setItem("user_name", responsePayload.name || '');
+            } catch (e) {
+                console.warn("Não foi possível salvar os dados do usuário no localStorage:", e);
+            }
+
+            alert(`Olá, ${responsePayload.name || 'Usuário'}!\nLogin realizado com sucesso.\nE-mail: ${responsePayload.email}`);
+        } else {
+            alert("Não foi possível extrair as informações da conta do Google.");
+        }
+    };
+
+    function parseJwt(token) {
+        try {
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+
+            return JSON.parse(jsonPayload);
+        } catch (e) {
+            console.error("Erro ao decodificar JWT:", e);
+            return null;
+        }
+    }
+
+    // ===== 2. BARRA DE ATALHOS =====
+    function createShortcuts() {
+        let container = document.querySelector('.shortcuts-bar');
+        if (container) return container;
+
+        container = document.createElement('div');
+        container.className = 'shortcuts-bar';
+
+        const shortcuts = [
+            { label: 'Gerar Jogos', icon: 'fa-wand-magic-sparkles', url: 'gerar_jogos.html' },
+            { label: 'Jogos Salvos', icon: 'fa-bookmark', url: 'saved_games.html' },
+            { label: 'Downloads', icon: 'fa-download', url: 'download_results.html' },
+            { label: 'Estatísticas', icon: 'fa-chart-pie', url: 'historico.html' },
+            { label: 'Filtrar Números', icon: 'fa-filter', url: 'generator.html' },
+            { label: 'Sorteio ao Vivo', icon: 'fa-tv', externalUrl: 'https://www.youtube.com/channel/UCPbhr02AfVb2nd5pm12BxTw/live' }
         ];
 
-        for (let chave of Object.keys(window.DADOS_ULTIMOS_CONCURSOS)) {
-            const chaveNormalizada = chave.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-            const nomeNormalizado = lotteryName.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-            
-            if (chaveNormalizada === nomeNormalizado) {
-                return window.DADOS_ULTIMOS_CONCURSOS[chave];
-            }
+        shortcuts.forEach(item => {
+            const btn = document.createElement('button');
+            btn.innerHTML = `<i class="fa-solid ${item.icon}"></i> <span>${item.label}</span>`;
+            btn.addEventListener('click', () => {
+                if (item.externalUrl) {
+                    window.open(item.externalUrl, '_blank');
+                } else if (item.url) {
+                    window.location.href = item.url;
+                }
+            });
+            container.appendChild(btn);
+        });
+
+        const header = document.querySelector('.toolbar');
+        if (header && header.parentNode) {
+            header.parentNode.insertBefore(container, header.nextSibling);
+        } else {
+            document.body.prepend(container);
+        }
+        return container;
+    }
+    createShortcuts();
+
+    // ===== 3. CORES E ÍCONES DAS LOTERIAS =====
+    const COLORS = {
+        'Dia de Sorte': '#cb8322', 'Dupla Sena': '#a61324', 'Federal': '#002f6c',
+        'Loteca': '#ca1518', 'Lotofácil': '#930089', 'Lotomania': '#F78100',
+        '+Milionária': '#1b365d', 'Mega-Sena': '#209869', 'Quina': '#260085',
+        'Super Sete': '#a8cf45', 'Timemania': '#2ecc71'
+    };
+
+    const ICONS = {
+        'Dia de Sorte': 'fa-sun', 'Dupla Sena': 'fa-copy', 'Federal': 'fa-building-columns',
+        'Loteca': 'fa-futbol', 'Lotofácil': 'fa-clover', 'Lotomania': 'fa-dice',
+        '+Milionária': 'fa-gem', 'Mega-Sena': 'fa-trophy', 'Quina': 'fa-star',
+        'Super Sete': 'fa-seven', 'Timemania': 'fa-clock'
+    };
+
+    const LOTTERIES = [
+        { name: 'Dia de Sorte' },
+        { name: 'Dupla Sena' },
+        { name: 'Federal' },
+        { name: 'Loteca' },
+        { name: 'Lotofácil' },
+        { name: 'Lotomania' },
+        { name: '+Milionária' },
+        { name: 'Mega-Sena' },
+        { name: 'Quina' },
+        { name: 'Super Sete' },
+        { name: 'Timemania' }
+    ];
+
+    // ===== 4. FUNÇÃO PARA PEGAR OS DADOS DIRETO DO ARQUIVO LOCAL (dados_loteria.js) =====
+    function fetchUltimoConcursoLocal(lotteryName) {
+        if (window.DADOS_ULTIMOS_CONCURSOS && window.DADOS_ULTIMOS_CONCURSOS[lotteryName]) {
+            return window.DADOS_ULTIMOS_CONCURSOS[lotteryName];
         }
         return null;
     }
@@ -29,55 +189,41 @@
 
         if (!data) {
             return `
-                <div class="lottery-card" style="border-top-color: ${color}; opacity: 0.9;">
+                <div class="lottery-card" style="border-top-color: ${color}; opacity: 0.8;">
                     <div class="card-header">
                         <h3 style="color: ${color};"><i class="fa-solid ${icon}"></i> ${lotteryName}</h3>
-                        <span class="badge-conc" style="background: #e0e0e0; color: #333;">Atualizando</span>
+                        <span class="badge-conc">Indisponível</span>
                     </div>
-                    <div class="drawn-numbers" style="font-size: 0.8rem; color: #555;">Dados em sincronização</div>
-                    <button class="btn-generate" style="background: ${color};" onclick="window.location.href='generator.html?lottery=${encodeURIComponent(lotteryName)}'">
-                        <i class="fa-solid fa-filter"></i> Gerar por Filtro
-                    </button>
+                    <div class="drawn-numbers">Sem dados</div>
+                    <button class="btn-generate" style="background: ${color};" disabled>Aguardando Atualização</button>
                 </div>
             `;
         }
 
-        const concurso = data.numero || data.concurso || data.nConcurso || '--';
-        const dezenas = data.listaDezenas || data.dezenas || data.dezenasOrdemSorteio || [];
+        const concurso = data.numero || data.concurso || '--';
+        const dezenas = data.listaDezenas || data.dezenas || [];
         const acumulado = Boolean(data.acumulado);
-        const estimativa = data.valorEstimadoProximoConcurso || data.valorAcumuladoProximoConcurso || 0;
-        const dataProximo = data.dataProximoConcurso || data.dataPorximoConcurso || '';
+        const estimativa = data.valorEstimadoProximoConcurso || 0;
+        const dataProximo = data.dataProximoConcurso || '';
         const localSorteio = data.nomeMunicipioUFSorteio || data.localSorteio || '';
 
         let numbersDisplay = '--';
 
-        // Tratamento robusto para a Federal (aceita várias estruturas de bilhetes)
-        if (lotteryName === 'Federal') {
-            const bilhetes = data.listaRateioPremio || data.dezenas || data.premios || data.listaDezenas || [];
-            if (bilhetes.length > 0) {
-                numbersDisplay = `
-                    <div style="font-size: 0.73rem; text-align: left; width: 100%; background: #f8f9fa; padding: 6px; border-radius: 4px; border: 1px solid #eee;">
-                        ${bilhetes.slice(0, 5).map((item, i) => {
-                            const premioNum = item.faixa || item.descricaoFaixa || `${i + 1}º Prêmio`;
-                            const bilheteVal = item.dezenas || item.valorPrêmio || item.bilhete || item;
-                            return `
-                                <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #eee; padding: 2px 0;">
-                                    <strong>${i + 1}º Prêmio:</strong> <span style="color: ${color}; font-weight: bold;">${bilheteVal}</span>
-                                </div>
-                            `;
-                        }).join('')}
-                    </div>
-                `;
-            } else {
-                numbersDisplay = `<span style="font-size: 0.78rem; color: #777;">Aguardando apuração</span>`;
-            }
-        } 
-        // Tratamento robusto para a Loteca
-        else if (lotteryName === 'Loteca') {
-            const jogos = data.listaResultadoLoteca || data.listaResultadoEquipe || data.jogos || data.partidas || [];
+        if (lotteryName === 'Federal' && dezenas.length > 0) {
+            numbersDisplay = `
+                <div style="font-size: 0.75rem; text-align: left; width: 100%; background: #f8f9fa; padding: 6px; border-radius: 4px; border: 1px solid #eee;">
+                    ${dezenas.slice(0, 5).map((bilhete, i) => `
+                        <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #eee; padding: 2px 0;">
+                            <strong>${i + 1}º Prêmio:</strong> <span>${bilhete}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        } else if (lotteryName === 'Loteca') {
+            const jogos = data.listaResultadoLoteca || data.listaResultadoEquipe || data.jogos || [];
             if (jogos.length > 0) {
                 numbersDisplay = `
-                    <div style="font-size: 0.68rem; max-height: 110px; overflow-y: auto; text-align: left; width: 100%; background: #f8f9fa; padding: 6px; border-radius: 4px; border: 1px solid #eee;">
+                    <div style="font-size: 0.7rem; max-height: 110px; overflow-y: auto; text-align: left; width: 100%; background: #f8f9fa; padding: 6px; border-radius: 4px; border: 1px solid #eee;">
                         ${jogos.map(j => {
                             const num = j.numJogo || j.nuJogo || j.sequencial || '';
                             const e1 = j.nomeEquipeUm || j.nomeTime1 || j.equipeUm || 'Time 1';
@@ -96,8 +242,7 @@
             } else {
                 numbersDisplay = `<span style="font-size: 0.78rem; color: #777;">Placares em apuração</span>`;
             }
-        } 
-        else if (dezenas.length > 0) {
+        } else if (dezenas.length > 0) {
             const formatted = dezenas.map(n => String(parseInt(n, 10)).padStart(2, '0'));
             if (lotteryName === 'Lotomania') {
                 numbersDisplay = `<span style="font-size:0.68rem; letter-spacing: 0.5px;">${formatted.join(' ')}</span>`;
@@ -107,7 +252,7 @@
         }
 
         let rateioHtml = '';
-        if (data.listaRateioPremio && data.listaRateioPremio.length > 0 && lotteryName !== 'Federal') {
+        if (data.listaRateioPremio && data.listaRateioPremio.length > 0) {
             rateioHtml = data.listaRateioPremio.map(item => {
                 const desc = item.descricaoFaixa || `${item.faixa} acertos`;
                 const g = item.numeroDeGanhadores;
@@ -186,3 +331,123 @@
             </div>
         `;
     }
+
+    // ===== 6. CARDS ESPECIAIS (Mantidos iguais) =====
+    function renderPremiumCard() {
+        return `
+            <div class="lottery-card premium-card" onclick="window.location.href='estrategias.html'">
+                <i class="fa-solid fa-crown" style="font-size: 2.8rem; color: #FFD700; margin-bottom: 6px;"></i>
+                <h3 style="color: #FFD700; margin: 0 0 4px 0;">Estratégias Premium</h3>
+                <p style="color: #ccc; margin: 0 0 8px 0; font-size: 0.85rem;">12 algoritmos avançados</p>
+                <span class="explore-btn"><i class="fa-solid fa-arrow-right"></i> Explorar</span>
+                <div class="lock-badge"><i class="fa-solid fa-lock"></i> Acesso exclusivo</div>
+            </div>
+        `;
+    }
+
+    function renderAvancadoCard() {
+        return `
+            <div class="lottery-card card-avancado" onclick="window.location.href='gerador-avancado.html'">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-microchip" style="font-size: 2rem; color: #2563eb;"></i>
+                    <h3 style="color: #1e40af; margin: 0;">Gerador Avançado</h3>
+                </div>
+                <p style="color: #1e3a5f; font-size: 0.85rem; margin: 8px 0;">12 estratégias estatísticas e matemáticas</p>
+                <span class="access-btn" style="background: #2563eb; color: white; padding: 4px 14px; border-radius: 30px; font-weight: bold; font-size: 0.8rem;">
+                    <i class="fa-solid fa-arrow-right"></i> Acessar
+                </span>
+            </div>
+        `;
+    }
+
+    function renderLotofacilRepeticaoCard() {
+        return `
+            <div class="lottery-card card-lotofacil-rep" onclick="window.location.href='lotofacil-repeticao.html'">
+                <i class="fa-solid fa-rotate" style="font-size: 2rem; color: #930089; margin-bottom: 6px;"></i>
+                <h3 style="color: #930089; margin: 0 0 4px 0;">Lotofácil - Repetição</h3>
+                <p style="color: #555; font-size: 0.8rem; margin: 0 0 8px 0;">Estratégia baseada na repetição do último concurso</p>
+                <span class="access-btn" style="background: #930089; color: white; padding: 4px 14px; border-radius: 30px; font-weight: bold; font-size: 0.75rem;">
+                    <i class="fa-solid fa-arrow-right"></i> Acessar
+                </span>
+            </div>
+        `;
+    }
+
+    function renderLotomaniaEstrategiaCard() {
+        return `
+            <div class="lottery-card card-lotomania-est" onclick="window.location.href='lotomania-estrategia.html'">
+                <i class="fa-solid fa-chart-simple" style="font-size: 2rem; color: #F78100; margin-bottom: 6px;"></i>
+                <h3 style="color: #F78100; margin: 0 0 4px 0;">Lotomania - Estratégia</h3>
+                <p style="color: #555; font-size: 0.8rem; margin: 0 0 8px 0;">Distribuição equilibrada por linhas (5 por linha)</p>
+                <span class="access-btn" style="background: #F78100; color: white; padding: 4px 14px; border-radius: 30px; font-weight: bold; font-size: 0.75rem;">
+                    <i class="fa-solid fa-arrow-right"></i> Acessar
+                </span>
+            </div>
+        `;
+    }
+
+    function renderDiadesorteRepeticaoCard() {
+        return `
+            <div class="lottery-card card-diadesorte-rep" onclick="window.location.href='diadesorte-repeticao.html'">
+                <i class="fa-solid fa-calendar-day" style="font-size: 2rem; color: #cb8322; margin-bottom: 6px;"></i>
+                <h3 style="color: #cb8322; margin: 0 0 4px 0;">Dia de Sorte - Repetição</h3>
+                <p style="color: #555; font-size: 0.8rem; margin: 0 0 8px 0;">Estratégia baseada na repetição do último concurso</p>
+                <span class="access-btn" style="background: #cb8322; color: white; padding: 4px 14px; border-radius: 30px; font-weight: bold; font-size: 0.75rem;">
+                    <i class="fa-solid fa-arrow-right"></i> Acessar
+                </span>
+            </div>
+        `;
+    }
+
+    function renderSorteioGloboCard() {
+        return `
+            <div class="lottery-card card-sorteio-globo" onclick="window.location.href='sorteio-globo.html'">
+                <i class="fa-solid fa-globe" style="font-size: 2rem; color: #60a5fa; margin-bottom: 6px;"></i>
+                <h3 style="color: #60a5fa; margin: 0 0 4px 0;">Sorteio Globo</h3>
+                <p style="color: #94a3b8; font-size: 0.8rem; margin: 0 0 8px 0;">Sorteio interativo com animações e sons</p>
+                <span class="access-btn" style="background: #2563eb; color: white; padding: 4px 14px; border-radius: 30px; font-weight: bold; font-size: 0.75rem;">
+                    <i class="fa-solid fa-arrow-right"></i> Acessar
+                </span>
+            </div>
+        `;
+    }
+
+    // ===== 7. FUNÇÃO PARA TOGGLE DA PREMIAÇÃO =====
+    window.togglePrizes = function(id) {
+        const el = document.getElementById(id);
+        const icon = document.getElementById(`icon_${id}`);
+        if (!el) return;
+        if (el.style.display === 'none') {
+            el.style.display = 'block';
+            if (icon) icon.className = 'fa-solid fa-chevron-up';
+        } else {
+            el.style.display = 'none';
+            if (icon) icon.className = 'fa-solid fa-chevron-down';
+        }
+    };
+
+    // ===== 8. CARREGAMENTO PRINCIPAL INSTANTÂNEO =====
+    const grid = document.getElementById('lottery_grid');
+    if (!grid) return;
+
+    // Pega os dados diretamente do arquivo 'dados_loteria.js' carregado na página
+    let results = LOTTERIES.map(lot => fetchUltimoConcursoLocal(lot.name));
+
+    // ===== MONTA O GRID: CARDS ESPECIAIS + LOTERIAS =====
+    let html = '';
+    
+    // 1. Cards Especiais
+    html += renderPremiumCard();
+    html += renderAvancadoCard();
+    html += renderLotofacilRepeticaoCard();
+    html += renderLotomaniaEstrategiaCard();
+    html += renderDiadesorteRepeticaoCard();
+    html += renderSorteioGloboCard();
+
+    // 2. Loterias (pegos direto do arquivo estático)
+    LOTTERIES.forEach((lot, index) => {
+        html += renderCard(lot.name, results[index]);
+    });
+
+    grid.innerHTML = html;
+});
