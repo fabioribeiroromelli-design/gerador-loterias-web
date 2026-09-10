@@ -567,30 +567,31 @@
             }
         }
 
-        const applyVipLocks = () => {
-            const grid = document.getElementById('lottery_grid');
-            if (!grid) return;
+       const applyVipLocks = () => {
+    const grid = document.getElementById('lottery_grid');
+    if (!grid) return;
 
-            const cards = Array.from(grid.children).slice(0, 5);
+    const cards = Array.from(grid.children).slice(0, 5);
 
-            if (isSubscriber) {
-                cards.forEach(card => {
-                    card.classList.remove('vip-card-locked');
-                    const badge = card.querySelector('.vip-badge');
-                    if (badge) badge.remove();
-                });
-            } else {
-                cards.forEach(card => {
-                    card.classList.add('vip-card-locked');
-                    if (!card.querySelector('.vip-badge')) {
-                        const badge = document.createElement('span');
-                        badge.className = 'vip-badge';
-                        badge.innerHTML = '<i class="fa-solid fa-lock"></i> VIP';
-                        card.appendChild(badge);
-                    }
-                });
+    // Se estiver logado E for assinante, libera. Caso contrário, tranca!
+    if (currentUser && isSubscriber) {
+        cards.forEach(card => {
+            card.classList.remove('vip-card-locked');
+            const badge = card.querySelector('.vip-badge');
+            if (badge) badge.remove();
+        });
+    } else {
+        cards.forEach(card => {
+            card.classList.add('vip-card-locked');
+            if (!card.querySelector('.vip-badge')) {
+                const badge = document.createElement('span');
+                badge.className = 'vip-badge';
+                badge.innerHTML = '<i class="fa-solid fa-lock"></i> VIP';
+                card.appendChild(badge);
             }
-        };
+        });
+    }
+};
 
         document.addEventListener('DOMContentLoaded', () => {
             updateUIAuth();
