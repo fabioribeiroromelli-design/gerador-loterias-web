@@ -53,7 +53,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (!authContainer) {
                 authContainer = document.createElement('div');
                 authContainer.id = 'google_auth_container';
-                // Adiciona no topo da toolbar ou header para não quebrar as telas de loterias
                 const toolbar = document.querySelector('.toolbar') || document.body;
                 toolbar.prepend(authContainer);
             }
@@ -70,12 +69,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 { theme: "outline", size: "medium", text: "signin_with" }
             );
         } catch (error) {
-            console.error("Erro ao inicializar Google Auth:", error);
+            console.error("Erro ao inicializar Google Auth / Error initializing Google Auth:", error);
             window._googleAuthInitialized = false;
         }
     }
 
-    // ===== 2. BARRA DE ATALHOS =====
+    // ===== 2. BARRA DE ATALHOS PROTEGIDA =====
     function createShortcuts() {
         let container = document.querySelector('.shortcuts-bar');
         if (container) return container;
@@ -84,12 +83,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         container.className = 'shortcuts-bar';
 
         const shortcuts = [
-            { label: 'Gerar Jogos', icon: 'fa-wand-magic-sparkles', url: 'gerar_jogos.html' },
-            { label: 'Jogos Salvos', icon: 'fa-bookmark', url: 'saved_games.html' },
-            { label: 'Downloads', icon: 'fa-download', url: 'download_results.html' },
-            { label: 'Estatísticas', icon: 'fa-chart-pie', url: 'historico.html' },
-            { label: 'Filtrar Números', icon: 'fa-filter', url: 'generator.html' },
-            { label: 'Sorteio ao Vivo', icon: 'fa-tv', externalUrl: 'https://www.youtube.com/channel/UCPbhr02AfVb2nd5pm12BxTw/live' }
+            { label: 'Gerar Jogos', icon: 'fa-wand-magic-sparkles', url: 'gerar_jogos.html', protected: true },
+            { label: 'Jogos Salvos', icon: 'fa-bookmark', url: 'saved_games.html', protected: true },
+            { label: 'Downloads', icon: 'fa-download', url: 'download_results.html', protected: false },
+            { label: 'Estatísticas', icon: 'fa-chart-pie', url: 'historico.html', protected: false },
+            { label: 'Filtrar Números', icon: 'fa-filter', url: 'generator.html', protected: false },
+            { label: 'Sorteio ao Vivo', icon: 'fa-tv', externalUrl: 'https://www.youtube.com/channel/UCPbhr02AfVb2nd5pm12BxTw/live', protected: false }
         ];
 
         shortcuts.forEach(item => {
@@ -99,7 +98,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (item.externalUrl) {
                     window.open(item.externalUrl, '_blank');
                 } else if (item.url) {
-                    window.location.href = item.url;
+                    if (item.protected) {
+                        navegarProtegido(item.url);
+                    } else {
+                        window.location.href = item.url;
+                    }
                 }
             });
             container.appendChild(btn);
@@ -294,10 +297,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         `;
     }
 
-    // Cards Especiais
+    // ===== CARDS ESPECIAIS COM PROTEÇÃO DE NAVEGAÇÃO =====
     function renderPremiumCard() {
         return `
-            <div class="lottery-card premium-card" onclick="window.location.href='estrategias.html'">
+            <div class="lottery-card premium-card" onclick="navegarProtegido('estrategias.html')">
                 <i class="fa-solid fa-crown" style="font-size: 2.8rem; color: #FFD700; margin-bottom: 6px;"></i>
                 <h3 style="color: #FFD700; margin: 0 0 4px 0;">Estratégias Premium</h3>
                 <p style="color: #ccc; margin: 0 0 8px 0; font-size: 0.85rem;">12 algoritmos avançados</p>
@@ -309,7 +312,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function renderAvancadoCard() {
         return `
-            <div class="lottery-card card-avancado" onclick="window.location.href='gerador-avancado.html'">
+            <div class="lottery-card card-avancado" onclick="navegarProtegido('gerador-avancado.html')">
                 <div style="display: flex; align-items: center; gap: 8px;">
                     <i class="fa-solid fa-microchip" style="font-size: 2rem; color: #2563eb;"></i>
                     <h3 style="color: #1e40af; margin: 0;">Gerador Avançado</h3>
@@ -324,7 +327,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function renderLotofacilRepeticaoCard() {
         return `
-            <div class="lottery-card card-lotofacil-rep" onclick="window.location.href='lotofacil-repeticao.html'">
+            <div class="lottery-card card-lotofacil-rep" onclick="navegarProtegido('lotofacil-repeticao.html')">
                 <i class="fa-solid fa-rotate" style="font-size: 2rem; color: #930089; margin-bottom: 6px;"></i>
                 <h3 style="color: #930089; margin: 0 0 4px 0;">Lotofácil - Repetição</h3>
                 <p style="color: #555; font-size: 0.8rem; margin: 0 0 8px 0;">Estratégia baseada na repetição do último concurso</p>
@@ -337,7 +340,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function renderLotomaniaEstrategiaCard() {
         return `
-            <div class="lottery-card card-lotomania-est" onclick="window.location.href='lotomania-estrategia.html'">
+            <div class="lottery-card card-lotomania-est" onclick="navegarProtegido('lotomania-estrategia.html')">
                 <i class="fa-solid fa-chart-simple" style="font-size: 2rem; color: #F78100; margin-bottom: 6px;"></i>
                 <h3 style="color: #F78100; margin: 0 0 4px 0;">Lotomania - Estratégia</h3>
                 <p style="color: #555; font-size: 0.8rem; margin: 0 0 8px 0;">Distribuição equilibrada por linhas (5 por linha)</p>
@@ -350,7 +353,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function renderDiadesorteRepeticaoCard() {
         return `
-            <div class="lottery-card card-diadesorte-rep" onclick="window.location.href='diadesorte-repeticao.html'">
+            <div class="lottery-card card-diadesorte-rep" onclick="navegarProtegido('diadesorte-repeticao.html')">
                 <i class="fa-solid fa-calendar-day" style="font-size: 2rem; color: #cb8322; margin-bottom: 6px;"></i>
                 <h3 style="color: #cb8322; margin: 0 0 4px 0;">Dia de Sorte - Repetição</h3>
                 <p style="color: #555; font-size: 0.8rem; margin: 0 0 8px 0;">Estratégia baseada na repetição do último concurso</p>
@@ -363,7 +366,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function renderSorteioGloboCard() {
         return `
-            <div class="lottery-card card-sorteio-globo" onclick="window.location.href='sorteio-globo.html'">
+            <div class="lottery-card card-sorteio-globo" onclick="navegarProtegido('sorteio-globo.html')">
                 <i class="fa-solid fa-globe" style="font-size: 2rem; color: #60a5fa; margin-bottom: 6px;"></i>
                 <h3 style="color: #60a5fa; margin: 0 0 4px 0;">Sorteio Globo</h3>
                 <p style="color: #94a3b8; font-size: 0.8rem; margin: 0 0 8px 0;">Sorteio interativo com animações e sons</p>
@@ -419,8 +422,8 @@ function atualizarInterfaceUsuario(nome, isAssinante) {
             <div style="display: flex; align-items: center; gap: 8px; font-size: 0.9rem; font-weight: bold; color: #333;">
                 <i class="fa-solid fa-user-check" style="color: ${isAssinante ? '#209869' : '#e67e22'};"></i>
                 <span>${nome}</span>
-                ${isAssinante ? '<span style="background: #e8f5e9; color: #209869; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem;">Assinante</span>' : '<span style="background: #fff3cd; color: #856404; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem;">Não Assinante</span>'}
-                <button onclick="sairConta()" title="Sair da Conta" style="background: transparent; border: none; color: #d9534f; cursor: pointer; font-size: 0.9rem; margin-left: 6px;">
+                ${isAssinante ? '<span style="background: #e8f5e9; color: #209869; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem;">Assinante / Subscriber / Suscriptor</span>' : '<span style="background: #fff3cd; color: #856404; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem;">Não Assinante</span>'}
+                <button onclick="sairConta()" title="Sair da Conta / Logout / Salir" style="background: transparent; border: none; color: #d9534f; cursor: pointer; font-size: 0.9rem; margin-left: 6px;">
                     <i class="fa-solid fa-right-from-bracket"></i>
                 </button>
             </div>
@@ -439,6 +442,25 @@ function verificarLoginSalvo() {
     }
 }
 
+// ===== NAVEGAÇÃO PROTEGIDA =====
+function navegarProtegido(url) {
+    const emailSalvo = localStorage.getItem("user_email");
+    const isAssinante = localStorage.getItem("is_subscriber") === "true";
+
+    if (!emailSalvo) {
+        alert("Por favor, faça login com sua conta do Google para continuar.\nPlease sign in with your Google account.\nPor favor, inicie sesión con sua cuenta de Google.");
+        return;
+    }
+
+    if (!isAssinante) {
+        const nomeSalvo = localStorage.getItem("user_name");
+        mostrarDialogoNaoAssinante(nomeSalvo);
+        return;
+    }
+
+    window.location.href = url;
+}
+
 // ===== FUNÇÃO DE LOGOUT =====
 window.sairConta = function() {
     localStorage.removeItem("user_email");
@@ -447,7 +469,7 @@ window.sairConta = function() {
     location.reload();
 };
 
-// ===== DIÁLOGO ELEGANTE PARA NÃO ASSINANTES =====
+// ===== DIÁLOGO ELEGANTE PARA NÃO ASSINANTES (MULTILÍNGUE PT/EN/ES) =====
 function mostrarDialogoNaoAssinante(nomeUsuario) {
     const modalAntigo = document.getElementById('modal-assinatura-exclusivo');
     if (modalAntigo) modalAntigo.remove();
@@ -463,7 +485,7 @@ function mostrarDialogoNaoAssinante(nomeUsuario) {
 
     overlay.innerHTML = `
         <div style="
-            background: #ffffff; width: 90%; max-width: 420px; border-radius: 16px;
+            background: #ffffff; width: 90%; max-width: 440px; border-radius: 16px;
             padding: 30px 24px; text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.3);
             font-family: inherit; position: relative; border-top: 6px solid #209869;
         ">
@@ -475,24 +497,27 @@ function mostrarDialogoNaoAssinante(nomeUsuario) {
                 <i class="fa-solid fa-crown"></i>
             </div>
             
-            <h3 style="color: #1a1a1a; margin: 0 0 10px 0; font-size: 1.4rem;">Olá, ${nomeUsuario || 'Visitante'}!</h3>
-            <p style="color: #555; font-size: 0.95rem; line-height: 1.5; margin-bottom: 24px;">
-                Identificamos que você ainda não possui uma assinatura ativa do aplicativo. Para desbloquear todas as estratégias avançadas e recursos exclusivos, baixe nosso app e assine um plano!
-            </p>
+            <h3 style="color: #1a1a1a; margin: 0 0 10px 0; font-size: 1.4rem;">Olá / Hello / Hola, ${nomeUsuario || 'Visitante'}!</h3>
+            
+            <div style="color: #555; font-size: 0.88rem; line-height: 1.4; margin-bottom: 20px; text-align: left;">
+                <p style="margin-bottom: 8px;"><strong>PT:</strong> Identificamos que você ainda não possui uma assinatura ativa. Para desbloquear recursos exclusivos, baixe nosso aplicativo no Google Play!</p>
+                <p style="margin-bottom: 8px;"><strong>EN:</strong> You don't have an active subscription yet. Unlock exclusive features by downloading our app from Google Play!</p>
+                <p style="margin: 0;"><strong>ES:</strong> Aún no tienes una suscripción activa. ¡Desbloquea recursos exclusivos descargando nuestra app en Google Play!</p>
+            </div>
             
             <a href="https://play.google.com/store/apps/details?id=com.fabioribeiroromelli.geradordejogos" target="_blank" style="
                 display: block; background: #209869; color: white; text-decoration: none;
-                padding: 14px 20px; border-radius: 30px; font-weight: bold; font-size: 1rem;
+                padding: 14px 20px; border-radius: 30px; font-weight: bold; font-size: 0.95rem;
                 box-shadow: 0 4px 15px rgba(32, 152, 105, 0.4); margin-bottom: 12px; transition: background 0.2s;
             ">
-                <i class="fa-brands fa-google-play"></i> Baixar App e Assinar
+                <i class="fa-brands fa-google-play"></i> Baixar App e Assinar / Download
             </a>
 
             <button id="fechar_modal_assinatura" style="
-                background: transparent; border: none; color: #888; font-size: 0.9rem;
+                background: transparent; border: none; color: #888; font-size: 0.85rem;
                 cursor: pointer; padding: 8px; font-weight: 600; text-decoration: underline;
             ">
-                Continuar apenas navegando
+                Continuar apenas navegando / Continue browsing / Continuar navegando
             </button>
         </div>
     `;
@@ -510,6 +535,7 @@ function mostrarDialogoNaoAssinante(nomeUsuario) {
     });
 }
 
+// ===== LOGIN DO GOOGLE AUTH =====
 function handleCredentialResponse(response) {
     if (!response || !response.credential) {
         console.error("Nenhuma credencial retornada pelo Google.");
@@ -534,7 +560,7 @@ function handleCredentialResponse(response) {
         if (!isAssinante) {
             mostrarDialogoNaoAssinante(responsePayload.name);
         } else {
-            alert(`Bem-vindo de volta, ${responsePayload.name || 'Usuário'}! Login de assinante verificado.`);
+            alert(`Bem-vindo de volta / Welcome / Bienvenido, ${responsePayload.name || 'Usuário'}!`);
         }
     } else {
         alert("Não foi possível extrair as informações da conta do Google.");
