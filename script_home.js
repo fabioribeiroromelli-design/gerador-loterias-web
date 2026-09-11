@@ -81,27 +81,29 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
     const limpar = (s) => (s || '').replace(/\u0000/g, '').trim();
 
-    // Normalização completa de dados para garantir suporte a qualquer formato de novo banco
+    // Normalização universal corrigida para o NOVO Firestore
     function pegarDados(docData) {
         if (!docData) return null;
-        let base = docData;
+
+        // Se houver sub-objeto, desestrutura, mas mantendo a prioridade nos atributos diretos do novo banco
+        let base = { ...docData };
         if (docData.ultimoCompleto && typeof docData.ultimoCompleto === 'object') {
-            base = { ...docData, ...docData.ultimoCompleto };
+            base = { ...docData.ultimoCompleto, ...base };
         } else if (docData.resultado && typeof docData.resultado === 'object') {
-            base = { ...docData, ...docData.resultado };
+            base = { ...docData.resultado, ...base };
         }
 
         return {
             ...base,
             concurso: base.concurso || base.numero || base.concursoAtual || '--',
             dataApuracao: base.dataApuracao || base.data || base.dataSorteio || '',
-            dataProximoConcurso: base.dataProximoConcurso || base.dataProximo || '',
+            dataProximoConcurso: base.dataProximoConcurso || base.dataProximo || base.dataProximoConcurso || '',
             numeroConcursoProximo: base.numeroConcursoProximo || base.proximoConcurso || '',
-            acumulado: base.acumulado === true || base.acumulou === true || base.acumulado === 'sim',
+            acumulado: base.acumulado === true || base.acumulou === true || String(base.acumulado).toLowerCase() === 'sim' || String(base.acumulou).toLowerCase() === 'true',
             valorEstimadoProximoConcurso: base.valorEstimadoProximoConcurso || base.valorEstimadoProximo || base.estimativaProximo || 0,
             valorArrecadado: base.valorArrecadado || base.arrecadacaoTotal || 0,
             localSorteio: base.nomeMunicipioUFSorteio || base.localSorteio || base.local || '',
-            listaDezenas: base.listaDezenas || base.dezenas || base.numeros || base.dezenasSorteio1 || [],
+            listaDezenas: base.dezenas || base.listaDezenas || base.numeros || base.dezenasSorteio1 || [],
             listaDezenasSegundoSorteio: base.listaDezenasSegundoSorteio || base.dezenasSorteio2 || base.dezenas2 || [],
             listaRateioPremio: base.listaRateioPremio || base.rateio || base.premiacao || [],
             listaResultadoEquipeEsportiva: base.listaResultadoEquipeEsportiva || base.jogos || base.jogosLoteca || [],
@@ -114,14 +116,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         const out = {};
         await Promise.all(LOTTERIES.map(async (l) => {
             try {
-                // Tenta buscar no caminho padrão da coleção 'loterias'
+                // 1. Busca padrão: coleção 'loterias' e ID do documento igual a DOC_IDS[l.name] (ex: diadesorte)
                 let doc = await db.collection('loterias').doc(DOC_IDS[l.name]).get();
                 if (doc.exists) {
                     out[l.name] = pegarDados(doc.data());
                 } else {
-                    // Fallback para caso o novo banco use o nome da loteria direto como ID da coleção
+                    // 2. Fallback para coleção independente
                     doc = await db.collection(DOC_IDS[l.name]).doc('latest').get();
-                    if (doc.exists) out[l.name] = pegarDados(doc.data());
+                    if (doc.exists) {
+                        out[l.name] = pegarDados(doc.data());
+                    }
                 }
             } catch (e) { console.error(`[Firestore] ❌ ${l.name}:`, e); }
         }));
@@ -162,7 +166,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (nome === 'Loteca') {
             const jogos = data.listaResultadoEquipeEsportiva;
-            if (jogos.length > 0) {
+            if (jogos && jogos.length > 0) {
                 numbersHtml = `
                     <div style="max-height:260px;overflow-y:auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:6px;padding:4px;margin:6px 0;box-shadow:inset 0 1px 3px rgba(0,0,0,0.03);">
                         ${jogos.map((j, idx) => {
@@ -196,7 +200,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         else if (nome === 'Federal') {
             const premios = data.premios || [];
             const lista = premios.length > 0 ? premios.map(p => p.bilhete || p) : listaDezenas;
-            if (lista.length > 0) {
+            if (lista && lista.length > 0) {
                 numbersHtml = `<div style="background:#f8fafc;border-radius:6px;padding:6px;margin:6px 0;">
                     ${lista.slice(0,5).map((b,i)=>{
                         const v = (b && typeof b === 'object') ? (b.bilhete || b.numero || b.bilheteGanho) : b;
@@ -215,26 +219,24 @@ document.addEventListener('DOMContentLoaded', async () => {
             numbersHtml = `<div style="margin:6px 0;">
                 <div style="font-size:0.65rem;color:#64748b;font-weight:700;margin-bottom:2px;">1º SORTEIO</div>
                 <div style="text-align:center;">${bolas(d1, color)}</div>
-                ${d2.length > 0 ? `<div style="font-size:0.65rem;color:#64748b;font-weight:700;margin-top:6px;margin-bottom:2px;">2º SORTEIO</div>
+                ${d2 && d2.length > 0 ? `<div style="font-size:0.65rem;color:#64748b;font-weight:700;margin-top:6px;margin-bottom:2px;">2º SORTEIO</div>
                     <div style="text-align:center;">${bolas(d2, '#8e44ad')}</div>` : ''}
             </div>`;
         }
-        else if (listaDezenas.length > 0) {
-            const fmt = listaDezenas.map(n => String(parseInt(n,10)).padStart(2,'0'));
+        else if (listaDezenas && listaDezenas.length > 0) {
+            const fmt = listaDezenas.map(n => String(n).padStart(2, '0'));
             
             if (nome === 'Lotofácil' || nome === 'Lotomania') {
-                // Lotofácil e Lotomania: Exatamente 5 por linha em bolinhas redondas padronizadas
                 numbersHtml = `<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin:6px 0;justify-items:center;">
                     ${fmt.map(n=>`<span style="background:linear-gradient(135deg,${color},${color}dd);color:#fff;width:26px;height:26px;line-height:26px;border-radius:50%;text-align:center;font-size:0.72rem;font-weight:bold;box-shadow:0 2px 4px rgba(0,0,0,0.15);">${n}</span>`).join('')}
                 </div>`;
             } else if (nome === '+Milionária') {
-                const trevos = data.trevosSorteados;
+                const trevos = data.trevosSorteados || [];
                 numbersHtml = `<div style="display:flex;flex-wrap:wrap;gap:4px;margin:6px 0;justify-content:center;">
                     ${fmt.map(n=>`<span style="background:linear-gradient(135deg,${color},${color}dd);color:#fff;text-align:center;width:28px;height:28px;line-height:28px;border-radius:50%;font-size:0.72rem;font-weight:bold;box-shadow:0 2px 4px rgba(0,0,0,0.15);">${n}</span>`).join('')}
                     ${trevos.map(t=>`<span style="background:linear-gradient(135deg,#FFD700,#f59e0b);color:#000;text-align:center;width:28px;height:28px;line-height:28px;border-radius:50%;font-size:0.72rem;font-weight:bold;box-shadow:0 2px 4px rgba(0,0,0,0.2);">★${t}</span>`).join('')}
                 </div>`;
             } else {
-                // Demais loterias com bolinhas redondas padronizadas
                 numbersHtml = `<div style="display:flex;flex-wrap:wrap;gap:4px;margin:6px 0;justify-content:center;">
                     ${fmt.map(n=>`<span style="background:linear-gradient(135deg,${color},${color}dd);color:#fff;text-align:center;width:28px;height:28px;line-height:28px;border-radius:50%;font-size:0.72rem;font-weight:bold;box-shadow:0 2px 4px rgba(0,0,0,0.15);">${n}</span>`).join('')}
                 </div>`;
