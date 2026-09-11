@@ -125,7 +125,6 @@
         .lottery-card-btn:hover, .lottery-card-btn.active { opacity: 1; transform: translateY(-2px); filter: brightness(1.08); }
         .lottery-card-btn.active { box-shadow: 0 0 0 3px var(--gold), 0 6px 16px rgba(0,0,0,0.35); }
 
-        /* Cores Temáticas Consistentes */
         .btn-megasena { background-color: #209869; }
         .btn-lotofacil { background-color: #930089; }
         .btn-quina { background-color: #260085; }
@@ -296,7 +295,7 @@
             </a>
             <div class="header-titles">
                 <h1 data-i18n="page_title">Estatísticas das loterias</h1>
-                <p data-i18n="page_subtitle">Análise histórica inteligente via arquivos locais</p>
+                <p data-i18n="page_subtitle">Análise histórica oficial via repositório</p>
             </div>
         </div>
         <select id="lang_selector" class="lang-selector" onchange="mudarIdioma(this.value)">
@@ -307,7 +306,6 @@
     </header>
 
     <main class="container">
-        <!-- Navegação com parâmetros exatos no padrão que funciona -->
         <nav class="lottery-grid-nav">
             <button class="lottery-card-btn btn-megasena active" onclick="carregarEstatisticas('megasena', 'Mega-Sena', this)">Mega-Sena</button>
             <button class="lottery-card-btn btn-lotofacil" onclick="carregarEstatisticas('lotofacil', 'Lotofácil', this)">Lotofácil</button>
@@ -330,7 +328,7 @@
 
         <div id="stats_container"></div>
 
-        <p class="rodape-nota" data-i18n="footer_note">As estatísticas utilizam os arquivos JSON locais do repositório para análise dinâmica dos concursos oficiais.</p>
+        <p class="rodape-nota" data-i18n="footer_note">As estatísticas utilizam exclusivamente os arquivos JSON oficiais do repositório.</p>
     </main>
 
     <script>
@@ -342,86 +340,86 @@
             pt: {
                 back: "Voltar",
                 page_title: "Estatísticas das loterias",
-                page_subtitle: "Análise histórica inteligente via arquivos locais",
+                page_subtitle: "Análise histórica oficial via repositório",
                 select_lottery: "Selecione uma loteria",
                 waiting: "Aguardando...",
-                checking: "Verificando dados...",
-                loading: "Carregando estatísticas...",
+                checking: "Lendo histórico oficial...",
+                loading: "Calculando estatísticas...",
                 no_history: "Nenhum histórico encontrado para",
-                empty_warning: "Aviso: Dados Vazios",
-                analyzed_total: (total) => `Total de ${total} concursos analisados`,
-                source_label: (origem, num) => `Fonte: ${origem} (Concurso ${num})`,
+                empty_warning: "Arquivo Vazio ou Ausente",
+                analyzed_total: (total) => `Total de ${total} concursos oficiais analisados`,
+                source_label: (origem, num) => `Base: ${origem} | Último: Concurso ${num}`,
                 freq_title: "Frequência dos Números",
-                freq_desc: "Histórico completo de saídas por dezena calculado sobre toda a base.",
+                freq_desc: "Histórico completo de saídas por dezena calculado sobre toda a base oficial.",
                 last_draw_title: (num) => `Último Concurso (${num})`,
                 last_draw_desc: "Resultado oficial apurado no sorteio mais recente.",
                 top_freq_title: "Números Mais Frequentes",
-                top_freq_desc: "Dezenas que mais apareceram no histórico.",
+                top_freq_desc: "Dezenas que mais apareceram no histórico oficial.",
                 hot_num: "Número quente",
                 cold_num: "Número frio",
                 mid_num: "Frequência média",
                 delay_num: "Em atraso prolongado",
-                never_drawn: "Nunca sorteado.",
+                never_drawn: "Nunca sorteado na base.",
                 times_drawn: (count) => `Saiu ${count} ${count === 1 ? 'vez' : 'vezes'}.`,
-                last_draws_label: "Últimos concursos: ",
+                last_draws_label: "Concursos recentes: ",
                 number_label: "Número ",
-                footer_note: "As estatísticas utilizam os arquivos JSON locais do repositório para análise dinâmica dos concursos oficiais."
+                footer_note: "As estatísticas utilizam exclusivamente os arquivos JSON oficiais do repositório."
             },
             en: {
                 back: "Back",
                 page_title: "Lottery Statistics",
-                page_subtitle: "Smart historical analysis via local files",
+                page_subtitle: "Official historical analysis via repository",
                 select_lottery: "Select a lottery",
                 waiting: "Waiting...",
-                checking: "Checking data...",
-                loading: "Loading statistics...",
+                checking: "Reading official history...",
+                loading: "Calculating statistics...",
                 no_history: "No history found for",
-                empty_warning: "Warning: Empty Data",
-                analyzed_total: (total) => `Total of ${total} draws analyzed`,
-                source_label: (origem, num) => `Source: ${origem} (Draw ${num})`,
+                empty_warning: "File Empty or Missing",
+                analyzed_total: (total) => `Total of ${total} official draws analyzed`,
+                source_label: (origem, num) => `Source: ${origem} | Last: Draw ${num}`,
                 freq_title: "Number Frequency",
-                freq_desc: "Complete historical draw count per number calculated from the full dataset.",
+                freq_desc: "Complete historical draw count per number calculated from the official dataset.",
                 last_draw_title: (num) => `Last Draw (${num})`,
                 last_draw_desc: "Official result from the most recent draw.",
                 top_freq_title: "Most Frequent Numbers",
-                top_freq_desc: "Numbers that appeared the most in history.",
+                top_freq_desc: "Numbers that appeared the most in the official history.",
                 hot_num: "Hot number",
                 cold_num: "Cold number",
                 mid_num: "Average frequency",
                 delay_num: "Overdue number",
-                never_drawn: "Never drawn.",
+                never_drawn: "Never drawn in dataset.",
                 times_drawn: (count) => `Drawn ${count} ${count === 1 ? 'time' : 'times'}.`,
                 last_draws_label: "Recent draws: ",
                 number_label: "Number ",
-                footer_note: "Statistics use local repository JSON files for dynamic analysis of official draws."
+                footer_note: "Statistics use exclusively official repository JSON files."
             },
             es: {
                 back: "Volver",
                 page_title: "Estadísticas de Loterías",
-                page_subtitle: "Análisis histórico inteligente mediante archivos locales",
+                page_subtitle: "Análisis histórico oficial mediante repositorio",
                 select_lottery: "Seleccione una lotería",
                 waiting: "Esperando...",
-                checking: "Verificando datos...",
-                loading: "Cargando estadísticas...",
+                checking: "Leyendo historial oficial...",
+                loading: "Calculando estadísticas...",
                 no_history: "No se encontró historial para",
-                empty_warning: "Aviso: Datos Vacíos",
-                analyzed_total: (total) => `Total de ${total} sorteos analizados`,
-                source_label: (origem, num) => `Fuente: ${origem} (Sorteo ${num})`,
+                empty_warning: "Archivo Vacío o Ausente",
+                analyzed_total: (total) => `Total de ${total} sorteos oficiales analizados`,
+                source_label: (origem, num) => `Base: ${origem} | Último: Sorteo ${num}`,
                 freq_title: "Frecuencia de Números",
-                freq_desc: "Historial completo de salidas por decena calculado sobre toda la base.",
+                freq_desc: "Historial completo de salidas por decena calculado sobre toda la base oficial.",
                 last_draw_title: (num) => `Último Sorteo (${num})`,
                 last_draw_desc: "Resultado oficial verificado en el sorteo más reciente.",
                 top_freq_title: "Números Más Frequentes",
-                top_freq_desc: "Decenas que más aparecieron en el historial.",
+                top_freq_desc: "Decenas que más aparecieron en el historial oficial.",
                 hot_num: "Número caliente",
                 cold_num: "Número frío",
                 mid_num: "Frecuencia media",
                 delay_num: "En retraso prolongado",
-                never_drawn: "Nunca sorteado.",
+                never_drawn: "Nunca sorteado en la base.",
                 times_drawn: (count) => `Salió ${count} ${count === 1 ? 'vez' : 'veces'}.`,
-                last_draws_label: "Últimos sorteos: ",
+                last_draws_label: "Sorteos recientes: ",
                 number_label: "Número ",
-                footer_note: "Las estadísticas utilizan los archivos JSON locales del repositorio para el análisis dinámico de los sorteos oficiales."
+                footer_note: "Las estadísticas utilizan exclusivamente los archivos JSON oficiales del repositorio."
             }
         };
 
@@ -445,24 +443,26 @@
             carregarEstatisticas(currentLottery, currentLotteryName);
         }
 
-        async function obterHistoricoLocal(loteria) {
+        async function obterHistoricoReal(loteria) {
             try {
                 const cacheBuster = new Date().getTime();
                 const arquivoJson = `./historico_${loteria.toLowerCase()}.json?v=${cacheBuster}`;
                 const response = await fetch(arquivoJson);
                 
                 if (!response.ok) {
-                    throw new Error(`Arquivo ${arquivoJson} não encontrado (404)`);
+                    throw new Error(`Erro 404: Arquivo ${arquivoJson} não encontrado.`);
                 }
                 
                 const historico = await response.json();
                 if (Array.isArray(historico) && historico.length > 0) {
-                    return { historico, origem: 'JSON Local' };
+                    return { historico, origem: 'Git/JSON Oficial' };
+                } else if (historico && typeof historico === 'object') {
+                    return { historico: [historico], origem: 'Git/JSON Oficial' };
                 }
                 return { historico: [], origem: 'Vazio' };
             } catch (error) {
-                console.error("Erro ao carregar histórico JSON local:", error);
-                return { historico: [], origem: 'Erro' };
+                console.error("Falha ao carregar o arquivo real do repositório:", error);
+                return { historico: [], origem: 'Erro 404/CORS' };
             }
         }
 
@@ -508,7 +508,6 @@
         function classificarNumero(num, stats) {
             const count = stats.freq[num] || 0;
             const atraso = stats.atrasoAtual[num] || 0;
-
             if (atraso >= 15 && count > 0) return 'delay';
             if (count > stats.media + stats.desvio * 0.7) return 'hot';
             if (count < stats.media - stats.desvio * 0.7) return 'cold';
@@ -519,7 +518,7 @@
             const t = i18n[currentLang];
             if (!concursos.length) return t.never_drawn;
             const recentes = concursos.slice(-5).reverse().join(', ');
-            return `${t.times_drawn(concursos.length)} ${t.last_draws_label}${recentes}. (Atraso: ${atraso} concursos)`;
+            return `${t.times_drawn(concursos.length)} ${t.last_draws_label}${recentes}. (Atraso: ${atraso})`;
         }
 
         async function carregarEstatisticas(loteria, nomeExibicao, elementoBotao) {
@@ -539,7 +538,7 @@
             document.getElementById('badge_fonte').innerText = t.checking;
             document.getElementById('stats_subtitle').innerText = t.loading;
 
-            const resultado = await obterHistoricoLocal(loteria);
+            const resultado = await obterHistoricoReal(loteria);
             const draws = resultado.historico;
             const origemDados = resultado.origem;
 
@@ -549,7 +548,7 @@
                 document.getElementById('stats_container').innerHTML = `
                     <div class="estado-vazio">
                         <i class="fa-solid fa-triangle-exclamation"></i>
-                        <p>${t.no_history} <strong>${currentLotteryName}</strong>.</p>
+                        <p>${t.no_history} <strong>${currentLotteryName}</strong>.<br><small style="color:var(--text-muted);font-size:0.8rem;">Verifique se o arquivo historico_${loteria}.json existe na pasta.</small></p>
                     </div>`;
                 return;
             }
@@ -561,8 +560,8 @@
             document.getElementById('badge_fonte').innerText = t.source_label(origemDados, numUltimo);
 
             const stats = calcularEstatisticasNumeros(draws, loteria);
-
             const colunas = COLUNAS_GRADE[loteria] || 10;
+            
             let gridHtml = `<div class="number-grid" style="grid-template-columns: repeat(${colunas}, 1fr);">`;
             stats.numeros.forEach(num => {
                 const cls = classificarNumero(num, stats);
