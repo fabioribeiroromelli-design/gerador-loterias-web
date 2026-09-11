@@ -1,0 +1,28 @@
+name: 🤖 Atualizar Último Resultado
+
+on:
+  schedule:
+    # Roda a cada hora: 01h, 02h, 03h, 04h, 05h, 06h BRT
+    # BRT = UTC-3 → 04,05,06,07,08,09 UTC
+    - cron: '0 4,5,6,7,8,9 * * *'
+  workflow_dispatch:
+
+jobs:
+  atualizar-ultimo:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Instalar dependências
+        run: npm install
+
+      - name: Rodar robô do último resultado
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: node robo_ultimo.js
