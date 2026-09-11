@@ -1039,3 +1039,105 @@ img {
     margin: 0 !important;
     min-height: 0 !important;
 }
+
+/* ============ CORREÇÕES DE LAYOUT ============ */
+.toolbar {
+    position: static !important;
+    top: auto !important;
+}
+
+body {
+    padding-top: 0 !important;
+    margin: 0 !important;
+}
+
+.container {
+    max-width: 1400px !important;
+    margin: 0 auto !important;
+    padding: 10px 15px !important;
+}
+
+#lottery_grid,
+.lottery-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)) !important;
+    gap: 14px !important;
+    align-items: stretch !important;
+}
+
+.lottery-card {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    padding: 12px !important;
+    border-radius: 10px !important;
+    background: #fff !important;
+    border-top: 4px solid #6c757d !important;
+    min-height: 300px !important;
+    transition: transform 0.15s, box-shadow 0.15s !important;
+}
+
+.lottery-card:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08) !important;
+}
+
+.lottery-card .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.lottery-card .card-header h3 {
+    margin: 0;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.badge-conc {
+    background: #f1f5f9;
+    color: #64748b;
+    font-size: 0.68rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+.badge-accumulated {
+    background: #fee2e2;
+    color: #b91c1c;
+    font-size: 0.68rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: bold;
+}
+
+.badge-extra {
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 0.68rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+.btn-generate {
+    border: none;
+    color: #fff;
+    padding: 8px;
+    border-radius: 6px;
+    font-weight: bold;
+    font-size: 0.78rem;
+    cursor: pointer;
+    width: 100%;
+    transition: opacity 0.15s;
+}
+
+.btn-generate:hover {
+    opacity: 0.9;
+}
