@@ -1,5 +1,5 @@
 /* ============================================================
-   script_home.js — 6 colunas, Lotofácil (5/linha), Lotomania (10/linha),
+   script_home.js — Grid de 6 colunas, Lotofácil e Lotomania (5/linha),
    detalhes independentes por card e efeito hover de destaque.
    ============================================================ */
 console.log("[script_home.js] Carregado.");
@@ -189,15 +189,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         else if (listaDezenas.length > 0) {
             const fmt = listaDezenas.map(n => String(parseInt(n,10)).padStart(2,'0'));
             
-            if (nome === 'Lotofácil') {
-                // Lotofácil: 5 por linha em bolinhas redondas padronizadas
+            if (nome === 'Lotofácil' || nome === 'Lotomania') {
+                // Lotofácil e Lotomania: Exatamente 5 por linha em bolinhas redondas padronizadas
                 numbersHtml = `<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin:6px 0;justify-items:center;">
                     ${fmt.map(n=>`<span style="background:linear-gradient(135deg,${color},${color}dd);color:#fff;width:26px;height:26px;line-height:26px;border-radius:50%;text-align:center;font-size:0.72rem;font-weight:bold;box-shadow:0 2px 4px rgba(0,0,0,0.15);">${n}</span>`).join('')}
-                </div>`;
-            } else if (nome === 'Lotomania') {
-                // Lotomania: 10 por linha em bolinhas redondas padronizadas
-                numbersHtml = `<div style="display:grid;grid-template-columns:repeat(10,1fr);gap:2px;margin:6px 0;justify-items:center;">
-                    ${fmt.map(n=>`<span style="background:linear-gradient(135deg,${color},${color}dd);color:#fff;width:20px;height:20px;line-height:20px;border-radius:50%;text-align:center;font-size:0.6rem;font-weight:bold;box-shadow:0 1px 3px rgba(0,0,0,0.15);">${n}</span>`).join('')}
                 </div>`;
             } else if (nome === '+Milionária') {
                 const trevos = data.trevosSorteados || data.trevos || [];
