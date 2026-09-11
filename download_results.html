@@ -6,11 +6,6 @@
     <title>Downloads de Resultados</title>
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Firebase SDKs (Versão Compat) -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    <!-- Seu arquivo de configuração do Firebase -->
-    <script src="firebase-config.js"></script>
 
     <style>
         body {
@@ -106,98 +101,91 @@
 </div>
 
 <script>
+window.downloadResultado = function(nome, concurso, dataApuracao, dezenasStr) {
+    const conteudo = `=====================================\nRESULTADO: ${nome.toUpperCase()}\nCONCURSO: ${concurso}\nDATA: ${dataApuracao}\nDEZENAS: ${dezenasStr}\n=====================================`;
+    const blob = new Blob([conteudo], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${nome.toLowerCase().replace(/\s+/g, '_')}_${concurso}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+};
+
 document.addEventListener('DOMContentLoaded', async () => {
     const listContainer = document.getElementById('results_list');
     const loadingContainer = document.getElementById('loading');
 
-    const DOC_IDS = {
-        'Dia de Sorte': 'diadesorte',
-        'Dupla Sena': 'duplasena',
-        'Federal': 'federal',
-        'Loteca': 'loteca',
-        'Lotofácil': 'lotofacil',
-        'Lotomania': 'lotomania',
-        '+Milionária': 'maismilionaria',
-        'Mega-Sena': 'megasena',
-        'Quina': 'quina',
-        'Super Sete': 'supersete',
-        'Timemania': 'timemania'
+    // Mapeia para os nomes exatos dos arquivos JSON do seu repositório
+    const LOTERIAS = {
+        'Dia de Sorte': 'historico_diadesorte.json',
+        'Dupla Sena': 'historico_duplasena.json',
+        'Lotofácil': 'historico_lotofacil.json',
+        'Lotomania': 'historico_lotomania.json',
+        '+Milionária': 'historico_maismilionaria.json',
+        'Mega-Sena': 'historico_megasena.json',
+        'Quina': 'historico_quina.json',
+        'Super Sete': 'historico_supersete.json',
+        'Timemania': 'historico_timemania.json'
     };
 
-    // Mapeamento dinâmico para evitar erros de campo nulo do Firestore
-    function MapearDados(docData) {
-        if (!docData) return null;
-        return {
-            concurso: docData.concurso || docData.numero || '--',
-            data: docData.dataApuracao || docData.data || '--',
-            dezenas: docData.dezenas || docData.listaDezenas || []
-        };
-    }
+    let html = '';
+    const cacheBuster = new Date().getTime();
 
-    // Função para baixar o resultado em formato TXT
-    window.downloadResultado = function(nome, concurso, dataApuracao, dezenasStr) {
-        const conteudo = `=====================================\nRESULTADO: ${nome.toUpperCase()}\nCONCURSO: ${concurso}\nDATA: ${dataApuracao}\nDEZENAS: ${dezenasStr}\n=====================================`;
-        const blob = new Blob([conteudo], { type: 'text/plain;charset=utf-8' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${nome.toLowerCase().replace(/\s+/g, '_')}_${concurso}.txt`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-    };
+    for (const [nome, arquivoJson] of Object.entries(LOTERIAS)) {
+        let itemData = null;
 
-    try {
-        let html = '';
-        for (const [nome, docId] of Object.entries(DOC_IDS)) {
-            let itemData = null;
-            
-            try {
-                const docSnap = await db.collection('loterias').doc(docId).get();
-                if (docSnap.exists) {
-                    itemData = MapearDados(docSnap.data());
+        try {
+            const res = await fetch(`./${arquivoJson}?v=${cacheBuster}`);
+            if (res.ok) {
+                const dados = await res.json();
+                const ultimo = Array.isArray(dados) ? dados[dados.length - 1] : dados;
+
+                if (ultimo) {
+                    itemData = {
+                        concurso: ultimo.concurso || ultimo.numero || '--',
+                        data: ultimo.dataApuracao || ultimo.data || '--',
+                        dezenas: ultimo.dezenas || ultimo.listaDezenas || []
+                    };
                 }
-            } catch (err) {
-                console.error(`Erro ao carregar ${nome}:`, err);
             }
-
-            if (itemData) {
-                const dezenasArr = Array.isArray(itemData.dezenas) ? itemData.dezenas : [];
-                const dezenasTexto = dezenasArr.join(' - ');
-                const tagsHtml = dezenasArr.map(d => `<span class="dezena-tag">${String(d).padStart(2, '0')}</span>`).join('');
-
-                html += `
-                    <div class="lottery-item">
-                        <div class="lottery-info">
-                            <span class="lottery-name">${nome}</span>
-                            <span class="lottery-details">Concurso: <strong>${itemData.concurso}</strong> | Data: <strong>${itemData.data}</strong></span>
-                            <div class="dezenas-container">${tagsHtml || '<em>Sem dezenas disponíveis</em>'}</div>
-                        </div>
-                        <button class="btn-download" onclick="downloadResultado('${nome}', '${itemData.concurso}', '${itemData.data}', '${dezenasTexto}')">
-                            <i class="fa-solid fa-download"></i> Baixar TXT
-                        </button>
-                    </div>
-                `;
-            } else {
-                html += `
-                    <div class="lottery-item">
-                        <div class="lottery-info">
-                            <span class="lottery-name">${nome}</span>
-                            <span class="lottery-details" style="color:#ef4444;">Dados indisponíveis no momento.</span>
-                        </div>
-                    </div>
-                `;
-            }
+        } catch (err) {
+            console.error(`Erro ao ler ${arquivoJson}:`, err);
         }
 
-        loadingContainer.style.display = 'none';
-        listContainer.innerHTML = html;
+        if (itemData) {
+            const dezenasArr = Array.isArray(itemData.dezenas) ? itemData.dezenas : [];
+            const dezenasTexto = dezenasArr.join(' - ');
+            const tagsHtml = dezenasArr.map(d => `<span class="dezena-tag">${String(d).padStart(2, '0')}</span>`).join('');
 
-    } catch (e) {
-        console.error("Erro geral na renderização:", e);
-        loadingContainer.innerHTML = `<span style="color:#dc2626;">Erro ao carregar os dados. Verifique a conexão com o Firebase.</span>`;
+            html += `
+                <div class="lottery-item">
+                    <div class="lottery-info">
+                        <span class="lottery-name">${nome}</span>
+                        <span class="lottery-details">Concurso: <strong>${itemData.concurso}</strong> | Data: <strong>${itemData.data}</strong></span>
+                        <div class="dezenas-container">${tagsHtml || '<em>Sem dezenas</em>'}</div>
+                    </div>
+                    <button class="btn-download" onclick="downloadResultado('${nome}', '${itemData.concurso}', '${itemData.data}', '${dezenasTexto}')">
+                        <i class="fa-solid fa-download"></i> Baixar TXT
+                    </button>
+                </div>
+            `;
+        } else {
+            html += `
+                <div class="lottery-item">
+                    <div class="lottery-info">
+                        <span class="lottery-name">${nome}</span>
+                        <span class="lottery-details" style="color:#ef4444;">Dados não encontrados.</span>
+                    </div>
+                </div>
+            `;
+        }
     }
+
+    loadingContainer.style.display = 'none';
+    listContainer.innerHTML = html;
 });
 </script>
 
