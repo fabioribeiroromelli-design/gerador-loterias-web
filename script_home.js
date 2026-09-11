@@ -1,27 +1,7 @@
 /* ============================================================
-   script_home.js — Versão Final Modular (Firebase v9/v10+)
+   script_home.js — versão final (usa db do index.html)
    ============================================================ */
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
-import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
 console.log("[script_home.js] Carregado.");
-
-// Configuração do Firebase
-const firebaseConfig = {
-  apiKey: "AIzaSyAd_6aSOdCFGbMCkcUSXVHeENKNBfJ75yA",
-  authDomain: "gerador-de-jogos-5e787.firebaseapp.com",
-  projectId: "gerador-de-jogos-5e787",
-  storageBucket: "gerador-de-jogos-5e787.firebasestorage.app",
-  messagingSenderId: "380501697774",
-  appId: "1:380501697774:web:35f4a4870110350fcf7fff",
-  measurementId: "G-68JK4JKSCQ"
-};
-
-// Inicialização do Firebase & Firestore
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
-const db = getFirestore(app);
 
 // Grid de 6 colunas + hover
 const styleGrid = document.createElement('style');
@@ -54,12 +34,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     const grid = document.getElementById('lottery_grid');
     if (!grid) return;
 
-    if (!db) {
-        console.error("[script_home.js] ❌ 'db' não está definido.");
-        grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:#dc2626;">Erro: Firebase não carregou.</div>`;
+    // ⚠️ Usa o 'db' já criado pelo index.html
+    if (typeof db === 'undefined') {
+        console.error("[script_home.js] ❌ 'db' não está definido. O index.html não carregou o Firebase?");
+        grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:#dc2626;">Erro: Firebase não carregou. Verifique o index.html.</div>`;
         return;
     }
-    console.log("[script_home.js] ✅ Firebase pronto. Projeto:", firebaseConfig.projectId);
+    console.log("[script_home.js] ✅ Firebase pronto. Projeto:", db.app.options.projectId);
 
     const COLORS = {
         'Dia de Sorte':'#cb8322','Dupla Sena':'#a61324','Federal':'#002f6c',
@@ -92,6 +73,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
     const limpar = (s) => (s||'').replace(/\u0000/g, '').trim();
 
+    // ⚠️ Mapeamento direto dos campos do seu Firestore
     function pegarDados(docData) {
         if (!docData) return null;
         const raw = docData.ultimoCompleto || docData.resultado || docData;
@@ -114,27 +96,25 @@ document.addEventListener('DOMContentLoaded', async () => {
         };
     }
 
-    // Busca assíncrona adaptada para Firebase Modular (v9/v10)
     async function fetchTodas() {
         const out = {};
         await Promise.all(LOTTERIES.map(async (l) => {
             try {
-                const docRef = doc(db, 'loterias', DOC_IDS[l.name]);
-                const docSnap = await getDoc(docRef);
-
-                if (docSnap.exists()) {
-                    out[l.name] = pegarDados(docSnap.data());
+                const doc = await db.collection('loterias').doc(DOC_IDS[l.name]).get();
+                if (doc.exists) {
+                    out[l.name] = pegarDados(doc.data());
                     console.log(`[Firestore] ✅ ${l.name}:`, out[l.name].concurso);
                 } else {
                     console.warn(`[Firestore] ⚠️ Sem doc loterias/${DOC_IDS[l.name]}`);
                 }
-            } catch (e) { 
-                console.error(`[Firestore] ❌ ${l.name}:`, e); 
-            }
+            } catch (e) { console.error(`[Firestore] ❌ ${l.name}:`, e); }
         }));
         return out;
     }
 
+    // ============================================================
+    // RENDER CARD
+    // ============================================================
     function renderCard(nome, data) {
         const color = COLORS[nome] || '#6c757d';
         const icon = ICONS[nome] || 'fa-hashtag';
@@ -155,6 +135,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         let numbersHtml = '';
 
+        // LOTECA
         if (nome === 'Loteca') {
             const jogos = data.listaResultadoEquipeEsportiva;
             if (jogos && jogos.length > 0) {
@@ -179,6 +160,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 </div>`;
             }
         }
+        // FEDERAL
         else if (nome === 'Federal') {
             const premios = data.premios || [];
             const lista = premios.length > 0 ? premios.map(p => p.bilhete || p) : listaDezenas;
@@ -194,6 +176,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 </div>`;
             }
         }
+        // DUPLA SENA
         else if (nome === 'Dupla Sena') {
             const d1 = listaDezenas;
             const d2 = data.listaDezenasSegundoSorteio;
@@ -205,6 +188,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <div style="text-align:center;">${bolas(d2, '#8e44ad')}</div>` : ''}
             </div>`;
         }
+        // DEMAIS
         else if (listaDezenas && listaDezenas.length > 0) {
             const fmt = listaDezenas.map(n => String(n).padStart(2, '0'));
             if (nome === 'Lotofácil' || nome === 'Lotomania') {
@@ -224,6 +208,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
 
+        // RATEIO
         let rateioHtml = '';
         if (Array.isArray(rateio) && rateio.length > 0) {
             rateioHtml = rateio.map(r => {
@@ -310,6 +295,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         </div>`;
     };
 
+    // ================= RENDER =================
     try {
         const dados = await fetchTodas();
         console.log("[script_home.js] Dados carregados:", Object.keys(dados).length, "loterias");
@@ -363,7 +349,7 @@ window.mostrarDialogoNaoAssinante = function(nomeUsuario) {
         <a href="https://play.google.com/store/apps/details?id=com.fabioribeiroromelli.geradordejogos" target="_blank" style="display:block;background:#209869;color:#fff;text-decoration:none;padding:13px 20px;border-radius:30px;font-weight:bold;font-size:0.95rem;margin-bottom:12px;">
             <i class="fa-brands fa-google-play"></i> Baixar App e Assinar
         </a>
-        <button onclick="document.getElementById('modal-assinatura-exclusivo').remove()" style="background:transparent;border:none;color:#888;font-size:0.85rem;cursor:padding:8px;text-decoration:underline;">Fechar</button>
+        <button onclick="document.getElementById('modal-assinatura-exclusivo').remove()" style="background:transparent;border:none;color:#888;font-size:0.85rem;cursor:pointer;padding:8px;text-decoration:underline;">Fechar</button>
     </div>`;
     document.body.appendChild(modal);
     modal.addEventListener('click', function(e) { if (e.target === modal) modal.remove(); });
