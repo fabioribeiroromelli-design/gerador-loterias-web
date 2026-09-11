@@ -52,7 +52,13 @@
             padding: 18px 24px;
             display: flex;
             align-items: center;
+            justify-content: space-between;
             flex-wrap: wrap;
+            gap: 16px;
+        }
+        .header-left {
+            display: flex;
+            align-items: center;
             gap: 16px;
         }
         .btn-back {
@@ -81,6 +87,17 @@
             line-height: 1.1;
         }
         .header-titles p { margin: 4px 0 0; color: var(--text-muted); font-size: 0.9rem; }
+        
+        .lang-selector {
+            background: var(--surface-2);
+            color: var(--text);
+            border: 1px solid var(--border);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-family: var(--font-body);
+            cursor: pointer;
+        }
+
         .container { max-width: 1080px; margin: 0 auto; padding: 28px 20px 60px; }
 
         .lottery-grid-nav {
@@ -264,13 +281,20 @@
 <body>
 
     <header class="header-bar">
-        <button class="btn-back" onclick="window.location.href='home.html'">
-            <i class="fa-solid fa-arrow-left"></i> Voltar
-        </button>
-        <div class="header-titles">
-            <h1>Estatísticas das loterias</h1>
-            <p>Análise histórica com salvamento local inteligente</p>
+        <div class="header-left">
+            <button class="btn-back" onclick="window.location.href='home.html'">
+                <i class="fa-solid fa-arrow-left"></i> <span data-i18n="back">Voltar</span>
+            </button>
+            <div class="header-titles">
+                <h1 data-i18n="page_title">Estatísticas das loterias</h1>
+                <p data-i18n="page_subtitle">Análise histórica com salvamento local inteligente</p>
+            </div>
         </div>
+        <select id="lang_selector" class="lang-selector" onchange="mudarIdioma(this.value)">
+            <option value="pt">Português</option>
+            <option value="en">English</option>
+            <option value="es">Español</option>
+        </select>
     </header>
 
     <main class="container">
@@ -288,18 +312,108 @@
 
         <div class="context-bar">
             <div>
-                <h2 id="stats_title">Selecione uma loteria</h2>
+                <h2 id="stats_title" data-i18n="select_lottery">Selecione uma loteria</h2>
                 <p id="stats_subtitle"></p>
             </div>
-            <span id="badge_fonte">Aguardando...</span>
+            <span id="badge_fonte" data-i18n="waiting">Aguardando...</span>
         </div>
 
         <div id="stats_container"></div>
 
-        <p class="rodape-nota">As estatísticas utilizam cache local no navegador. Caso ocorra um novo sorteio oficial, limpe os dados ou atualize diretamente pela base.</p>
+        <p class="rodape-nota" data-i18n="footer_note">As estatísticas utilizam cache local no navegador. Caso ocorra um novo sorteio oficial, limpe os dados ou atualize diretamente pela base.</p>
     </main>
 
     <script>
+        let currentLang = 'pt';
+        let currentLottery = 'megasena';
+
+        const i18n = {
+            pt: {
+                back: "Voltar",
+                page_title: "Estatísticas das loterias",
+                page_subtitle: "Análise histórica com salvamento local inteligente",
+                select_lottery: "Selecione uma loteria",
+                waiting: "Aguardando...",
+                checking: "Verificando dados...",
+                loading: "Carregando estatísticas...",
+                no_history: "Nenhum histórico encontrado para",
+                empty_warning: "Aviso: Dados Vazios",
+                analyzed_total: (total) => `Total de ${total} concursos analisados`,
+                source_label: (origem, num) => `Fonte: ${origem} (Concurso ${num})`,
+                freq_title: "Frequência dos Números",
+                freq_desc: "Histórico completo de saídas por dezena calculado sobre toda a base.",
+                last_draw_title: (num) => `Último Concurso (${num})`,
+                last_draw_desc: "Resultado oficial apurado no sorteio mais recente.",
+                top_freq_title: "Números Mais Frequentes",
+                top_freq_desc: "Dezenas que mais apareceram no histórico.",
+                hot_num: "Número quente",
+                cold_num: "Número frio",
+                mid_num: "Frequência média",
+                delay_num: "Em atraso prolongado",
+                never_drawn: "Nunca sorteado.",
+                times_drawn: (count) => `Saiu ${count} ${count === 1 ? 'vez' : 'vezes'}.`,
+                last_draws_label: "Últimos concursos: ",
+                number_label: "Número ",
+                footer_note: "As estatísticas utilizam cache local no navegador. Caso ocorra um novo sorteio oficial, limpe os dados ou atualize diretamente pela base."
+            },
+            en: {
+                back: "Back",
+                page_title: "Lottery Statistics",
+                page_subtitle: "Historical analysis with intelligent local caching",
+                select_lottery: "Select a lottery",
+                waiting: "Waiting...",
+                checking: "Checking data...",
+                loading: "Loading statistics...",
+                no_history: "No history found for",
+                empty_warning: "Warning: Empty Data",
+                analyzed_total: (total) => `Total of ${total} draws analyzed`,
+                source_label: (origem, num) => `Source: ${origem} (Draw ${num})`,
+                freq_title: "Number Frequency",
+                freq_desc: "Complete historical draw count per number calculated from the full dataset.",
+                last_draw_title: (num) => `Last Draw (${num})`,
+                last_draw_desc: "Official result from the most recent draw.",
+                top_freq_title: "Most Frequent Numbers",
+                top_freq_desc: "Numbers that appeared the most in history.",
+                hot_num: "Hot number",
+                cold_num: "Cold number",
+                mid_num: "Average frequency",
+                delay_num: "Overdue number",
+                never_drawn: "Never drawn.",
+                times_drawn: (count) => `Drawn ${count} ${count === 1 ? 'time' : 'times'}.`,
+                last_draws_label: "Recent draws: ",
+                number_label: "Number ",
+                footer_note: "Statistics use local browser caching. If a new official draw happens, clear data or update directly."
+            },
+            es: {
+                back: "Volver",
+                page_title: "Estadísticas de Loterías",
+                page_subtitle: "Análisis histórico con almacenamiento local inteligente",
+                select_lottery: "Seleccione una lotería",
+                waiting: "Esperando...",
+                checking: "Verificando datos...",
+                loading: "Cargando estadísticas...",
+                no_history: "No se encontró historial para",
+                empty_warning: "Aviso: Datos Vacíos",
+                analyzed_total: (total) => `Total de ${total} sorteos analizados`,
+                source_label: (origem, num) => `Fuente: ${origem} (Sorteo ${num})`,
+                freq_title: "Frecuencia de Números",
+                freq_desc: "Historial completo de salidas por decena calculado sobre toda la base.",
+                last_draw_title: (num) => `Último Sorteo (${num})`,
+                last_draw_desc: "Resultado oficial verificado en el sorteo más reciente.",
+                top_freq_title: "Números Más Frecuentes",
+                top_freq_desc: "Decenas que más aparecieron en el historial.",
+                hot_num: "Número caliente",
+                cold_num: "Número frío",
+                mid_num: "Frecuencia media",
+                delay_num: "En retraso prolongado",
+                never_drawn: "Nunca sorteado.",
+                times_drawn: (count) => `Salió ${count} ${count === 1 ? 'vez' : 'veces'}.`,
+                last_draws_label: "Últimos sorteos: ",
+                number_label: "Número ",
+                footer_note: "Las estadísticas utilizan caché local en el navegador. Si ocurre un nuevo sorteo oficial, limpie los datos o actualice."
+            }
+        };
+
         const NOMES_LOTERIAS = {
             megasena: 'Mega-Sena', lotofacil: 'Lotofácil', quina: 'Quina', lotomania: 'Lotomania',
             timemania: 'Timemania', duplasena: 'Dupla Sena', diadesorte: 'Dia de Sorte',
@@ -314,17 +428,24 @@
             duplasena: 10, diadesorte: 5, supersete: 10, maismilionaria: 10
         };
 
-        // Função que busca do Cache Local (localStorage) ou do Firebase se não existir
+        function mudarIdioma(lang) {
+            currentLang = lang;
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (i18n[currentLang][key]) {
+                    el.innerText = i18n[currentLang][key];
+                }
+            });
+            carregarEstatisticas(currentLottery);
+        }
+
         async function obterHistoricoFirebase(loteria) {
             const cacheKey = `cache_loterias_${loteria}`;
-            
-            // 1. Tenta buscar do armazenamento local do navegador primeiro
             const dadosLocais = localStorage.getItem(cacheKey);
             if (dadosLocais) {
                 try {
                     const historicoParsed = JSON.parse(dadosLocais);
                     if (Array.isArray(historicoParsed) && historicoParsed.length > 0) {
-                        console.log(`Carregando ${loteria} do Cache Local do Navegador.`);
                         return { historico: historicoParsed, origem: 'Cache Local' };
                     }
                 } catch (e) {
@@ -332,29 +453,23 @@
                 }
             }
 
-            // 2. Se não tiver no cache, busca do Firebase Firestore
             try {
                 if (typeof db === 'undefined') {
                     console.error("Instância 'db' do Firestore não encontrada.");
                     return { historico: [], origem: 'Erro' };
                 }
 
-                console.log(`Baixando ${loteria} do Firebase Firestore...`);
                 const docRef = db.collection('loterias').doc(loteria);
                 const docSnap = await docRef.get();
 
                 if (docSnap.exists) {
                     const dados = docSnap.data();
                     const historico = dados.historico || [];
-
-                    // Salva no localStorage do navegador para as próximas vezes
                     if (historico.length > 0) {
                         localStorage.setItem(cacheKey, JSON.stringify(historico));
                     }
-
-                    return { historico, origem: 'Firebase (Salvo no Cache)' };
+                    return { historico, origem: 'Firebase' };
                 } else {
-                    console.warn(`Nenhum documento encontrado para ${loteria} no Firebase.`);
                     return { historico: [], origem: 'Vazio' };
                 }
             } catch (error) {
@@ -365,69 +480,90 @@
 
         function getConcursoHeader(draw) { return draw.concurso || draw.numero || draw.id || '?'; }
         function getDataConcurso(draw) { return draw.data || draw.dataApuracao || draw.dataSorteio || draw.date || null; }
-        function pluralizar(qtd, sing, plur) { return Number(qtd) === 1 ? sing : plur; }
 
+        // Cálculo estatístico completo com atraso (delay) real baseado no histórico
         function calcularEstatisticasNumeros(draws, loteria) {
             const isSuperSete = (loteria === 'supersete');
             const totalNumeros = TOTAL_NUMEROS[loteria] || 60;
             const numeros = isSuperSete ? Array.from({ length: 10 }, (_, i) => i) : Array.from({ length: totalNumeros }, (_, i) => i + 1);
             const numeroValido = (n) => isSuperSete ? (n >= 0 && n <= 9) : (n >= 1 && n <= totalNumeros);
 
-            const freq = {}, ocorrencias = {};
-            numeros.forEach(n => { freq[n] = 0; ocorrencias[n] = []; });
+            const freq = {}, ocorrencias = {}, atrasoAtual = {};
+            numeros.forEach(n => { freq[n] = 0; ocorrencias[n] = []; atrasoAtual[n] = draws.length; });
 
-            draws.forEach(draw => {
+            // Percorre do mais antigo para o mais recente para calcular frequências e aparências
+            draws.forEach((draw, index) => {
+                const concursoNum = getConcursoHeader(draw);
                 const numerosDraw = (draw.dezenas || draw.listaDezenas || []).map(n => parseInt(n, 10));
+                
                 numerosDraw.forEach(n => {
-                    if (numeroValido(n)) { freq[n] = (freq[n] || 0) + 1; ocorrencias[n].push(getConcursoHeader(draw)); }
+                    if (numeroValido(n)) {
+                        freq[n] = (freq[n] || 0) + 1;
+                        ocorrencias[n].push(concursoNum);
+                        // Reseta o atraso toda vez que o número é sorteado
+                        atrasoAtual[n] = 0;
+                    }
+                });
+
+                // Incrementa o atraso para os números que não saíram neste concurso
+                numeros.forEach(n => {
+                    if (!numerosDraw.includes(n)) {
+                        // Se o número já apareceu antes, incrementa seu contador de ausência
+                        if (ocorrencias[n].length > 0) {
+                            atrasoAtual[n]++;
+                        }
+                    }
                 });
             });
 
             const valores = Object.values(freq);
             const media = valores.reduce((a, b) => a + b, 0) / (valores.length || 1);
             const desvio = Math.sqrt(valores.reduce((a, b) => a + (b - media) ** 2, 0) / (valores.length || 1));
-            const ultimos5Set = new Set(draws.slice(-5).flatMap(d => (d.dezenas || d.listaDezenas || []).map(n => parseInt(n, 10))));
 
-            return { numeros, freq, ocorrencias, media, desvio, ultimos5Set, isSuperSete, totalNumeros };
+            return { numeros, freq, ocorrencias, atrasoAtual, media, desvio, isSuperSete, totalNumeros };
         }
 
         function classificarNumero(num, stats) {
             const count = stats.freq[num] || 0;
-            let cls = 'mid';
-            if (count > stats.media + stats.desvio * 0.8) cls = 'hot';
-            else if (count < stats.media - stats.desvio * 0.8) cls = 'cold';
-            if (!stats.ultimos5Set.has(Number(num))) cls = 'delay';
-            return cls;
+            const atraso = stats.atrasoAtual[num] || 0;
+
+            // Se o atraso for muito alto (ex: acima de 1.5x a média de ausência ou limite crítico), classifica como atrasado/delay
+            if (atraso >= 15 && count > 0) return 'delay';
+            if (count > stats.media + stats.desvio * 0.7) return 'hot';
+            if (count < stats.media - stats.desvio * 0.7) return 'cold';
+            return 'mid';
         }
 
-        function formatarTooltip(concursos) {
-            if (!concursos.length) return 'Nunca sorteado.';
+        function formatarTooltip(concursos, atraso) {
+            const t = i18n[currentLang];
+            if (!concursos.length) return t.never_drawn;
             const recentes = concursos.slice(-5).reverse().join(', ');
-            return `Saiu ${concursos.length} ${pluralizar(concursos.length, 'vez', 'vezes')}. Últimos concursos: ${recentes}.`;
+            return `${t.times_drawn(concursos.length)} ${t.last_draws_label}${recentes}. (Atraso: ${atraso} concursos)`;
         }
 
         async function carregarEstatisticas(loteria) {
+            currentLottery = loteria;
             document.querySelectorAll('.lottery-card-btn').forEach(btn => btn.classList.remove('active'));
             const btnAtivo = document.getElementById('btn_' + loteria);
             if (btnAtivo) btnAtivo.classList.add('active');
 
+            const t = i18n[currentLang];
             const nomeOficial = NOMES_LOTERIAS[loteria] || loteria;
             document.getElementById('stats_title').innerText = nomeOficial;
-            document.getElementById('badge_fonte').innerText = 'Verificando dados...';
-            document.getElementById('stats_subtitle').innerText = 'Carregando estatísticas...';
+            document.getElementById('badge_fonte').innerText = t.checking;
+            document.getElementById('stats_subtitle').innerText = t.loading;
 
-            // Chama a função que gerencia o cache local / Firebase
             const resultado = await obterHistoricoFirebase(loteria);
             const draws = resultado.historico;
             const origemDados = resultado.origem;
 
             if (!draws || draws.length === 0) {
-                document.getElementById('stats_subtitle').innerText = 'Nenhum histórico encontrado.';
-                document.getElementById('badge_fonte').innerText = 'Aviso: Dados Vazios';
+                document.getElementById('stats_subtitle').innerText = `${t.no_history} ${nomeOficial}.`;
+                document.getElementById('badge_fonte').innerText = t.empty_warning;
                 document.getElementById('stats_container').innerHTML = `
                     <div class="estado-vazio">
                         <i class="fa-solid fa-triangle-exclamation"></i>
-                        <p>Não há histórico salvo para <strong>${nomeOficial}</strong>.</p>
+                        <p>${t.no_history} <strong>${nomeOficial}</strong>.</p>
                     </div>`;
                 return;
             }
@@ -436,8 +572,8 @@
             const numUltimo = getConcursoHeader(ultimoConcurso);
             const dataUltima = getDataConcurso(ultimoConcurso);
 
-            document.getElementById('stats_subtitle').innerText = `Total de ${draws.length} concursos analisados`;
-            document.getElementById('badge_fonte').innerText = `Fonte: ${origemDados} (Concurso ${numUltimo})`;
+            document.getElementById('stats_subtitle').innerText = t.analyzed_total(draws.length);
+            document.getElementById('badge_fonte').innerText = t.source_label(origemDados, numUltimo);
 
             const stats = calcularEstatisticasNumeros(draws, loteria);
 
@@ -446,7 +582,7 @@
             stats.numeros.forEach(num => {
                 const cls = classificarNumero(num, stats);
                 const displayNum = stats.isSuperSete ? num : num.toString().padStart(2, '0');
-                const tooltipText = formatarTooltip(stats.ocorrencias[num] || []);
+                const tooltipText = formatarTooltip(stats.ocorrencias[num] || [], stats.atrasoAtual[num]);
                 gridHtml += `
                     <div class="number-cell ${cls}" data-number="${num}">
                         ${displayNum}
@@ -457,7 +593,7 @@
 
             const numerosUltimo = (ultimoConcurso.dezenas || ultimoConcurso.listaDezenas || []).map(n => parseInt(n, 10));
             let linhasUltimo = '';
-            const rotulos = { hot: 'Número quente', cold: 'Número frio', mid: 'Frequência média', delay: 'Estava em atraso' };
+            const rotulos = { hot: t.hot_num, cold: t.cold_num, mid: t.mid_num, delay: t.delay_num };
             
             [...numerosUltimo].sort((a, b) => a - b).forEach(n => {
                 const cls = classificarNumero(n, stats);
@@ -473,8 +609,8 @@
                 const pct = Math.round((count / maiorFreq) * 100);
                 listaFrequentes += `
                     <li class="bar-row">
-                        <span class="bar-label">Número ${display}</span>
-                        <span class="bar-value">${count} ${pluralizar(count, 'vez', 'vezes')}</span>
+                        <span class="bar-label">${t.number_label}${display}</span>
+                        <span class="bar-value">${count} ${t.times_drawn(count).toLowerCase()}</span>
                         <div class="bar-track"><div class="bar-fill" style="width: ${pct}%"></div></div>
                     </li>`;
             });
@@ -483,20 +619,20 @@
             document.getElementById('stats_container').innerHTML = `
                 <div class="painel-principal">
                     <div class="number-grid-wrapper">
-                        <h3><i class="fa-solid fa-chart-simple"></i> Frequência dos Números</h3>
-                        <p class="card-desc">Histórico completo de saídas por dezena. Carregado instantaneamente do navegador.</p>
+                        <h3><i class="fa-solid fa-chart-simple"></i> ${t.freq_title}</h3>
+                        <p class="card-desc">${t.freq_desc}</p>
                         ${gridHtml}
                     </div>
                     <div class="stat-card last-draw-panel">
-                        <h3><i class="fa-solid fa-bullseye"></i> Último Concurso (${numUltimo})</h3>
-                        <p class="card-desc">Resultado oficial apurado em ${dataUltima || 'data recente'}.</p>
+                        <h3><i class="fa-solid fa-bullseye"></i> ${t.last_draw_title(numUltimo)}</h3>
+                        <p class="card-desc">${t.last_draw_desc}</p>
                         <div class="last-draw-balls">${linhasUltimo}</div>
                     </div>
                 </div>
                 <div class="stats-grid">
                     <div class="stat-card">
-                        <h3><i class="fa-solid fa-fire"></i> Números Mais Frequentes</h3>
-                        <p class="card-desc">Dezenas que mais apareceram no histórico.</p>
+                        <h3><i class="fa-solid fa-fire"></i> ${t.top_freq_title}</h3>
+                        <p class="card-desc">${t.top_freq_desc}</p>
                         <ul class="bar-list">${listaFrequentes}</ul>
                     </div>
                 </div>`;
