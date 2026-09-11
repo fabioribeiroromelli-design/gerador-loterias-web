@@ -71,6 +71,7 @@
             align-items: center;
             gap: 8px;
             transition: border-color .15s ease, background .15s ease;
+            text-decoration: none;
             white-space: nowrap;
         }
         .btn-back:hover { border-color: var(--gold); background: var(--gold-dim); }
@@ -117,11 +118,23 @@
             justify-content: center;
             text-align: center;
             min-height: 52px;
-            transition: transform .15s ease, filter .15s ease;
+            opacity: 0.75;
+            transition: transform .15s ease, filter .15s ease, opacity .15s ease;
             box-shadow: 0 1px 0 rgba(255,255,255,0.12) inset, 0 4px 10px rgba(0,0,0,0.28);
         }
-        .lottery-card-btn:hover { transform: translateY(-2px); filter: brightness(1.08); }
-        .lottery-card-btn.active { box-shadow: 0 0 0 3px var(--gold), 0 6px 16px rgba(0,0,0,0.35); transform: translateY(-2px); }
+        .lottery-card-btn:hover, .lottery-card-btn.active { opacity: 1; transform: translateY(-2px); filter: brightness(1.08); }
+        .lottery-card-btn.active { box-shadow: 0 0 0 3px var(--gold), 0 6px 16px rgba(0,0,0,0.35); }
+
+        /* Cores Temáticas Consistentes */
+        .btn-megasena { background-color: #209869; }
+        .btn-lotofacil { background-color: #930089; }
+        .btn-quina { background-color: #260085; }
+        .btn-lotomania { background-color: #f78100; }
+        .btn-timemania { background-color: #00ff48; color: #14131b !important; }
+        .btn-duplasena { background-color: #a61324; }
+        .btn-diadesorte { background-color: #cb831d; }
+        .btn-supersete { background-color: #a8cf45; color: #14131b !important; }
+        .btn-maismilionaria { background-color: #1b3582; }
 
         .context-bar {
             display: flex;
@@ -278,9 +291,9 @@
 
     <header class="header-bar">
         <div class="header-left">
-            <button class="btn-back" onclick="window.location.href='home.html'">
+            <a href="index.html" class="btn-back">
                 <i class="fa-solid fa-arrow-left"></i> <span data-i18n="back">Voltar</span>
-            </button>
+            </a>
             <div class="header-titles">
                 <h1 data-i18n="page_title">Estatísticas das loterias</h1>
                 <p data-i18n="page_subtitle">Análise histórica inteligente via arquivos locais</p>
@@ -294,16 +307,17 @@
     </header>
 
     <main class="container">
+        <!-- Navegação com parâmetros exatos no padrão que funciona -->
         <nav class="lottery-grid-nav">
-            <button class="lottery-card-btn" id="btn_megasena" onclick="carregarEstatisticas('megasena')" style="background: #209869;">Mega-Sena</button>
-            <button class="lottery-card-btn" id="btn_lotofacil" onclick="carregarEstatisticas('lotofacil')" style="background: #930089;">Lotofácil</button>
-            <button class="lottery-card-btn" id="btn_quina" onclick="carregarEstatisticas('quina')" style="background: #260085;">Quina</button>
-            <button class="lottery-card-btn" id="btn_lotomania" onclick="carregarEstatisticas('lotomania')" style="background: #f78100;">Lotomania</button>
-            <button class="lottery-card-btn" id="btn_timemania" onclick="carregarEstatisticas('timemania')" style="background: #00ff48; color: #14131b;">Timemania</button>
-            <button class="lottery-card-btn" id="btn_duplasena" onclick="carregarEstatisticas('duplasena')" style="background: #a61324;">Dupla Sena</button>
-            <button class="lottery-card-btn" id="btn_diadesorte" onclick="carregarEstatisticas('diadesorte')" style="background: #cb831d;">Dia de Sorte</button>
-            <button class="lottery-card-btn" id="btn_supersete" onclick="carregarEstatisticas('supersete')" style="background: #a8cf45; color: #14131b;">Super Sete</button>
-            <button class="lottery-card-btn" id="btn_maismilionaria" onclick="carregarEstatisticas('maismilionaria')" style="background: #1b3582;">+Milionária</button>
+            <button class="lottery-card-btn btn-megasena active" onclick="carregarEstatisticas('megasena', 'Mega-Sena', this)">Mega-Sena</button>
+            <button class="lottery-card-btn btn-lotofacil" onclick="carregarEstatisticas('lotofacil', 'Lotofácil', this)">Lotofácil</button>
+            <button class="lottery-card-btn btn-quina" onclick="carregarEstatisticas('quina', 'Quina', this)">Quina</button>
+            <button class="lottery-card-btn btn-lotomania" onclick="carregarEstatisticas('lotomania', 'Lotomania', this)">Lotomania</button>
+            <button class="lottery-card-btn btn-timemania" onclick="carregarEstatisticas('timemania', 'Timemania', this)">Timemania</button>
+            <button class="lottery-card-btn btn-duplasena" onclick="carregarEstatisticas('duplasena', 'Dupla Sena', this)">Dupla Sena</button>
+            <button class="lottery-card-btn btn-diadesorte" onclick="carregarEstatisticas('diadesorte', 'Dia de Sorte', this)">Dia de Sorte</button>
+            <button class="lottery-card-btn btn-supersete" onclick="carregarEstatisticas('supersete', 'Super Sete', this)">Super Sete</button>
+            <button class="lottery-card-btn btn-maismilionaria" onclick="carregarEstatisticas('maismilionaria', '+Milionária', this)">+Milionária</button>
         </nav>
 
         <div class="context-bar">
@@ -322,6 +336,7 @@
     <script>
         let currentLang = 'pt';
         let currentLottery = 'megasena';
+        let currentLotteryName = 'Mega-Sena';
 
         const i18n = {
             pt: {
@@ -396,7 +411,7 @@
                 freq_desc: "Historial completo de salidas por decena calculado sobre toda la base.",
                 last_draw_title: (num) => `Último Sorteo (${num})`,
                 last_draw_desc: "Resultado oficial verificado en el sorteo más reciente.",
-                top_freq_title: "Números Más Frecuentes",
+                top_freq_title: "Números Más Frequentes",
                 top_freq_desc: "Decenas que más aparecieron en el historial.",
                 hot_num: "Número caliente",
                 cold_num: "Número frío",
@@ -410,11 +425,6 @@
             }
         };
 
-        const NOMES_LOTERIAS = {
-            megasena: 'Mega-Sena', lotofacil: 'Lotofácil', quina: 'Quina', lotomania: 'Lotomania',
-            timemania: 'Timemania', duplasena: 'Dupla Sena', diadesorte: 'Dia de Sorte',
-            supersete: 'Super Sete', maismilionaria: '+Milionária'
-        };
         const TOTAL_NUMEROS = {
             megasena: 60, lotofacil: 25, quina: 80, lotomania: 100, timemania: 80,
             duplasena: 50, diadesorte: 31, supersete: 7, maismilionaria: 50
@@ -432,13 +442,13 @@
                     el.innerText = i18n[currentLang][key];
                 }
             });
-            carregarEstatisticas(currentLottery);
+            carregarEstatisticas(currentLottery, currentLotteryName);
         }
 
-        // Função ajustada para ler diretamente os arquivos JSON locais do repositório (ex: historico_quina.json)
         async function obterHistoricoLocal(loteria) {
             try {
-                const arquivoJson = `historico_${loteria.toLowerCase()}.json`;
+                const cacheBuster = new Date().getTime();
+                const arquivoJson = `./historico_${loteria.toLowerCase()}.json?v=${cacheBuster}`;
                 const response = await fetch(arquivoJson);
                 
                 if (!response.ok) {
@@ -457,7 +467,6 @@
         }
 
         function getConcursoHeader(draw) { return draw.concurso || draw.numero || draw.id || '?'; }
-        function getDataConcurso(draw) { return draw.data || draw.dataApuracao || draw.dataSorteio || draw.date || null; }
 
         function calcularEstatisticasNumeros(draws, loteria) {
             const isSuperSete = (loteria === 'supersete');
@@ -513,15 +522,20 @@
             return `${t.times_drawn(concursos.length)} ${t.last_draws_label}${recentes}. (Atraso: ${atraso} concursos)`;
         }
 
-        async function carregarEstatisticas(loteria) {
+        async function carregarEstatisticas(loteria, nomeExibicao, elementoBotao) {
             currentLottery = loteria;
+            currentLotteryName = nomeExibicao || currentLotteryName;
+
             document.querySelectorAll('.lottery-card-btn').forEach(btn => btn.classList.remove('active'));
-            const btnAtivo = document.getElementById('btn_' + loteria);
-            if (btnAtivo) btnAtivo.classList.add('active');
+            if (elementoBotao) {
+                elementoBotao.classList.add('active');
+            } else {
+                const btnEncontrado = document.querySelector(`.btn-${loteria}`);
+                if (btnEncontrado) btnEncontrado.classList.add('active');
+            }
 
             const t = i18n[currentLang];
-            const nomeOficial = NOMES_LOTERIAS[loteria] || loteria;
-            document.getElementById('stats_title').innerText = nomeOficial;
+            document.getElementById('stats_title').innerText = currentLotteryName;
             document.getElementById('badge_fonte').innerText = t.checking;
             document.getElementById('stats_subtitle').innerText = t.loading;
 
@@ -530,12 +544,12 @@
             const origemDados = resultado.origem;
 
             if (!draws || draws.length === 0) {
-                document.getElementById('stats_subtitle').innerText = `${t.no_history} ${nomeOficial}.`;
+                document.getElementById('stats_subtitle').innerText = `${t.no_history} ${currentLotteryName}.`;
                 document.getElementById('badge_fonte').innerText = t.empty_warning;
                 document.getElementById('stats_container').innerHTML = `
                     <div class="estado-vazio">
                         <i class="fa-solid fa-triangle-exclamation"></i>
-                        <p>${t.no_history} <strong>${nomeOficial}</strong>.</p>
+                        <p>${t.no_history} <strong>${currentLotteryName}</strong>.</p>
                     </div>`;
                 return;
             }
@@ -610,7 +624,8 @@
         }
 
         window.addEventListener('DOMContentLoaded', () => {
-            carregarEstatisticas('megasena');
+            const btnMega = document.querySelector('.btn-megasena');
+            carregarEstatisticas('megasena', 'Mega-Sena', btnMega);
         });
     </script>
 </body>
