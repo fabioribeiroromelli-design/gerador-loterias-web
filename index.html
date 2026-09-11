@@ -67,7 +67,7 @@
             --muted-text: #cbd5e1;
         }
         body { font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif; margin:0; padding:0; background:#f4f6f9; color:#333; }
-        .toolbar { background:var(--primary-bg); color:var(--text-color); display:flex; justify-space-between; align-items:center; padding:12px 24px; box-shadow:0 2px 10px rgba(0,0,0,0.1); }
+        .toolbar { background:var(--primary-bg); color:var(--text-color); display:flex; justify-content:space-between; align-items:center; padding:12px 24px; box-shadow:0 2px 10px rgba(0,0,0,0.1); }
         .ad-container { max-width:1200px; margin:20px auto; text-align:center; overflow:hidden; }
         .carousel-container { position:relative; max-width:1200px; margin:20px auto; overflow:hidden; border-radius:12px; box-shadow:0 4px 15px rgba(0,0,0,0.15); background:#1e293b; color:var(--text-color); }
         .carousel-slides { display:flex; transition:transform 0.4s ease-in-out; width:100%; }
@@ -320,7 +320,6 @@
             }
         }
 
-        // Aplica travas VIP apenas em elementos com classe .vip-protected
         let isLockingVip = false;
 
         const applyVipLocks = () => {
