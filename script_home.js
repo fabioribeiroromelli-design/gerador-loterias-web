@@ -57,7 +57,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         try {
             google.accounts.id.initialize({
-                client_id: "383374785711-e00t37fkf9q6aqe5imqi0nnh29v2npq4.apps.googleusercontent.com",
+                // ID DE TESTE (Substitua pelo seu ID final quando aprovado no Google Cloud Console)
+                client_id: "YOUR_CLIENT_ID.apps.googleusercontent.com",
                 callback: handleCredentialResponse,
                 ux_mode: "popup"
             });
