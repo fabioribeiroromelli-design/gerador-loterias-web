@@ -1,6 +1,5 @@
 /* ============================================================
-   script_home.js — Grid de 6 colunas, Lotofácil e Lotomania (5/linha),
-   detalhes independentes por card e efeito hover de destaque.
+   script_home.js — Versão Corrigida para a Coleção "loterias"
    ============================================================ */
 console.log("[script_home.js] Carregado.");
 
@@ -28,7 +27,7 @@ styleGrid.innerHTML = `
 `;
 document.head.appendChild(styleGrid);
 
-// Função global para expandir/recolher individualmente cada card (sanfona isolada)
+// Função global para expandir/recolher detalhes de cada card
 window.toggleLotteryDetails = function(cardId) {
     const div = document.getElementById(`detalhes-${cardId}`);
     const btn = document.getElementById(`btn-detalhes-${cardId}`);
@@ -81,53 +80,58 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
     const limpar = (s) => (s || '').replace(/\u0000/g, '').trim();
 
-    // Normalização universal corrigida para o NOVO Firestore
+    // Mapeamento direto dos campos conforme o seu Firestore
     function pegarDados(docData) {
         if (!docData) return null;
 
-        // Se houver sub-objeto, desestrutura, mas mantendo a prioridade nos atributos diretos do novo banco
-        let base = { ...docData };
-        if (docData.ultimoCompleto && typeof docData.ultimoCompleto === 'object') {
-            base = { ...docData.ultimoCompleto, ...base };
-        } else if (docData.resultado && typeof docData.resultado === 'object') {
-            base = { ...docData.resultado, ...base };
-        }
+        // Se houver estrutura aninhada antiga, desestrutura mantendo o topo como prioridade
+        let raw = docData.ultimoCompleto || docData.resultado || docData;
 
         return {
-            ...base,
-            concurso: base.concurso || base.numero || base.concursoAtual || '--',
-            dataApuracao: base.dataApuracao || base.data || base.dataSorteio || '',
-            dataProximoConcurso: base.dataProximoConcurso || base.dataProximo || base.dataProximoConcurso || '',
-            numeroConcursoProximo: base.numeroConcursoProximo || base.proximoConcurso || '',
-            acumulado: base.acumulado === true || base.acumulou === true || String(base.acumulado).toLowerCase() === 'sim' || String(base.acumulou).toLowerCase() === 'true',
-            valorEstimadoProximoConcurso: base.valorEstimadoProximoConcurso || base.valorEstimadoProximo || base.estimativaProximo || 0,
-            valorArrecadado: base.valorArrecadado || base.arrecadacaoTotal || 0,
-            localSorteio: base.nomeMunicipioUFSorteio || base.localSorteio || base.local || '',
-            listaDezenas: base.dezenas || base.listaDezenas || base.numeros || base.dezenasSorteio1 || [],
-            listaDezenasSegundoSorteio: base.listaDezenasSegundoSorteio || base.dezenasSorteio2 || base.dezenas2 || [],
-            listaRateioPremio: base.listaRateioPremio || base.rateio || base.premiacao || [],
-            listaResultadoEquipeEsportiva: base.listaResultadoEquipeEsportiva || base.jogos || base.jogosLoteca || [],
-            trevosSorteados: base.trevosSorteados || base.trevos || [],
-            nomeTimeCoracaoMesSorte: base.nomeTimeCoracaoMesSorte || base.nomeTimeCoracao || base.mesSorte || ''
+            concurso: docData.concurso || raw.concurso || raw.numero || '--',
+            dataApuracao: docData.dataApuracao || docData.data || raw.dataApuracao || raw.data || '',
+            dataProximoConcurso: docData.dataProximoConcurso || docData.dataProximo || raw.dataProximoConcurso || '',
+            numeroConcursoProximo: docData.numeroConcursoProximo || docData.proximoConcurso || raw.numeroConcursoProximo || '',
+            acumulado: docData.acumulado === true || docData.acumulou === true || raw.acumulado === true || raw.acumulou === true,
+            valorEstimadoProximoConcurso: docData.valorEstimadoProximoConcurso || docData.valorEstimadoProximo || raw.valorEstimadoProximoConcurso || 0,
+            valorArrecadado: docData.valorArrecadado || docData.arrecadacaoTotal || raw.valorArrecadado || 0,
+            localSorteio: docData.nomeMunicipioUFSorteio || docData.localSorteio || raw.localSorteio || '',
+            listaDezenas: docData.dezenas || docData.listaDezenas || raw.dezenas || raw.listaDezenas || [],
+            listaDezenasSegundoSorteio: docData.dezenasSorteio2 || docData.listaDezenasSegundoSorteio || raw.dezenasSorteio2 || [],
+            listaRateioPremio: docData.listaRateioPremio || docData.rateio || raw.listaRateioPremio || [],
+            listaResultadoEquipeEsportiva: docData.listaResultadoEquipeEsportiva || docData.jogos || raw.listaResultadoEquipeEsportiva || [],
+            trevosSorteados: docData.trevosSorteados || docData.trevos || raw.trevosSorteados || [],
+            nomeTimeCoracaoMesSorte: docData.nomeTimeCoracaoMesSorte || docData.nomeTimeCoracao || docData.mesSorte || raw.nomeTimeCoracaoMesSorte || ''
         };
     }
 
     async function fetchTodas() {
         const out = {};
+
+        // Checagem de segurança da instância do Firestore
+        if (typeof db === 'undefined') {
+            console.error("[script_home.js] ❌ A variável 'db' (Firestore) não está definida!");
+            return out;
+        }
+
         await Promise.all(LOTTERIES.map(async (l) => {
             try {
-                // 1. Busca padrão: coleção 'loterias' e ID do documento igual a DOC_IDS[l.name] (ex: diadesorte)
-                let doc = await db.collection('loterias').doc(DOC_IDS[l.name]).get();
+                const docRef = db.collection('loterias').doc(DOC_IDS[l.name]);
+                const doc = await docRef.get();
+
                 if (doc.exists) {
                     out[l.name] = pegarDados(doc.data());
                 } else {
-                    // 2. Fallback para coleção independente
-                    doc = await db.collection(DOC_IDS[l.name]).doc('latest').get();
-                    if (doc.exists) {
-                        out[l.name] = pegarDados(doc.data());
+                    console.warn(`[Firestore] Documento não encontrado: loterias/${DOC_IDS[l.name]}`);
+                    // Fallback para coleção com nome direto
+                    const docAlt = await db.collection(DOC_IDS[l.name]).doc('latest').get();
+                    if (docAlt.exists) {
+                        out[l.name] = pegarDados(docAlt.data());
                     }
                 }
-            } catch (e) { console.error(`[Firestore] ❌ ${l.name}:`, e); }
+            } catch (e) {
+                console.error(`[Firestore] ❌ Erro ao ler ${l.name}:`, e);
+            }
         }));
         return out;
     }
@@ -215,7 +219,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         else if (nome === 'Dupla Sena') {
             const d1 = listaDezenas;
             const d2 = data.listaDezenasSegundoSorteio;
-            const bolas = (arr, cor) => arr.map(n => `<span style="display:inline-block;background:${cor};color:#fff;width:24px;height:24px;line-height:24px;border-radius:50%;text-align:center;font-weight:bold;font-size:0.7rem;margin:1.5px;">${String(n).padStart(2,'0')}</span>`).join('');
+            const bolas = (arr, cor) => (arr || []).map(n => `<span style="display:inline-block;background:${cor};color:#fff;width:24px;height:24px;line-height:24px;border-radius:50%;text-align:center;font-weight:bold;font-size:0.7rem;margin:1.5px;">${String(n).padStart(2,'0')}</span>`).join('');
             numbersHtml = `<div style="margin:6px 0;">
                 <div style="font-size:0.65rem;color:#64748b;font-weight:700;margin-bottom:2px;">1º SORTEIO</div>
                 <div style="text-align:center;">${bolas(d1, color)}</div>
@@ -286,14 +290,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                         ${badgeExtra}
                     </div>
                     
-                    <!-- BOTÃO INDIVIDUAL DA SANFONA -->
                     <div style="text-align:center; margin-top: 8px; border-top: 1px dashed #e2e8f0; padding-top: 6px;">
                         <button id="btn-detalhes-${cardId}" onclick="toggleLotteryDetails('${cardId}')" style="background:transparent; border:none; color:${color}; font-size:0.72rem; font-weight:bold; cursor:pointer; width:100%; display:flex; align-items:center; justify-content:center; gap:5px;">
                             <i class="fa-solid fa-chevron-down"></i> Ver Detalhes
                         </button>
                     </div>
 
-                    <!-- CONTAINER DOS DETALHES (ISOLADO POR CARD) -->
                     <div id="detalhes-${cardId}" style="display:none; margin-top: 8px; animation: fadeIn 0.3s ease;">
                         ${localSorteio ? `<div style="font-size:0.65rem;color:#94a3b8;margin:3px 0;"><i class="fa-solid fa-location-dot"></i> ${localSorteio}</div>` : ''}
 
@@ -340,24 +342,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         const badgeHtml = isVip ? '' :
             '<span class="vip-badge" style="position:absolute;top:8px;right:8px;background:#dc2626;color:#fff;font-size:0.62rem;font-weight:bold;padding:2px 6px;border-radius:10px;z-index:10;"><i class="fa-solid fa-lock"></i> VIP</span>';
 
-        let miniInfo = '';
-        if (dados && dados.listaRateioPremio && dados.listaRateioPremio.length > 0) {
-            const faixa1 = dados.listaRateioPremio[0];
-            const valPremio = faixa1.valorPremio ?? faixa1.premio ?? 0;
-            const numGanhadores = faixa1.numeroDeGanhadores ?? faixa1.ganhadores ?? 0;
-
-            if (faixa1 && valPremio > 0) {
-                miniInfo = `
-                    <div style="background:${cor}12;border:1px dashed ${cor}40;border-radius:6px;padding:5px 6px;margin:6px 0;font-size:0.62rem;">
-                        <div style="color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:0.3px;">Última faixa 1</div>
-                        <div style="color:${cor};font-weight:900;font-size:0.8rem;">${fmtR$(valPremio)}</div>
-                        ${numGanhadores > 0
-                            ? `<div style="color:#059669;font-weight:700;">${numGanhadores} ganhador${numGanhadores===1?'':'es'}</div>`
-                            : '<div style="color:#dc2626;font-weight:700;">Sem ganhador</div>'}
-                    </div>`;
-            }
-        }
-
         return `
             <div class="lottery-card vip-protected ${lockedClass}" onclick="navegarProtegido('${url}')" style="border-top-color:${cor};cursor:pointer;position:relative; display:flex; flex-direction:column; height:100%;">
                 ${badgeHtml}
@@ -367,7 +351,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <h3 style="color:${cor};margin:8px 0 3px 0;font-size:0.98rem;">${titulo}</h3>
                         <p style="color:#64748b;font-size:0.72rem;margin:0 0 6px 0;line-height:1.3;">${desc}</p>
                     </div>
-                    ${miniInfo}
                 </div>
                 <div style="text-align:center; margin-top:auto; padding-top:8px;">
                     <div style="background:${cor};color:#fff;padding:7px 12px;border-radius:20px;font-weight:bold;font-size:0.78rem;display:inline-block; width:100%;">
@@ -377,9 +360,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             </div>`;
     };
 
-    // ============================================================
-    // RENDER
-    // ============================================================
+    // RENDERIZAÇÃO
     try {
         const dados = await fetchTodas();
         let html = '';
@@ -394,9 +375,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         LOTTERIES.forEach(l => { html += renderCard(l.name, dados[l.name]); });
 
         grid.innerHTML = html;
-        console.log("[script_home.js] ✅ Renderizados:", grid.children.length, "cards");
+        console.log("[script_home.js] ✅ Sucesso! Renderizados:", grid.children.length, "cards");
     } catch (e) {
-        console.error("[script_home.js] ❌ Erro:", e);
+        console.error("[script_home.js] ❌ Erro ao renderizar:", e);
     }
 });
 
