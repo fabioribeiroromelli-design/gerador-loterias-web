@@ -1,191 +1,205 @@
-<!-- FIREBASE -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Downloads de Resultados</title>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDKs (Versão Compat) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <!-- Seu arquivo de configuração do Firebase -->
+    <script src="firebase-config.js"></script>
 
-        // Configuração apontando para o projeto "Gerador de Jogos" (gerador-de-jogos-5e787)
-        const firebaseConfig = {
-            projectId: "gerador-de-jogos-5e787"
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f6f9;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+        h1 {
+            text-align: center;
+            color: #1b365d;
+            margin-bottom: 20px;
+        }
+        .lottery-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+            border-bottom: 1px solid #e2e8f0;
+            transition: background 0.2s;
+        }
+        .lottery-item:hover {
+            background-color: #f8fafc;
+        }
+        .lottery-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .lottery-name {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #0f172a;
+        }
+        .lottery-details {
+            font-size: 0.85rem;
+            color: #64748b;
+        }
+        .dezenas-container {
+            margin-top: 6px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+        .dezena-tag {
+            background: #2563eb;
+            color: #fff;
+            font-size: 0.75rem;
+            font-weight: bold;
+            padding: 2px 7px;
+            border-radius: 12px;
+        }
+        .btn-download {
+            background-color: #209869;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+        .btn-download:hover {
+            background-color: #15803d;
+        }
+        #loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 1.1rem;
+            color: #64748b;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1><i class="fa-solid fa-file-arrow-down"></i> Resultados e Downloads</h1>
+    <div id="loading"><i class="fa-solid fa-spinner fa-spin"></i> Carregando resultados...</div>
+    <div id="results_list"></div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+    const listContainer = document.getElementById('results_list');
+    const loadingContainer = document.getElementById('loading');
+
+    const DOC_IDS = {
+        'Dia de Sorte': 'diadesorte',
+        'Dupla Sena': 'duplasena',
+        'Federal': 'federal',
+        'Loteca': 'loteca',
+        'Lotofácil': 'lotofacil',
+        'Lotomania': 'lotomania',
+        '+Milionária': 'maismilionaria',
+        'Mega-Sena': 'megasena',
+        'Quina': 'quina',
+        'Super Sete': 'supersete',
+        'Timemania': 'timemania'
+    };
+
+    // Mapeamento dinâmico para evitar erros de campo nulo do Firestore
+    function MapearDados(docData) {
+        if (!docData) return null;
+        return {
+            concurso: docData.concurso || docData.numero || '--',
+            data: docData.dataApuracao || docData.data || '--',
+            dezenas: docData.dezenas || docData.listaDezenas || []
         };
+    }
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+    // Função para baixar o resultado em formato TXT
+    window.downloadResultado = function(nome, concurso, dataApuracao, dezenasStr) {
+        const conteudo = `=====================================\nRESULTADO: ${nome.toUpperCase()}\nCONCURSO: ${concurso}\nDATA: ${dataApuracao}\nDEZENAS: ${dezenasStr}\n=====================================`;
+        const blob = new Blob([conteudo], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${nome.toLowerCase().replace(/\s+/g, '_')}_${concurso}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    };
 
-        let loteriaAtual = 'megasena';
-
-        const syncEl = document.getElementById('sync_status');
-
-        // ============================================================
-        // CARREGAR LOTERIA (só leitura de historico_loterias/{id})
-        // ============================================================
-        window.carregarLoteria = async function(loteria) {
-            loteriaAtual = loteria;
-            destacarBotaoAtivo(loteria);
-
-            // Reset UI
-            document.getElementById('loading_box').style.display = 'block';
-            document.getElementById('history_display').style.display = 'none';
-            document.getElementById('stats_box').style.display = 'none';
-            document.getElementById('loading_box').innerHTML = `
-                <div class="loading">
-                    <i class="fa-solid fa-spinner fa-spin"></i>
-                    Carregando ${loteria.toUpperCase()}...
-                </div>`;
-
-            syncEl.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Carregando...`;
-
+    try {
+        let html = '';
+        for (const [nome, docId] of Object.entries(DOC_IDS)) {
+            let itemData = null;
+            
             try {
-                const docRef = doc(db, 'historico_loterias', loteria);
-                const snap = await getDoc(docRef);
-
-                if (!snap.exists()) {
-                    mostrarVazio(loteria);
-                    return;
+                const docSnap = await db.collection('loterias').doc(docId).get();
+                if (docSnap.exists) {
+                    itemData = MapearDados(docSnap.data());
                 }
-
-                const dados = snap.data();
-                const concursos = dados.concursos || [];
-
-                if (concursos.length === 0) {
-                    mostrarVazio(loteria);
-                    return;
-                }
-
-                // Renderiza
-                mostrarEstatisticas(loteria, concursos, dados);
-                exibirDadosNaTabela(loteria, concursos);
-
-                document.getElementById('loading_box').style.display = 'none';
-                document.getElementById('history_display').style.display = 'block';
-                document.getElementById('stats_box').style.display = 'block';
-
-                syncEl.innerHTML = `<i class="fa-solid fa-circle-check"></i> ${concursos.length} concursos`;
             } catch (err) {
-                console.error("Erro:", err);
-                syncEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Erro`;
-                document.getElementById('loading_box').innerHTML = `
-                    <div class="empty">
-                        <i class="fa-solid fa-triangle-exclamation"></i>
-                        <strong>Erro ao carregar</strong><br>
-                        <small>${err.message}</small>
-                    </div>`;
+                console.error(`Erro ao carregar ${nome}:`, err);
             }
-        };
 
-        // ============================================================
-        // ESTATÍSTICAS
-        // ============================================================
-        function mostrarEstatisticas(loteria, concursos, meta) {
-            const ordenado = [...concursos].sort((a, b) =>
-                Number(b.concurso) - Number(a.concurso)
-            );
-            const ultimo = ordenado[0];
-            const acumulados = ordenado.filter(c => c.acumulado).length;
+            if (itemData) {
+                const dezenasArr = Array.isArray(itemData.dezenas) ? itemData.dezenas : [];
+                const dezenasTexto = dezenasArr.join(' - ');
+                const tagsHtml = dezenasArr.map(d => `<span class="dezena-tag">${String(d).padStart(2, '0')}</span>`).join('');
 
-            document.getElementById('stat_total').textContent = concursos.length.toLocaleString('pt-BR');
-            document.getElementById('stat_ultimo').textContent = ultimo ? '#' + ultimo.concurso : '--';
-            document.getElementById('stat_data').textContent = ultimo ? (ultimo.data || '--') : '--';
-            document.getElementById('stat_acumulados').textContent = acumulados.toLocaleString('pt-BR');
-
-            document.getElementById('table_title').innerHTML =
-                `<i class="fa-solid fa-table"></i> ${loteria.toUpperCase()} — ${concursos.length} concursos`;
-        }
-
-        // ============================================================
-        // ESTADO VAZIO
-        // ============================================================
-        function mostrarVazio(loteria) {
-            document.getElementById('loading_box').innerHTML = `
-                <div class="empty">
-                    <i class="fa-solid fa-folder-open"></i>
-                    <strong>Sem histórico para ${loteria.toUpperCase()}</strong><br>
-                    <small>O robô ainda não baixou esta loteria. Rode o workflow novamente.</small>
-                </div>`;
-            syncEl.innerHTML = `<i class="fa-solid fa-circle-info"></i> Sem dados`;
-        }
-
-        // ============================================================
-        // RENDERIZAR TABELA
-        // ============================================================
-        function exibirDadosNaTabela(loteria, lista) {
-            const tbody = document.getElementById('table_body');
-            const ordenado = [...lista].sort((a, b) =>
-                Number(b.concurso) - Number(a.concurso)
-            );
-
-            tbody.innerHTML = '';
-
-            // Limita a 200 últimos pra não travar o navegador
-            const LIMITE = 200;
-            const mostrar = ordenado.slice(0, LIMITE);
-
-            mostrar.forEach(item => {
-                const tr = document.createElement('tr');
-                let dezenasHtml = '';
-
-                if (Array.isArray(item.dezenas)) {
-                    if (loteria === 'supersete') {
-                        dezenasHtml = item.dezenas.map((d, i) => `
-                            <span style="display:inline-flex;flex-direction:column;align-items:center;margin-right:5px;">
-                                <span style="font-size:9px;color:#64748b;font-weight:bold;">C${i+1}</span>
-                                <span class="ball ball-supersete">${d}</span>
-                            </span>`).join('');
-                    } else {
-                        dezenasHtml = item.dezenas.map(d => `<span class="ball">${d}</span>`).join('');
-                    }
-                }
-
-                // Extras
-                let extras = '';
-
-                if (loteria === 'diadesorte' && (item.mesSorte || item.nomeTimeCoracaoMesSorte)) {
-                    const mes = item.mesSorte || item.nomeTimeCoracaoMesSorte;
-                    extras += `<br><span class="badge-extra" style="background:#fff3cd;color:#856404;">🗓️ Mês: <strong>${mes}</strong></span>`;
-                }
-                if (loteria === 'timemania' && (item.timeCoracao || item.nomeTimeCoracaoMesSorte)) {
-                    const time = item.timeCoracao || item.nomeTimeCoracaoMesSorte;
-                    extras += `<br><span class="badge-extra" style="background:#d4edda;color:#155724;">⚽ Time: <strong>${time}</strong></span>`;
-                }
-                if (loteria === 'maismilionaria' && item.trevos && item.trevos.length > 0) {
-                    const bolasTrevo = item.trevos.map(t => `<span class="ball ball-trevo">★${t}</span>`).join('');
-                    extras += `<br><span class="badge-extra" style="background:#d1ecf1;color:#0c5460;">🍀 Trevos: ${bolasTrevo}</span>`;
-                }
-                if (loteria === 'duplasena' && item.dezenasSorteio2 && item.dezenasSorteio2.length > 0) {
-                    const bolas2 = item.dezenasSorteio2.map(d => `<span class="ball ball-dupla2">${d}</span>`).join('');
-                    extras += `<br><span class="badge-extra" style="background:#f3e5f5;color:#4a148c;">2º Sorteio: ${bolas2}</span>`;
-                }
-
-                const txtAcumulado = item.acumulado
-                    ? '<span style="color:#e74c3c; font-weight:bold;">Sim</span>'
-                    : '<span style="color:#64748b;">Não</span>';
-
-                tr.innerHTML = `
-                    <td><strong>#${item.concurso}</strong></td>
-                    <td>${item.data || '-'}</td>
-                    <td><div>${dezenasHtml}</div>${extras}</td>
-                    <td>${txtAcumulado}</td>
+                html += `
+                    <div class="lottery-item">
+                        <div class="lottery-info">
+                            <span class="lottery-name">${nome}</span>
+                            <span class="lottery-details">Concurso: <strong>${itemData.concurso}</strong> | Data: <strong>${itemData.data}</strong></span>
+                            <div class="dezenas-container">${tagsHtml || '<em>Sem dezenas disponíveis</em>'}</div>
+                        </div>
+                        <button class="btn-download" onclick="downloadResultado('${nome}', '${itemData.concurso}', '${itemData.data}', '${dezenasTexto}')">
+                            <i class="fa-solid fa-download"></i> Baixar TXT
+                        </button>
+                    </div>
                 `;
-                tbody.appendChild(tr);
-            });
-
-            // Aviso se truncou
-            if (ordenado.length > LIMITE) {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `<td colspan="4" style="text-align:center;color:#64748b;font-style:italic;padding:12px;">
-                    Mostrando os ${LIMITE} concursos mais recentes de ${ordenado.length} total.
-                </td>`;
-                tbody.appendChild(tr);
+            } else {
+                html += `
+                    <div class="lottery-item">
+                        <div class="lottery-info">
+                            <span class="lottery-name">${nome}</span>
+                            <span class="lottery-details" style="color:#ef4444;">Dados indisponíveis no momento.</span>
+                        </div>
+                    </div>
+                `;
             }
         }
 
-        function destacarBotaoAtivo(loteria) {
-            document.querySelectorAll('.btn-lottery').forEach(b => b.classList.remove('active'));
-            const b = document.getElementById(`btn_${loteria}`);
-            if (b) b.classList.add('active');
-        }
+        loadingContainer.style.display = 'none';
+        listContainer.innerHTML = html;
 
-        // Carrega Mega-Sena por padrão
-        window.addEventListener('DOMContentLoaded', () => {
-            window.carregarLoteria('megasena');
-        });
-    </script>
+    } catch (e) {
+        console.error("Erro geral na renderização:", e);
+        loadingContainer.innerHTML = `<span style="color:#dc2626;">Erro ao carregar os dados. Verifique a conexão com o Firebase.</span>`;
+    }
+});
+</script>
+
+</body>
+</html>
