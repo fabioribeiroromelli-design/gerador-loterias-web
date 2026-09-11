@@ -1,5 +1,8 @@
 /* ============================================================
-   script_home.js — API Caixa (estrutura oficial)
+   script_home.js — versão completa e corrigida
+   - Lê dados do Firestore (coleção "loterias")
+   - Cards VIP + cards de resultado
+   - Navegação protegida global
    ============================================================ */
 console.log("[script_home.js] Carregado.");
 
@@ -34,11 +37,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (v >= 1e3) return 'R$ ' + (v/1e3).toFixed(1).replace('.',',') + ' mil';
         return 'R$ ' + v.toFixed(0);
     };
-
-    function limparZeros(s) {
-        // Remove caracteres nulos \u0000 que a API retorna
-        return (s || '').replace(/\u0000/g, '').trim();
-    }
+    const limparZeros = (s) => (s || '').replace(/\u0000/g, '').trim();
 
     // ============================================================
     // BUSCA FIRESTORE
@@ -78,7 +77,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         const dataProx = data.dataProximoConcurso || '';
         const acumulado = data.acumulado === true;
         const estimativa = data.valorEstimadoProximoConcurso || 0;
-        const acumProx = data.valorAcumuladoProximoConcurso || 0;
         const arrecadado = data.valorArrecadado || 0;
         const local = limparZeros(data.nomeMunicipioUFSorteio) || limparZeros(data.localSorteio) || '';
 
@@ -86,14 +84,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // ---------- LOTECA ----------
         if (nome === 'Loteca') {
-            const jogos = data.listaResultadoEquipeEsportiva || [];
+            const jogos = data.listaResultadoEquipeEsportiva || data.jogos || [];
             if (jogos.length > 0) {
                 numbersHtml = `
                     <div style="max-height:200px;overflow-y:auto;background:#f8fafc;border-radius:6px;padding:4px;margin:4px 0;">
                         ${jogos.map((j, idx) => {
-                            const g1 = j.nuGolEquipeUm ?? 0;
-                            const g2 = j.nuGolEquipeDois ?? 0;
-                            // Deriva a coluna pelo placar
+                            const g1 = j.nuGolEquipeUm ?? j.golEquipeUm ?? 0;
+                            const g2 = j.nuGolEquipeDois ?? j.golEquipeDois ?? 0;
                             let col = 'X';
                             if (g1 > g2) col = '1';
                             else if (g1 < g2) col = '2';
@@ -153,21 +150,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // ---------- DEMAIS ----------
         else {
-            const dz = data.listaDezenas || [];
+            const dz = data.listaDezenas || data.dezenas || [];
             if (dz.length > 0) {
                 const fmt = dz.map(n => String(parseInt(n,10)).padStart(2,'0'));
                 if (nome === 'Lotomania') {
-                    // Lotomania tem 20 números — grade 5x4
                     numbersHtml = `<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:3px;margin:6px 0;">
                         ${fmt.map(n=>`<span style="background:${color};color:#fff;text-align:center;padding:3px 0;border-radius:3px;font-size:0.72rem;font-weight:bold;">${n}</span>`).join('')}
                     </div>`;
                 } else if (nome === 'Super Sete') {
-                    // Super Sete: 7 colunas de 1 dígito
                     numbersHtml = `<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin:6px 0;">
-                        ${fmt.map((n,i)=>`<span style="background:${color};color:#fff;text-align:center;padding:5px 0;border-radius:3px;font-size:0.85rem;font-weight:bold;">${n}</span>`).join('')}
+                        ${fmt.map(n=>`<span style="background:${color};color:#fff;text-align:center;padding:5px 0;border-radius:3px;font-size:0.85rem;font-weight:bold;">${n}</span>`).join('')}
                     </div>`;
                 } else if (nome === '+Milionária') {
-                    // +Milionária: 6 dezenas + 2 trevos
                     numbersHtml = `<div style="display:flex;flex-wrap:wrap;gap:4px;margin:6px 0;justify-content:center;">
                         ${fmt.map(n=>`<span style="background:${color};color:#fff;text-align:center;width:30px;height:30px;line-height:30px;border-radius:50%;font-size:0.75rem;font-weight:bold;">${n}</span>`).join('')}
                         ${(data.trevosSorteados||[]).map(t=>`<span style="background:#FFD700;color:#000;text-align:center;width:30px;height:30px;line-height:30px;border-radius:50%;font-size:0.75rem;font-weight:bold;">★${t}</span>`).join('')}
@@ -254,14 +248,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // ===== CARDS VIP =====
-    const vipCard = (titulo, desc, cor, icone, url, badge) => `
+    const vipCard = (titulo, desc, cor, icone, url) => `
         <div class="lottery-card vip-protected" onclick="navegarProtegido('${url}')" style="border-top-color:${cor};cursor:pointer;position:relative;">
             <span style="position:absolute;top:8px;right:8px;background:#dc2626;color:#fff;font-size:0.65rem;font-weight:bold;padding:2px 7px;border-radius:10px;z-index:10;"><i class="fa-solid fa-lock"></i> VIP</span>
             <div style="text-align:center;padding:6px 0;">
                 <i class="fa-solid ${icone}" style="font-size:1.8rem;color:${cor};"></i>
                 <h3 style="color:${cor};margin:6px 0 2px 0;font-size:1rem;">${titulo}</h3>
                 <p style="color:#64748b;font-size:0.72rem;margin:0 0 8px 0;line-height:1.3;">${desc}</p>
-                ${badge || ''}
                 <div style="background:${cor};color:#fff;padding:5px 12px;border-radius:20px;font-weight:bold;font-size:0.72rem;display:inline-block;">
                     <i class="fa-solid fa-arrow-right"></i> Acessar
                 </div>
@@ -281,21 +274,91 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
         const dados = await fetchTodas();
         let html = '';
-
-        // Cards VIP primeiro
         html += vipCard('Estratégias Premium', '12 algoritmos avançados', '#d97706', 'fa-crown', 'estrategias.html');
         html += vipCard('Gerador Avançado', '12 estratégias estatísticas', '#2563eb', 'fa-microchip', 'gerador-avancado.html');
         html += vipCard('Lotofácil - Repetição', 'Estratégia de repetição', '#930089', 'fa-rotate', 'lotofacil-repeticao.html');
         html += vipCard('Lotomania - Estratégia', 'Distribuição por linhas', '#F78100', 'fa-chart-simple', 'lotomania-estrategia.html');
         html += vipCard('Dia de Sorte - Repetição', 'Estratégia de repetição', '#cb8322', 'fa-calendar-day', 'diadesorte-repeticao.html');
         html += vipCard('Sorteio Globo', 'Sorteio animado e interativo', '#2563eb', 'fa-globe', 'sorteio-globo.html');
-
-        // Depois os resultados
         LOTTERIES.forEach(l => { html += renderCard(l.name, dados[l.name]); });
-
         grid.innerHTML = html;
         console.log("[script_home.js] ✅ Renderizados:", grid.children.length, "cards");
     } catch (e) {
         console.error("[script_home.js] ❌ Erro:", e);
     }
 });
+
+/* ============================================================
+   FUNÇÕES GLOBAIS — navegação protegida e modal
+   ============================================================ */
+
+window.navegarProtegido = function(url) {
+    let emailSalvo = localStorage.getItem('user_email');
+    if (!emailSalvo) {
+        try {
+            const u = JSON.parse(localStorage.getItem('currentUser') || 'null');
+            if (u && u.email) emailSalvo = u.email;
+        } catch (e) {}
+    }
+
+    if (!emailSalvo) {
+        alert("Por favor, faça login com sua conta do Google para continuar.\nPlease sign in with your Google account.\nPor favor, inicie sesión con su cuenta de Google.");
+        return;
+    }
+
+    if (window.isSubscriber === true) {
+        window.location.href = url;
+        return;
+    }
+
+    if (typeof window.verificarAssinaturaFirestore === 'function') {
+        window.verificarAssinaturaFirestore(emailSalvo).then(function(isAss) {
+            window.isSubscriber = isAss;
+            localStorage.setItem('isSubscriber', isAss ? 'true' : 'false');
+            if (isAss) {
+                window.location.href = url;
+            } else {
+                window.mostrarDialogoNaoAssinante(localStorage.getItem('user_name') || emailSalvo);
+            }
+        }).catch(function() {
+            window.mostrarDialogoNaoAssinante(emailSalvo);
+        });
+        return;
+    }
+
+    window.mostrarDialogoNaoAssinante(emailSalvo);
+};
+
+window.mostrarDialogoNaoAssinante = function(nomeUsuario) {
+    const antigo = document.getElementById('modal-assinatura-exclusivo');
+    if (antigo) antigo.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'modal-assinatura-exclusivo';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(5px);display:flex;align-items:center;justify-content:center;z-index:99999;';
+
+    modal.innerHTML = `
+        <div style="background:#fff;border-radius:16px;padding:30px 24px;max-width:440px;width:90%;text-align:center;box-shadow:0 15px 35px rgba(0,0,0,0.3);border-top:6px solid #209869;font-family:inherit;">
+            <div style="width:65px;height:65px;background:#e8f5e9;color:#209869;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 20px auto;box-shadow:0 4px 10px rgba(32,152,105,0.2);">
+                <i class="fa-solid fa-crown"></i>
+            </div>
+            <h3 style="color:#1a1a1a;margin:0 0 10px 0;font-size:1.3rem;">Olá / Hello / Hola, ${nomeUsuario || 'Visitante'}!</h3>
+            <div style="color:#555;font-size:0.88rem;line-height:1.45;margin-bottom:20px;text-align:left;">
+                <p style="margin-bottom:8px;"><strong>PT:</strong> Identificamos que você ainda não possui assinatura ativa. Baixe o app no Google Play para desbloquear.</p>
+                <p style="margin-bottom:8px;"><strong>EN:</strong> You don't have an active subscription yet. Download our app on Google Play to unlock.</p>
+                <p style="margin:0;"><strong>ES:</strong> Aún no tienes suscripción activa. Descarga nuestra app en Google Play para desbloquear.</p>
+            </div>
+            <a href="https://play.google.com/store/apps/details?id=com.fabioribeiroromelli.geradordejogos" target="_blank" style="display:block;background:#209869;color:#fff;text-decoration:none;padding:13px 20px;border-radius:30px;font-weight:bold;font-size:0.95rem;box-shadow:0 4px 15px rgba(32,152,105,0.4);margin-bottom:12px;">
+                <i class="fa-brands fa-google-play"></i> Baixar App e Assinar
+            </a>
+            <button onclick="document.getElementById('modal-assinatura-exclusivo').remove()" style="background:transparent;border:none;color:#888;font-size:0.85rem;cursor:pointer;padding:8px;font-weight:600;text-decoration:underline;">
+                Continuar navegando / Continue browsing
+            </button>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) modal.remove();
+    });
+};
