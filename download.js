@@ -6,9 +6,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!btnDownload) return;
 
     btnDownload.addEventListener('click', async () => {
-        // Garante que o nome da loteria vá em minúsculas para a API
         const lottery = selectType ? selectType.value.toLowerCase() : 'megasena';
-        
+
         if (statusEl) {
             statusEl.style.color = '#007bff';
             statusEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Buscando e atualizando no Firebase...';
@@ -17,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             let data = null;
 
-            // 1. Tenta buscar na API auxiliar (Evita problemas severos de CORS no browser)
+            // 1. Tenta buscar na API auxiliar (Evita CORS)
             try {
                 const resAlt = await fetch(`https://api.guidi.dev.br/loteria/${lottery}/ultimo`);
                 if (resAlt.ok) {
@@ -27,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.warn("API auxiliar indisponível, tentando API oficial...");
             }
 
-            // 2. Se falhar, tenta a API oficial da Caixa
+            // 2. Tenta a API oficial da Caixa como fallback
             if (!data) {
                 try {
                     const res = await fetch(`https://servicebus2.caixa.gov.br/portaldeloterias/api/${lottery}`);
@@ -43,35 +42,40 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error("Não foi possível obter os dados da loteria em nenhuma das fontes.");
             }
 
-            // Padroniza a extração do número do concurso dependendo da API que respondeu
             const concurso = String(data.numero || data.concurso || data.darrelo);
-            
+
             if (!concurso || concurso === "undefined") {
                 throw new Error("Número do concurso não identificado no retorno da API.");
             }
-            
-            // Salva diretamente no Firestore (Certifique-se de que 'db' está declarado globalmente)
-            if (typeof db !== 'undefined') {
-                await db.collection('loterias').doc(lottery).collection('concursos').doc(concurso).set(data, { merge: true });
+
+            // 3. Atualiza no Firestore mantendo a estrutura historico_loterias/{loteria}
+            if (typeof db !== 'undefined' && window.arrayUnion && window.doc && window.setDoc) {
+                const docRef = window.doc(db, 'historico_loterias', lottery);
+                
+                // Salva o novo concurso dentro da array 'concursos' do documento
+                await window.setDoc(docRef, {
+                    concursos: window.arrayUnion(data),
+                    ultimaAtualizacao: new Date().toISOString()
+                }, { merge: true });
             } else {
-                throw new Error("Instância do Firestore ('db') não encontrada.");
+                throw new Error("Instância do Firestore ou métodos auxiliares não encontrados.");
             }
 
             if (statusEl) {
                 statusEl.style.color = '#28a745';
-                statusEl.innerHTML = `<i class="fa-solid fa-check-circle"></i> Concurso ${concurso} atualizado no Firebase com sucesso!`;
+                statusEl.innerHTML = `<i class="fa-solid fa-circle-check"></i> Concurso ${concurso} atualizado no Firebase com sucesso!`;
             }
 
-            // Atualiza a tabela na tela se a função existir
-            if (typeof carregarDadosFirebase === 'function') {
-                carregarDadosFirebase(lottery);
+            // Atualiza a visualização na tela
+            if (typeof window.carregarLoteria === 'function') {
+                window.carregarLoteria(lottery);
             }
 
-        }Congressos catch (err) {
+        } catch (err) {
             console.error(err);
             if (statusEl) {
                 statusEl.style.color = '#dc3545';
-                statusEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Erro ao atualizar os dados.';
+                statusEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Erro: ${err.message}`;
             }
         }
     });
