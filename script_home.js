@@ -8,10 +8,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.head.appendChild(fa);
     }
 
+    // Garante que a flag global de controle exista corretamente
     if (window._googleAuthInitialized === undefined) {
         window._googleAuthInitialized = false;
     }
 
+    // Verifica se já existe um usuário logado anteriormente ao carregar a página
     verificarLoginSalvo();
 
     const existingGsiScript = document.getElementById('google-gsi-script');
@@ -44,20 +46,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         window._googleAuthInitialized = true;
 
+        // Procura um container específico para o login ou cria de forma segura sem afetar o grid principal
         let authContainer = document.getElementById('google_auth_container');
         if (!authContainer) {
             authContainer = document.querySelector('.login-container') || document.querySelector('.toolbar');
             if (!authContainer) {
                 authContainer = document.createElement('div');
                 authContainer.id = 'google_auth_container';
+                // Adiciona no topo da toolbar ou header para não quebrar as telas de loterias
                 const toolbar = document.querySelector('.toolbar') || document.body;
                 toolbar.prepend(authContainer);
             }
         }
 
-       try {
+        try {
             google.accounts.id.initialize({
-                // Substituído pelo seu Client ID real:
                 client_id: "383374785711-e00t37fkf9q6aqe5imqi0nnh29v2npq4.apps.googleusercontent.com",
                 callback: handleCredentialResponse,
                 ux_mode: "popup"
@@ -148,7 +151,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (!data) {
             return `
-                <div class="lottery-card" style="border-top-color: ${color}; opacity: 0.85;">
+                <div class="lottery-card" style="border-top-color: ${color}; opacity: 0.8;">
                     <div class="card-header">
                         <h3 style="color: ${color};"><i class="fa-solid ${icon}"></i> ${lotteryName}</h3>
                         <span class="badge-conc">Indisponível</span>
@@ -291,7 +294,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         `;
     }
 
-    // ===== 4. FUNÇÕES DOS CARDS ESPECIAIS =====
+    // Cards Especiais
     function renderPremiumCard() {
         return `
             <div class="lottery-card premium-card" onclick="window.location.href='estrategias.html'">
@@ -384,40 +387,27 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
-    // ===== 5. RENDERIZAÇÃO DOS CARDS =====
     const grid = document.getElementById('lottery_grid');
     if (!grid) return;
 
-    // Se existir container próprio para cards especiais, usa. Se não, renderiza tudo com segurança no container principal.
-    let specialGrid = document.getElementById('special_cards_grid');
-    let specialHtml = renderPremiumCard() +
-                      renderAvancadoCard() +
-                      renderLotofacilRepeticaoCard() +
-                      renderLotomaniaEstrategiaCard() +
-                      renderDiadesorteRepeticaoCard() +
-                      renderSorteioGloboCard();
+    let results = LOTTERIES.map(lot => fetchUltimoConcursoLocal(lot.name));
 
-    if (specialGrid) {
-        specialGrid.innerHTML = specialHtml;
-    }
+    let html = '';
+    html += renderPremiumCard();
+    html += renderAvancadoCard();
+    html += renderLotofacilRepeticaoCard();
+    html += renderLotomaniaEstrategiaCard();
+    html += renderDiadesorteRepeticaoCard();
+    html += renderSorteioGloboCard();
 
-    let lotteriesHtml = '';
-    
-    // Se não houver container separado, mantém os cards especiais no topo da grid principal
-    if (!specialGrid) {
-        lotteriesHtml += specialHtml;
-    }
-
-    // Processa os dados das loterias
-    LOTTERIES.forEach(lot => {
-        const data = fetchUltimoConcursoLocal(lot.name);
-        lotteriesHtml += renderCard(lot.name, data);
+    LOTTERIES.forEach((lot, index) => {
+        html += renderCard(lot.name, results[index]);
     });
 
-    grid.innerHTML = lotteriesHtml;
+    grid.innerHTML = html;
 });
 
-// ===== FUNÇÕES AUXILIARES DE USUÁRIO E LOGIN =====
+// ===== FUNÇÃO PARA ATUALIZAR A INTERFACE QUANDO LOGADO =====
 function atualizarInterfaceUsuario(nome, isAssinante) {
     let authContainer = document.getElementById('google_auth_container');
     if (!authContainer) {
@@ -438,6 +428,7 @@ function atualizarInterfaceUsuario(nome, isAssinante) {
     }
 }
 
+// ===== VERIFICAÇÃO DE LOGIN SALVO AO CARREGAR =====
 function verificarLoginSalvo() {
     const emailSalvo = localStorage.getItem("user_email");
     const nomeSalvo = localStorage.getItem("user_name");
@@ -448,6 +439,7 @@ function verificarLoginSalvo() {
     }
 }
 
+// ===== FUNÇÃO DE LOGOUT =====
 window.sairConta = function() {
     localStorage.removeItem("user_email");
     localStorage.removeItem("user_name");
@@ -455,6 +447,7 @@ window.sairConta = function() {
     location.reload();
 };
 
+// ===== DIÁLOGO ELEGANTE PARA NÃO ASSINANTES =====
 function mostrarDialogoNaoAssinante(nomeUsuario) {
     const modalAntigo = document.getElementById('modal-assinatura-exclusivo');
     if (modalAntigo) modalAntigo.remove();
@@ -535,6 +528,7 @@ function handleCredentialResponse(response) {
 
         const isAssinante = localStorage.getItem("is_subscriber") === "true";
 
+        // Atualiza a tela imediatamente para exibir o nome do usuário logado
         atualizarInterfaceUsuario(responsePayload.name || responsePayload.email, isAssinante);
 
         if (!isAssinante) {
