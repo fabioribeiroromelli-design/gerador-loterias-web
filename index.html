@@ -11,19 +11,31 @@
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2348094023361642" crossorigin="anonymous"></script>
 
+    <!-- SDKs do Firebase (Compat) -->
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    
     <script>
+        // Configuração do Firebase Atualizada
         const firebaseConfig = {
-            apiKey: "AIzaSyBc1Ab14Fo6Ua-u3i1SDudf4EfVijVmONY",
-            authDomain: "gerador-loterias-web.firebaseapp.com",
-            projectId: "gerador-loterias-web",
-            storageBucket: "gerador-loterias-web.firebasestorage.app",
-            messagingSenderId: "539211828205",
-            appId: "1:539211828205:web:138dc9c6f09169bde2b5e4"
+            apiKey: "AIzaSyAd_6aSOdCFGbMCkcUSXVHeENKNBfJ75yA",
+            authDomain: "gerador-de-jogos-5e787.firebaseapp.com",
+            projectId: "gerador-de-jogos-5e787",
+            storageBucket: "gerador-de-jogos-5e787.firebasestorage.app",
+            messagingSenderId: "380501697774",
+            appId: "1:380501697774:web:35f4a4870110350fcf7fff",
+            measurementId: "G-68JK4JKSCQ"
         };
-        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+
+        // Inicializa o Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+
+        // Conecta aos serviços unificados
         const db = firebase.firestore();
+        const auth = firebase.auth();
 
         window.verificarAssinaturaFirestore = async function (email) {
             if (!email) return false;
@@ -293,16 +305,13 @@
             else alert(`Olá, ${payload.name || 'Usuário'}! O e-mail ${email} não possui assinatura ativa.`);
         }
 
-        // ============================================================
         // VIP LOCKS — SÓ afeta cards com a classe .vip-protected
-        // ============================================================
         let isLockingVip = false;
 
         const applyVipLocks = () => {
             const grid = document.getElementById('lottery_grid');
             if (!grid) return;
 
-            // ⚠️ AQUI A CORREÇÃO: só pega cards com .vip-protected
             const cardsProtegidos = grid.querySelectorAll('.vip-protected');
             const liberado = Boolean(currentUser) && window.isSubscriber === true;
 
