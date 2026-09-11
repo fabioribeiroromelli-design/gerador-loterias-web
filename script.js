@@ -1,428 +1,356 @@
-const LOTTERIES_CONFIG = {
-    MEGA_SENA: { name: 'Mega-Sena', maxNum: 60, defaultSelect: 6, zeroBased: false },
-    LOTOFACIL: { name: 'Lotofácil', maxNum: 25, defaultSelect: 15, zeroBased: false },
-    QUINA: { name: 'Quina', maxNum: 80, defaultSelect: 5, zeroBased: false },
-    LOTOMANIA: { name: 'Lotomania', maxNum: 100, defaultSelect: 50, zeroBased: true },
-    TIMEMANIA: { name: 'Timemania', maxNum: 80, defaultSelect: 10, zeroBased: false },
-    DUPLA_SENA: { name: 'Dupla Sena', maxNum: 50, defaultSelect: 6, zeroBased: false },
-    DIA_DE_SORTE: { name: 'Dia de Sorte', maxNum: 31, defaultSelect: 7, zeroBased: false },
-    SUPER_SETE: { name: 'Super Sete', isSuperSete: true, columns: 7, rows: 10, defaultSelect: 7 },
-    MAIS_MILIONARIA: { name: '+Milionária', maxNum: 50, defaultSelect: 6, zeroBased: false }
+/* ============================================================
+   script_home.js — versão final (usa db do index.html)
+   ============================================================ */
+console.log("[script_home.js] Carregado.");
+
+// Grid de 6 colunas + hover
+const styleGrid = document.createElement('style');
+styleGrid.innerHTML = `
+    #lottery_grid { display: grid !important; grid-template-columns: repeat(6, 1fr) !important; gap: 12px; }
+    @media (max-width: 1400px) { #lottery_grid { grid-template-columns: repeat(5, 1fr) !important; } }
+    @media (max-width: 1200px) { #lottery_grid { grid-template-columns: repeat(4, 1fr) !important; } }
+    @media (max-width: 992px)  { #lottery_grid { grid-template-columns: repeat(3, 1fr) !important; } }
+    @media (max-width: 768px)  { #lottery_grid { grid-template-columns: repeat(2, 1fr) !important; } }
+    @media (max-width: 480px)  { #lottery_grid { grid-template-columns: 1fr !important; } }
+    .lottery-card { transition: transform 0.25s ease, box-shadow 0.25s ease !important; }
+    .lottery-card:hover { transform: translateY(-4px); box-shadow: 0 10px 25px rgba(0,0,0,0.12) !important; }
+`;
+document.head.appendChild(styleGrid);
+
+window.toggleLotteryDetails = function(cardId) {
+    const div = document.getElementById(`detalhes-${cardId}`);
+    const btn = document.getElementById(`btn-detalhes-${cardId}`);
+    if (!div || !btn) return;
+    if (div.style.display === 'none' || div.style.display === '') {
+        div.style.display = 'block';
+        btn.innerHTML = `<i class="fa-solid fa-chevron-up"></i> Ocultar Detalhes`;
+    } else {
+        div.style.display = 'none';
+        btn.innerHTML = `<i class="fa-solid fa-chevron-down"></i> Ver Detalhes`;
+    }
 };
 
-let currentLottery = 'MEGA_SENA';
-let selectedMode = 'fixed';
-let fixedNumbers = new Set();
-let excludedNumbers = new Set();
-let generatedGames = [];
+document.addEventListener('DOMContentLoaded', async () => {
+    const grid = document.getElementById('lottery_grid');
+    if (!grid) return;
 
-document.addEventListener('DOMContentLoaded', () => {
-    initEvents();
-    
-    // Captura o parâmetro de URL ?lottery=NomeSeletor (ex: generator.html?lottery=Mega-Sena)
-    const urlParams = new URLSearchParams(window.location.search);
-    const lotteryParam = urlParams.get('lottery');
-    if (lotteryParam) {
-        const foundKey = Object.keys(LOTTERIES_CONFIG).find(
-            key => LOTTERIES_CONFIG[key].name.toLowerCase() === lotteryParam.toLowerCase()
-        );
-        if (foundKey) currentLottery = foundKey;
+    // ⚠️ Usa o 'db' já criado pelo index.html
+    if (typeof db === 'undefined') {
+        console.error("[script_home.js] ❌ 'db' não está definido. O index.html não carregou o Firebase?");
+        grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:#dc2626;">Erro: Firebase não carregou. Verifique o index.html.</div>`;
+        return;
+    }
+    console.log("[script_home.js] ✅ Firebase pronto. Projeto:", db.app.options.projectId);
+
+    const COLORS = {
+        'Dia de Sorte':'#cb8322','Dupla Sena':'#a61324','Federal':'#002f6c',
+        'Loteca':'#ca1518','Lotofácil':'#930089','Lotomania':'#F78100',
+        '+Milionária':'#1b365d','Mega-Sena':'#209869','Quina':'#260085',
+        'Super Sete':'#a8cf45','Timemania':'#2ecc71'
+    };
+    const ICONS = {
+        'Dia de Sorte':'fa-sun','Dupla Sena':'fa-copy','Federal':'fa-building-columns',
+        'Loteca':'fa-futbol','Lotofácil':'fa-clover','Lotomania':'fa-dice',
+        '+Milionária':'fa-gem','Mega-Sena':'fa-trophy','Quina':'fa-star',
+        'Super Sete':'fa-seven','Timemania':'fa-clock'
+    };
+    const DOC_IDS = {
+        'Dia de Sorte':'diadesorte','Dupla Sena':'duplasena','Federal':'federal',
+        'Loteca':'loteca','Lotofácil':'lotofacil','Lotomania':'lotomania',
+        '+Milionária':'maismilionaria','Mega-Sena':'megasena','Quina':'quina',
+        'Super Sete':'supersete','Timemania':'timemania'
+    };
+    const LOTTERIES = Object.keys(DOC_IDS).map(n => ({ name: n }));
+
+    const fmtR$ = (v) => { const n = parseFloat(v)||0; return n>0 ? 'R$ ' + n.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}) : 'R$ 0,00'; };
+    const fmtR$k = (v) => {
+        const n = parseFloat(v)||0;
+        if (!n || n<=0) return 'R$ 0';
+        if (n >= 1e9) return 'R$ ' + (n/1e9).toFixed(2).replace('.',',') + ' bi';
+        if (n >= 1e6) return 'R$ ' + (n/1e6).toFixed(2).replace('.',',') + ' mi';
+        if (n >= 1e3) return 'R$ ' + (n/1e3).toFixed(1).replace('.',',') + ' mil';
+        return 'R$ ' + n.toFixed(0);
+    };
+    const limpar = (s) => (s||'').replace(/\u0000/g, '').trim();
+
+    // ⚠️ Mapeamento direto dos campos do seu Firestore
+    function pegarDados(docData) {
+        if (!docData) return null;
+        const raw = docData.ultimoCompleto || docData.resultado || docData;
+        return {
+            concurso: raw.concurso || raw.numero || docData.concurso || '--',
+            dataApuracao: raw.dataApuracao || raw.data || docData.dataApuracao || docData.data || '',
+            dataProximoConcurso: raw.dataProximoConcurso || docData.dataProximoConcurso || '',
+            numeroConcursoProximo: raw.numeroConcursoProximo || docData.numeroConcursoProximo || '',
+            acumulado: raw.acumulado === true || raw.acumulou === true || docData.acumulado === true,
+            valorEstimadoProximoConcurso: raw.valorEstimadoProximoConcurso || docData.valorEstimadoProximoConcurso || 0,
+            valorArrecadado: raw.valorArrecadado || docData.valorArrecadado || 0,
+            localSorteio: raw.nomeMunicipioUFSorteio || raw.localSorteio || docData.localSorteio || '',
+            listaDezenas: raw.listaDezenas || raw.dezenas || docData.listaDezenas || docData.dezenas || [],
+            listaDezenasSegundoSorteio: raw.listaDezenasSegundoSorteio || raw.dezenasSorteio2 || docData.dezenasSorteio2 || [],
+            listaRateioPremio: raw.listaRateioPremio || docData.listaRateioPremio || [],
+            listaResultadoEquipeEsportiva: raw.listaResultadoEquipeEsportiva || raw.jogos || docData.listaResultadoEquipeEsportiva || docData.jogos || [],
+            trevosSorteados: raw.trevosSorteados || raw.trevos || docData.trevosSorteados || docData.trevos || [],
+            nomeTimeCoracaoMesSorte: raw.nomeTimeCoracaoMesSorte || raw.mesSorte || raw.timeCoracao || docData.nomeTimeCoracaoMesSorte || '',
+            premios: raw.premios || docData.premios || []
+        };
     }
 
-    switchLottery(currentLottery);
-    initGoogleAuthUI();
+    async function fetchTodas() {
+        const out = {};
+        await Promise.all(LOTTERIES.map(async (l) => {
+            try {
+                const doc = await db.collection('loterias').doc(DOC_IDS[l.name]).get();
+                if (doc.exists) {
+                    out[l.name] = pegarDados(doc.data());
+                    console.log(`[Firestore] ✅ ${l.name}:`, out[l.name].concurso);
+                } else {
+                    console.warn(`[Firestore] ⚠️ Sem doc loterias/${DOC_IDS[l.name]}`);
+                }
+            } catch (e) { console.error(`[Firestore] ❌ ${l.name}:`, e); }
+        }));
+        return out;
+    }
+
+    // ============================================================
+    // RENDER CARD
+    // ============================================================
+    function renderCard(nome, data) {
+        const color = COLORS[nome] || '#6c757d';
+        const icon = ICONS[nome] || 'fa-hashtag';
+        const cardId = DOC_IDS[nome] || nome.replace(/[^a-zA-Z0-9]/g, '');
+
+        if (!data) {
+            return `<div class="lottery-card" style="border-top-color:${color};opacity:0.8;display:flex;flex-direction:column;height:100%;">
+                <div class="card-header"><h3 style="color:${color};"><i class="fa-solid ${icon}"></i> ${nome}</h3><span class="badge-conc">--</span></div>
+                <div style="padding:20px;text-align:center;color:#999;font-size:0.85rem;flex-grow:1;">Sem dados</div>
+                <div style="margin-top:auto;"><button class="btn-generate" style="background:${color};width:100%;" disabled>Aguarde</button></div>
+            </div>`;
+        }
+
+        const { concurso, dataApuracao: dataApur, dataProximoConcurso: dataProx, numeroConcursoProximo: proxConcurso,
+                acumulado, valorEstimadoProximoConcurso: estimativa, valorArrecadado: arrecadado,
+                localSorteio, listaDezenas, listaRateioPremio: rateio } = data;
+        const localSorteioLimpo = limpar(localSorteio);
+
+        let numbersHtml = '';
+
+        // LOTECA
+        if (nome === 'Loteca') {
+            const jogos = data.listaResultadoEquipeEsportiva;
+            if (jogos && jogos.length > 0) {
+                numbersHtml = `<div style="max-height:260px;overflow-y:auto;background:#fff;border:1px solid #e2e8f0;border-radius:6px;padding:4px;margin:6px 0;">
+                    ${jogos.map((j, idx) => {
+                        const g1 = j.golEquipeUm ?? j.nuGolEquipeUm ?? 0;
+                        const g2 = j.golEquipeDois ?? j.nuGolEquipeDois ?? 0;
+                        let corE1 = '#475569', corE2 = '#475569';
+                        if (g1 > g2) { corE1='#15803d'; corE2='#dc2626'; }
+                        else if (g1 < g2) { corE1='#dc2626'; corE2='#15803d'; }
+                        return `<div style="display:grid;grid-template-columns:22px 1fr auto 1fr;gap:4px;align-items:center;padding:5px 3px;border-bottom:1px solid #f8fafc;font-size:0.7rem;">
+                            <span style="font-weight:bold;color:#cbd5e1;text-align:center;font-size:0.6rem;">${idx+1}</span>
+                            <span style="text-align:right;color:${corE1};font-weight:${g1>g2?'bold':'500'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${j.nomeEquipeUm||'?'}</span>
+                            <div style="background:#f1f5f9;border-radius:4px;padding:2px 6px;display:flex;align-items:center;justify-content:center;min-width:38px;border:1px solid #e2e8f0;">
+                                <span style="color:${corE1};font-weight:bold;font-size:0.75rem;">${g1}</span>
+                                <span style="color:#94a3b8;margin:0 3px;font-size:0.6rem;">x</span>
+                                <span style="color:${corE2};font-weight:bold;font-size:0.75rem;">${g2}</span>
+                            </div>
+                            <span style="color:${corE2};font-weight:${g2>g1?'bold':'500'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${j.nomeEquipeDois||'?'}</span>
+                        </div>`;
+                    }).join('')}
+                </div>`;
+            }
+        }
+        // FEDERAL
+        else if (nome === 'Federal') {
+            const premios = data.premios || [];
+            const lista = premios.length > 0 ? premios.map(p => p.bilhete || p) : listaDezenas;
+            if (lista && lista.length > 0) {
+                numbersHtml = `<div style="background:#f8fafc;border-radius:6px;padding:6px;margin:6px 0;">
+                    ${lista.slice(0,5).map((b,i)=>{
+                        const v = (b && typeof b === 'object') ? (b.bilhete || b.numero) : b;
+                        return `<div style="display:flex;justify-content:space-between;align-items:center;font-size:0.75rem;padding:4px 6px;border-bottom:1px solid #e2e8f0;">
+                            <span style="color:#64748b;font-weight:700;font-size:0.65rem;">${i+1}º PRÊMIO</span>
+                            <span style="font-family:'Courier New',monospace;font-weight:bold;color:${color};letter-spacing:2px;font-size:0.85rem;">${String(v).padStart(5,'0')}</span>
+                        </div>`;
+                    }).join('')}
+                </div>`;
+            }
+        }
+        // DUPLA SENA
+        else if (nome === 'Dupla Sena') {
+            const d1 = listaDezenas;
+            const d2 = data.listaDezenasSegundoSorteio;
+            const bolas = (arr, cor) => (arr||[]).map(n => `<span style="display:inline-block;background:${cor};color:#fff;width:24px;height:24px;line-height:24px;border-radius:50%;text-align:center;font-weight:bold;font-size:0.7rem;margin:1.5px;">${String(n).padStart(2,'0')}</span>`).join('');
+            numbersHtml = `<div style="margin:6px 0;">
+                <div style="font-size:0.65rem;color:#64748b;font-weight:700;margin-bottom:2px;">1º SORTEIO</div>
+                <div style="text-align:center;">${bolas(d1, color)}</div>
+                ${d2 && d2.length > 0 ? `<div style="font-size:0.65rem;color:#64748b;font-weight:700;margin-top:6px;margin-bottom:2px;">2º SORTEIO</div>
+                    <div style="text-align:center;">${bolas(d2, '#8e44ad')}</div>` : ''}
+            </div>`;
+        }
+        // DEMAIS
+        else if (listaDezenas && listaDezenas.length > 0) {
+            const fmt = listaDezenas.map(n => String(n).padStart(2, '0'));
+            if (nome === 'Lotofácil' || nome === 'Lotomania') {
+                numbersHtml = `<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin:6px 0;justify-items:center;">
+                    ${fmt.map(n=>`<span style="background:linear-gradient(135deg,${color},${color}dd);color:#fff;width:26px;height:26px;line-height:26px;border-radius:50%;text-align:center;font-size:0.72rem;font-weight:bold;box-shadow:0 2px 4px rgba(0,0,0,0.15);">${n}</span>`).join('')}
+                </div>`;
+            } else if (nome === '+Milionária') {
+                const trevos = data.trevosSorteados || [];
+                numbersHtml = `<div style="display:flex;flex-wrap:wrap;gap:4px;margin:6px 0;justify-content:center;">
+                    ${fmt.map(n=>`<span style="background:linear-gradient(135deg,${color},${color}dd);color:#fff;text-align:center;width:28px;height:28px;line-height:28px;border-radius:50%;font-size:0.72rem;font-weight:bold;">${n}</span>`).join('')}
+                    ${trevos.map(t=>`<span style="background:linear-gradient(135deg,#FFD700,#f59e0b);color:#000;text-align:center;width:28px;height:28px;line-height:28px;border-radius:50%;font-size:0.72rem;font-weight:bold;">★${t}</span>`).join('')}
+                </div>`;
+            } else {
+                numbersHtml = `<div style="display:flex;flex-wrap:wrap;gap:4px;margin:6px 0;justify-content:center;">
+                    ${fmt.map(n=>`<span style="background:linear-gradient(135deg,${color},${color}dd);color:#fff;text-align:center;width:28px;height:28px;line-height:28px;border-radius:50%;font-size:0.72rem;font-weight:bold;">${n}</span>`).join('')}
+                </div>`;
+            }
+        }
+
+        // RATEIO
+        let rateioHtml = '';
+        if (Array.isArray(rateio) && rateio.length > 0) {
+            rateioHtml = rateio.map(r => {
+                const g = r.numeroDeGanhadores ?? r.ganhadores ?? 0;
+                const desc = r.descricaoFaixa || ('Faixa '+(r.faixa||''));
+                const val = r.valorPremio ?? r.premio ?? 0;
+                const gTxt = g === 0 ? '<span style="color:#dc2626;font-weight:bold;">Não houve</span>'
+                    : `<span style="color:#059669;font-weight:bold;">${g.toLocaleString('pt-BR')} ${g===1?'ganhador':'ganhadores'}</span>`;
+                return `<div style="display:grid;grid-template-columns:1fr auto;gap:6px;padding:4px 0;border-bottom:1px dotted #e2e8f0;font-size:0.7rem;">
+                    <span style="color:#475569;font-weight:700;">${desc}</span>
+                    <div style="text-align:right;"><div>${gTxt}</div><div style="color:#0f172a;font-weight:bold;">${fmtR$(val)}</div></div>
+                </div>`;
+            }).join('');
+        }
+
+        const mesSorte = limpar(data.nomeTimeCoracaoMesSorte);
+        let badgeExtra = '';
+        if (nome === 'Dia de Sorte' && mesSorte) badgeExtra = `<span class="badge-extra" style="background:#fef3c7;color:#92400e;"><i class="fa-solid fa-calendar-alt"></i> Mês: ${mesSorte}</span>`;
+        else if (nome === 'Timemania' && mesSorte) badgeExtra = `<span class="badge-extra" style="background:#d4edda;color:#155724;"><i class="fa-solid fa-shield-halved"></i> ${mesSorte}</span>`;
+
+        return `
+            <div class="lottery-card" style="border-top-color:${color};display:flex;flex-direction:column;height:100%;">
+                <div class="card-header">
+                    <h3 style="color:${color};"><i class="fa-solid ${icon}"></i> ${nome}</h3>
+                    <span class="badge-conc">Conc: ${concurso}</span>
+                </div>
+                <div style="flex-grow:1;display:flex;flex-direction:column;">
+                    ${numbersHtml}
+                    <div style="display:flex;flex-wrap:wrap;gap:4px;margin:4px 0;">
+                        ${acumulado ? '<span class="badge-accumulated"><i class="fa-solid fa-fire"></i> Acumulou!</span>' : '<span class="badge-extra" style="background:#e8f5e9;color:#2e7d32;"><i class="fa-solid fa-trophy"></i> Teve Ganhador!</span>'}
+                        ${badgeExtra}
+                    </div>
+                    <div style="text-align:center;margin-top:8px;border-top:1px dashed #e2e8f0;padding-top:6px;">
+                        <button id="btn-detalhes-${cardId}" onclick="toggleLotteryDetails('${cardId}')" style="background:transparent;border:none;color:${color};font-size:0.72rem;font-weight:bold;cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:5px;">
+                            <i class="fa-solid fa-chevron-down"></i> Ver Detalhes
+                        </button>
+                    </div>
+                    <div id="detalhes-${cardId}" style="display:none;margin-top:8px;">
+                        ${localSorteioLimpo ? `<div style="font-size:0.65rem;color:#94a3b8;margin:3px 0;"><i class="fa-solid fa-location-dot"></i> ${localSorteioLimpo}</div>` : ''}
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:0.68rem;color:#64748b;margin:4px 0;padding:4px 0;border-top:1px dashed #e2e8f0;">
+                            <div><i class="fa-solid fa-sack-dollar"></i> Arrecadação: <strong style="color:#0f172a;">${fmtR$k(arrecadado)}</strong></div>
+                            <div style="text-align:right;"><i class="fa-regular fa-calendar-check"></i> Apurado: <strong style="color:#0f172a;">${dataApur || '--'}</strong></div>
+                        </div>
+                        ${estimativa > 0 ? `<div style="background:linear-gradient(135deg,${color}18,${color}08);border:1px solid ${color}40;border-radius:6px;padding:6px 8px;margin:4px 0;">
+                            <div style="display:flex;justify-content:space-between;align-items:center;">
+                                <span style="font-size:0.62rem;color:#64748b;font-weight:800;text-transform:uppercase;">Próximo ${proxConcurso ? '#'+proxConcurso : ''}</span>
+                                ${dataProx ? `<span style="font-size:0.65rem;color:#475569;font-weight:700;">${dataProx}</span>` : ''}
+                            </div>
+                            <div style="color:${color};font-weight:900;font-size:0.95rem;margin-top:2px;">${fmtR$k(estimativa)}</div>
+                        </div>` : ''}
+                        ${rateioHtml ? `<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:6px 8px;margin:4px 0;">
+                            <div style="font-size:0.68rem;color:${color};font-weight:800;text-transform:uppercase;border-bottom:1px solid ${color}30;padding-bottom:3px;margin-bottom:3px;"><i class="fa-solid fa-trophy"></i> Premiação</div>
+                            ${rateioHtml}
+                        </div>` : ''}
+                    </div>
+                </div>
+                <div style="margin-top:auto;padding-top:8px;">
+                    <button class="btn-generate" style="background:${color};width:100%;" onclick="window.location.href='generator.html?lottery=${encodeURIComponent(nome)}'">
+                        <i class="fa-solid fa-filter"></i> Gerar por Filtro
+                    </button>
+                </div>
+            </div>`;
+    }
+
+    const vipCard = (titulo, desc, cor, icone, url) => {
+        const isVip = window.isSubscriber === true;
+        const lockedClass = isVip ? '' : 'vip-card-locked';
+        const badgeHtml = isVip ? '' :
+            '<span class="vip-badge" style="position:absolute;top:8px;right:8px;background:#dc2626;color:#fff;font-size:0.62rem;font-weight:bold;padding:2px 6px;border-radius:10px;z-index:10;"><i class="fa-solid fa-lock"></i> VIP</span>';
+        return `<div class="lottery-card vip-protected ${lockedClass}" onclick="navegarProtegido('${url}')" style="border-top-color:${cor};cursor:pointer;position:relative;display:flex;flex-direction:column;height:100%;">
+            ${badgeHtml}
+            <div style="flex-grow:1;display:flex;flex-direction:column;justify-content:center;">
+                <div style="text-align:center;padding:4px 0;">
+                    <i class="fa-solid ${icone}" style="font-size:2rem;color:${cor};"></i>
+                    <h3 style="color:${cor};margin:8px 0 3px 0;font-size:0.98rem;">${titulo}</h3>
+                    <p style="color:#64748b;font-size:0.72rem;margin:0 0 6px 0;line-height:1.3;">${desc}</p>
+                </div>
+            </div>
+            <div style="text-align:center;margin-top:auto;padding-top:8px;">
+                <div style="background:${cor};color:#fff;padding:7px 12px;border-radius:20px;font-weight:bold;font-size:0.78rem;display:inline-block;width:100%;">
+                    <i class="fa-solid fa-arrow-right"></i> Acessar
+                </div>
+            </div>
+        </div>`;
+    };
+
+    // ================= RENDER =================
+    try {
+        const dados = await fetchTodas();
+        console.log("[script_home.js] Dados carregados:", Object.keys(dados).length, "loterias");
+
+        let html = '';
+        html += vipCard('Estratégias Premium', '12 algoritmos avançados', '#d97706', 'fa-crown', 'estrategias.html');
+        html += vipCard('Gerador Avançado', '12 estratégias estatísticas', '#2563eb', 'fa-microchip', 'gerador-avancado.html');
+        html += vipCard('Lotofácil - Repetição', 'Estratégia de repetição', '#930089', 'fa-rotate', 'lotofacil-repeticao.html');
+        html += vipCard('Lotomania - Estratégia', 'Distribuição por linhas', '#F78100', 'fa-chart-simple', 'lotomania-estrategia.html');
+        html += vipCard('Dia de Sorte - Repetição', 'Estratégia de repetição', '#cb8322', 'fa-calendar-day', 'diadesorte-repeticao.html');
+        html += vipCard('Sorteio Globo', 'Sorteio animado e interativo', '#2563eb', 'fa-globe', 'sorteio-globo.html');
+        LOTTERIES.forEach(l => { html += renderCard(l.name, dados[l.name]); });
+        grid.innerHTML = html;
+        console.log("[script_home.js] ✅ Renderizados:", grid.children.length, "cards");
+    } catch (e) {
+        console.error("[script_home.js] ❌ Erro:", e);
+        grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:#dc2626;">Erro ao carregar: ${e.message}</div>`;
+    }
 });
 
-function initEvents() {
-    document.querySelectorAll('.btn-lottery').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const type = e.currentTarget.getAttribute('data-type');
-            switchLottery(type);
+// Navegação protegida
+window.navegarProtegido = function(url) {
+    let email = localStorage.getItem('user_email');
+    if (!email) {
+        try { const u = JSON.parse(localStorage.getItem('currentUser') || 'null'); if (u?.email) email = u.email; } catch (e) {}
+    }
+    if (!email) { alert("Faça login com Google para continuar."); return; }
+    if (window.isSubscriber === true) { window.location.href = url; return; }
+    if (typeof window.verificarAssinaturaFirestore === 'function') {
+        window.verificarAssinaturaFirestore(email).then(function(isAss) {
+            window.isSubscriber = isAss;
+            localStorage.setItem('isSubscriber', isAss ? 'true' : 'false');
+            if (isAss) window.location.href = url;
+            else window.mostrarDialogoNaoAssinante(localStorage.getItem('user_name') || email);
         });
-    });
-
-    document.querySelectorAll('input[name="mode"]').forEach(radio => {
-        radio.addEventListener('change', (e) => {
-            selectedMode = e.target.value;
-        });
-    });
-
-    const btnClear = document.getElementById('btn_clear');
-    if (btnClear) btnClear.addEventListener('click', clearSelections);
-
-    const btnGenerate = document.getElementById('btn_generate');
-    if (btnGenerate) btnGenerate.addEventListener('click', generateGames);
-
-    const btnSave = document.getElementById('btn_save');
-    if (btnSave) btnSave.addEventListener('click', saveGames);
-
-    const btnDownload = document.getElementById('btn_download');
-    if (btnDownload) btnDownload.addEventListener('click', downloadTXT);
-}
-
-// ===== GOOGLE AUTH UI INTEGRADO =====
-function initGoogleAuthUI() {
-    if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
-        try {
-            google.accounts.id.initialize({
-                client_id: "383374785711-e00t37fkf9q6aqe5imqi0nnh29v2npq4.apps.googleusercontent.com",
-                callback: typeof handleCredentialResponse !== 'undefined' ? handleCredentialResponse : () => {},
-                ux_mode: "popup"
-            });
-
-            const authContainer = document.getElementById('google_auth_container');
-            if (authContainer) {
-                google.accounts.id.renderButton(
-                    authContainer,
-                    { theme: "outline", size: "medium", text: "signin_with" }
-                );
-            }
-        } catch (e) {
-            console.error("Erro ao carregar botão do Google:", e);
-        }
-    }
-}
-
-function switchLottery(type) {
-    if (!LOTTERIES_CONFIG[type]) return;
-    currentLottery = type;
-    const config = LOTTERIES_CONFIG[type];
-
-    const pageTitle = document.getElementById('page_title');
-    if (pageTitle) pageTitle.textContent = `Gerador - ${config.name}`;
-
-    const volanteTitle = document.getElementById('volante_title');
-    if (volanteTitle) volanteTitle.textContent = `Volante de Seleção (${config.name})`;
-
-    // Destaca o botão ativo da loteria se existir a lista de botões
-    document.querySelectorAll('.btn-lottery').forEach(btn => {
-        if (btn.getAttribute('data-type') === type) {
-            btn.classList.add('active');
-        } else {
-            btn.classList.remove('active');
-        }
-    });
-
-    clearSelections();
-    buildGrid();
-    populateFilterSelects();
-}
-
-function buildGrid() {
-    const grid = document.getElementById('numbers_grid');
-    if (!grid) return;
-    grid.innerHTML = '';
-    const config = LOTTERIES_CONFIG[currentLottery];
-
-    if (config.isSuperSete) {
-        grid.style.display = 'grid';
-        grid.style.gridTemplateColumns = 'repeat(7, 1fr)';
-        grid.style.gap = '10px';
-
-        for (let col = 1; col <= 7; col++) {
-            const colContainer = document.createElement('div');
-            colContainer.setAttribute('style', 'display: flex; flex-direction: column; align-items: center; background: #f8f9fa; padding: 6px; border-radius: 6px; border: 1px solid #ddd;');
-            colContainer.innerHTML = `<span style="font-weight: bold; margin-bottom: 6px; font-size: 12px;">Col. ${col}</span>`;
-
-            for (let row = 0; row <= 9; row++) {
-                const itemKey = `C${col}_${row}`;
-                const btn = document.createElement('button');
-                btn.textContent = row;
-                btn.setAttribute('style', 'width: 100%; padding: 6px 0; margin: 2px 0; border: 1px solid #ccc; background: #fff; border-radius: 4px; font-weight: bold; cursor: pointer;');
-
-                btn.addEventListener('click', () => toggleNumber(itemKey, btn));
-                colContainer.appendChild(btn);
-            }
-            grid.appendChild(colContainer);
-        }
         return;
     }
+    window.mostrarDialogoNaoAssinante(email);
+};
 
-    grid.style.display = 'grid';
-    grid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(42px, 1fr))';
-    grid.style.gap = '8px';
-
-    const start = config.zeroBased ? 0 : 1;
-    const end = config.zeroBased ? config.maxNum - 1 : config.maxNum;
-
-    for (let i = start; i <= end; i++) {
-        const numStr = String(i).padStart(2, '0');
-        const btn = document.createElement('button');
-        btn.textContent = numStr;
-        btn.setAttribute('style', 'padding: 10px 0; border: 1px solid #ccc; background: #fff; border-radius: 6px; font-weight: bold; cursor: pointer;');
-
-        btn.addEventListener('click', () => toggleNumber(i, btn));
-        grid.appendChild(btn);
-    }
-}
-
-function toggleNumber(val, btn) {
-    if (selectedMode === 'fixed') {
-        if (fixedNumbers.has(val)) {
-            fixedNumbers.delete(val);
-            btn.style.background = '#fff';
-            btn.style.color = '#000';
-        } else {
-            excludedNumbers.delete(val);
-            fixedNumbers.add(val);
-            btn.style.background = '#28a745';
-            btn.style.color = '#fff';
-        }
-    } else {
-        if (excludedNumbers.has(val)) {
-            excludedNumbers.delete(val);
-            btn.style.background = '#fff';
-            btn.style.color = '#000';
-        } else {
-            fixedNumbers.delete(val);
-            excludedNumbers.add(val);
-            btn.style.background = '#dc3545';
-            btn.style.color = '#fff';
-        }
-    }
-    updateSummary();
-}
-
-function updateSummary() {
-    const config = LOTTERIES_CONFIG[currentLottery];
-    const summaryInfo = document.getElementById('summary-info');
-    if (!summaryInfo) return;
-
-    if (config.isSuperSete) {
-        const fixos = Array.from(fixedNumbers).join(', ') || 'Nenhum / None / Ninguno';
-        const excl = Array.from(excludedNumbers).join(', ') || 'Nenhum / None / Ninguno';
-        summaryInfo.innerHTML = `
-            Fixos: <strong style="color: #28a745;">${fixos}</strong> | 
-            Excluídos: <strong style="color: #dc3545;">${excl}</strong>
-        `;
-        return;
-    }
-
-    const fixos = Array.from(fixedNumbers).sort((a,b)=>a-b).map(n => String(n).padStart(2, '0')).join(', ') || 'Nenhum / None / Ninguno';
-    const excl = Array.from(excludedNumbers).sort((a,b)=>a-b).map(n => String(n).padStart(2, '0')).join(', ') || 'Nenhum / None / Ninguno';
-
-    summaryInfo.innerHTML = `
-        Fixos: <strong style="color: #28a745;">${fixos}</strong> | 
-        Excluídos: <strong style="color: #dc3545;">${excl}</strong>
-    `;
-
-    updateStats(Array.from(fixedNumbers));
-}
-
-function updateStats(numbers) {
-    const statsInfo = document.getElementById('stats_info');
-    if (!statsInfo) return;
-
-    if (numbers.length === 0 || typeof numbers[0] === 'string') {
-        statsInfo.innerHTML = 'Pares: <strong>0</strong> | Ímpares: <strong>0</strong> | Primos: <strong>0</strong> | Soma: <strong>0</strong>';
-        return;
-    }
-    const pares = numbers.filter(n => n % 2 === 0).length;
-    const impares = numbers.filter(n => n % 2 !== 0).length;
-    const primos = numbers.filter(isPrime).length;
-    const soma = numbers.reduce((acc, curr) => acc + curr, 0);
-
-    statsInfo.innerHTML = `
-        Pares: <strong>${pares}</strong> | 
-        Ímpares: <strong>${impares}</strong> | 
-        Primos: <strong>${primos}</strong> | 
-        Soma: <strong>${soma}</strong>
-    `;
-}
-
-function isPrime(num) {
-    if (num <= 1) return false;
-    for (let i = 2; i <= Math.sqrt(num); i++) {
-        if (num % i === 0) return false;
-    }
-    return true;
-}
-
-function clearSelections() {
-    fixedNumbers.clear();
-    excludedNumbers.clear();
-    generatedGames = [];
-    
-    const genList = document.getElementById('generated_games_list');
-    if (genList) genList.innerHTML = '';
-    
-    buildGrid();
-    updateSummary();
-}
-
-function populateFilterSelects() {
-    const config = LOTTERIES_CONFIG[currentLottery];
-    const max = config.defaultSelect;
-
-    ['select_pares', 'select_impares', 'select_primos'].forEach(id => {
-        const select = document.getElementById(id);
-        if (!select) return;
-        select.innerHTML = '<option value="">Todos / All / Todos</option>';
-        for (let i = 0; i <= max; i++) {
-            select.innerHTML += `<option value="${i}">${i}</option>`;
-        }
-    });
-}
-
-function generateGames() {
-    const config = LOTTERIES_CONFIG[currentLottery];
-    const qtdInput = document.getElementById('qtd_jogos');
-    const qtdGames = qtdInput ? parseInt(qtdInput.value) || 1 : 1;
-    generatedGames = [];
-
-    if (config.isSuperSete) {
-        for (let g = 0; g < qtdGames; g++) {
-            let gameCols = [];
-            for (let col = 1; col <= 7; col++) {
-                let fixedInCol = Array.from(fixedNumbers)
-                    .filter(k => typeof k === 'string' && k.startsWith(`C${col}_`))
-                    .map(k => parseInt(k.split('_')[1]));
-
-                if (fixedInCol.length > 0) {
-                    gameCols.push(fixedInCol[Math.floor(Math.random() * fixedInCol.length)]);
-                } else {
-                    let available = [];
-                    for (let r = 0; r <= 9; r++) {
-                        if (!excludedNumbers.has(`C${col}_${r}`)) available.push(r);
-                    }
-                    if (available.length === 0) available = [0,1,2,3,4,5,6,7,8,9];
-                    gameCols.push(available[Math.floor(Math.random() * available.length)]);
-                }
-            }
-            generatedGames.push(gameCols);
-        }
-        renderGeneratedGames();
-        return;
-    }
-
-    const reqPares = document.getElementById('select_pares')?.value || "";
-    const reqImpares = document.getElementById('select_impares')?.value || "";
-    const reqPrimos = document.getElementById('select_primos')?.value || "";
-
-    const pool = [];
-    const start = config.zeroBased ? 0 : 1;
-    const end = config.zeroBased ? config.maxNum - 1 : config.maxNum;
-
-    for (let i = start; i <= end; i++) {
-        if (!fixedNumbers.has(i) && !excludedNumbers.has(i)) pool.push(i);
-    }
-
-    // Validação de segurança para garantir espaço no conjunto
-    if (fixedNumbers.size > config.defaultSelect) {
-        alert(`Você fixou mais números (${fixedNumbers.size}) do que a quantidade padrão da aposta (${config.defaultSelect})!\nPor favor, remova alguns fixos.`);
-        return;
-    }
-
-    let tentativas = 0;
-    const maxTentativas = 5000;
-
-    while (generatedGames.length < qtdGames && tentativas < maxTentativas) {
-        tentativas++;
-        let game = [...Array.from(fixedNumbers)];
-        let tempPool = [...pool].sort(() => Math.random() - 0.5);
-
-        while (game.length < config.defaultSelect && tempPool.length > 0) {
-            game.push(tempPool.pop());
-        }
-
-        if (game.length < config.defaultSelect) break;
-
-        game.sort((a, b) => a - b);
-
-        const pares = game.filter(n => n % 2 === 0).length;
-        const impares = game.filter(n => n % 2 !== 0).length;
-        const primos = game.filter(isPrime).length;
-
-        if (reqPares !== "" && pares !== parseInt(reqPares)) continue;
-        if (reqImpares !== "" && impares !== parseInt(reqImpares)) continue;
-        if (reqPrimos !== "" && primos !== parseInt(reqPrimos)) continue;
-
-        const gameKey = game.join('-');
-        if (!generatedGames.some(g => g.join('-') === gameKey)) {
-            generatedGames.push(game);
-        }
-    }
-
-    if (generatedGames.length < qtdGames) {
-        alert("Não foi possível gerar todos os jogos com a combinação de filtros selecionada.\nTente relaxar os filtros (ex: deixar Pares ou Primos em 'Todos').");
-    }
-
-    renderGeneratedGames();
-}
-
-function renderGeneratedGames() {
-    const container = document.getElementById('generated_games_list');
-    if (!container) return;
-    container.innerHTML = '';
-
-    if (generatedGames.length === 0) {
-        container.innerHTML = '<p style="color: #666; text-align: center;">Nenhum jogo gerado com esses filtros / No games generated / Ningún juego generado.</p>';
-        return;
-    }
-
-    const config = LOTTERIES_CONFIG[currentLottery];
-
-    generatedGames.forEach((game, index) => {
-        let gameStr = "";
-        if (config.isSuperSete) {
-            gameStr = game.map((val, idx) => `[C${idx+1}: ${val}]`).join(' ');
-        } else {
-            gameStr = game.map(n => String(n).padStart(2, '0')).join(' - ');
-        }
-
-        const card = document.createElement('div');
-        card.setAttribute('style', 'background: #fff; border-left: 5px solid #8e44ad; padding: 10px; margin-bottom: 8px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); font-weight: bold;');
-        card.innerHTML = `Jogo ${index + 1}: <span style="color: #2c3e50;">${gameStr}</span>`;
-        container.appendChild(card);
-    });
-}
-
-function saveGames() {
-    if (generatedGames.length === 0) {
-        alert("Gere pelo menos um jogo antes de salvar!\nGenerate at least one game before saving!");
-        return;
-    }
-
-    // Proteção de assinatura ao salvar no LocalStorage
-    const isAssinante = localStorage.getItem("is_subscriber") === "true";
-    if (!isAssinante) {
-        if (typeof mostrarDialogoNaoAssinante === 'function') {
-            mostrarDialogoNaoAssinante(localStorage.getItem("user_name"));
-        } else {
-            alert("Apenas assinantes podem salvar jogos!\nOnly subscribers can save games!");
-        }
-        return;
-    }
-
-    const saved = JSON.parse(localStorage.getItem('saved_games_list') || '[]');
-    generatedGames.forEach(game => {
-        saved.push({
-            loteria: currentLottery,
-            data: new Date().toLocaleDateString('pt-BR'),
-            numeros: game
-        });
-    });
-    localStorage.setItem('saved_games_list', JSON.stringify(saved));
-    alert(`${generatedGames.length} jogo(s) salvo(s) com sucesso! / Saved successfully!`);
-}
-
-function downloadTXT() {
-    if (generatedGames.length === 0) {
-        alert("Gere pelo menos um jogo antes de baixar!\nGenerate at least one game before downloading!");
-        return;
-    }
-    const config = LOTTERIES_CONFIG[currentLottery];
-    let content = `=== JOGOS GERADOS (${config.name}) ===\n\n`;
-    generatedGames.forEach((game, i) => {
-        let gameStr = config.isSuperSete 
-            ? game.map((val, idx) => `[C${idx+1}: ${val}]`).join(' ')
-            : game.map(n => String(n).padStart(2, '0')).join(' - ');
-        content += `Jogo ${i + 1}: ${gameStr}\n`;
-    });
-
-    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `jogos_${currentLottery.toLowerCase()}.txt`;
-    a.click();
-}
+window.mostrarDialogoNaoAssinante = function(nomeUsuario) {
+    const antigo = document.getElementById('modal-assinatura-exclusivo');
+    if (antigo) antigo.remove();
+    const modal = document.createElement('div');
+    modal.id = 'modal-assinatura-exclusivo';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(5px);display:flex;align-items:center;justify-content:center;z-index:99999;';
+    modal.innerHTML = `<div style="background:#fff;border-radius:16px;padding:30px 24px;max-width:440px;width:90%;text-align:center;box-shadow:0 15px 35px rgba(0,0,0,0.3);border-top:6px solid #209869;font-family:inherit;">
+        <div style="width:65px;height:65px;background:#e8f5e9;color:#209869;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 20px auto;"><i class="fa-solid fa-crown"></i></div>
+        <h3 style="color:#1a1a1a;margin:0 0 10px 0;font-size:1.3rem;">Olá, ${nomeUsuario || 'Visitante'}!</h3>
+        <p style="color:#555;font-size:0.9rem;line-height:1.5;margin-bottom:20px;">Função exclusiva para assinantes. Baixe nosso app no Google Play para desbloquear.</p>
+        <a href="https://play.google.com/store/apps/details?id=com.fabioribeiroromelli.geradordejogos" target="_blank" style="display:block;background:#209869;color:#fff;text-decoration:none;padding:13px 20px;border-radius:30px;font-weight:bold;font-size:0.95rem;margin-bottom:12px;">
+            <i class="fa-brands fa-google-play"></i> Baixar App e Assinar
+        </a>
+        <button onclick="document.getElementById('modal-assinatura-exclusivo').remove()" style="background:transparent;border:none;color:#888;font-size:0.85rem;cursor:pointer;padding:8px;text-decoration:underline;">Fechar</button>
+    </div>`;
+    document.body.appendChild(modal);
+    modal.addEventListener('click', function(e) { if (e.target === modal) modal.remove(); });
+};
