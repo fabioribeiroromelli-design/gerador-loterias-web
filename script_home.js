@@ -1,14 +1,11 @@
 /* ============================================================
-   script_home.js — versão completa e corrigida
-   - Lê dados do Firestore (coleção "loterias")
-   - Cards VIP + cards de resultado
-   - Navegação protegida global
+   script_home.js — versão premium com mais dados
    ============================================================ */
 console.log("[script_home.js] Carregado.");
 
 document.addEventListener('DOMContentLoaded', async () => {
     const grid = document.getElementById('lottery_grid');
-    if (!grid) { console.error("#lottery_grid não encontrado"); return; }
+    if (!grid) return;
 
     const COLORS = {
         'Dia de Sorte':'#cb8322','Dupla Sena':'#a61324','Federal':'#002f6c',
@@ -33,11 +30,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     const fmtR$ = (v) => v > 0 ? 'R$ ' + Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}) : 'R$ 0,00';
     const fmtR$k = (v) => {
         if (!v || v <= 0) return 'R$ 0';
+        if (v >= 1e9) return 'R$ ' + (v/1e9).toFixed(2).replace('.',',') + ' bi';
         if (v >= 1e6) return 'R$ ' + (v/1e6).toFixed(2).replace('.',',') + ' mi';
         if (v >= 1e3) return 'R$ ' + (v/1e3).toFixed(1).replace('.',',') + ' mil';
         return 'R$ ' + v.toFixed(0);
     };
     const limparZeros = (s) => (s || '').replace(/\u0000/g, '').trim();
+
+    const get = (obj, ...nomes) => {
+        if (!obj) return undefined;
+        const niveis = [obj, obj.ultimoConcurso, obj.UltimoConcurso, obj.dados, obj.data];
+        for (const nivel of niveis) {
+            if (!nivel || typeof nivel !== 'object') continue;
+            for (const n of nomes) {
+                const v = nivel[n];
+                if (v !== undefined && v !== null && v !== '' &&
+                    !(Array.isArray(v) && v.length === 0)) return v;
+            }
+        }
+        return undefined;
+    };
 
     // ============================================================
     // BUSCA FIRESTORE
@@ -47,17 +59,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         await Promise.all(LOTTERIES.map(async (l) => {
             try {
                 const doc = await db.collection('loterias').doc(DOC_IDS[l.name]).get();
-                if (doc.exists) {
-                    out[l.name] = doc.data();
-                    console.log(`[Firestore] ✅ ${l.name}`);
-                }
+                if (doc.exists) out[l.name] = doc.data();
             } catch (e) { console.error(`[Firestore] ❌ ${l.name}:`, e); }
         }));
         return out;
     }
 
     // ============================================================
-    // RENDER — CARD DE RESULTADO
+    // RENDER — CARD
     // ============================================================
     function renderCard(nome, data) {
         const color = COLORS[nome] || '#6c757d';
@@ -72,46 +81,64 @@ document.addEventListener('DOMContentLoaded', async () => {
             </div>`;
         }
 
-        const concurso = data.numero ?? '--';
-        const dataApur = data.dataApuracao || '';
-        const dataProx = data.dataProximoConcurso || '';
-        const acumulado = data.acumulado === true;
-        const estimativa = data.valorEstimadoProximoConcurso || 0;
-        const arrecadado = data.valorArrecadado || 0;
-        const local = limparZeros(data.nomeMunicipioUFSorteio) || limparZeros(data.localSorteio) || '';
+        // Metadados do concurso
+        const concurso = get(data, 'numero','concurso') ?? '--';
+        const dataApur = get(data, 'dataApuracao','data') || '';
+        const dataProx = get(data, 'dataProximoConcurso') || '';
+        const proxConcurso = get(data, 'numeroConcursoProximo') || '';
+        const acumulado = get(data, 'acumulado','acumulou') === true;
+        const estimativa = get(data, 'valorEstimadoProximoConcurso') || 0;
+        const acumProx = get(data, 'valorAcumuladoProximoConcurso') || 0;
+        const arrecadado = get(data, 'valorArrecadado') || 0;
+        const especial = get(data, 'indicadorConcursoEspecial') === 1;
+        const local = limparZeros(get(data, 'nomeMunicipioUFSorteio','localSorteio') || '');
+        const totalFaixa1 = get(data, 'valorTotalPremioFaixaUm') || 0;
 
         let numbersHtml = '';
 
         // ---------- LOTECA ----------
         if (nome === 'Loteca') {
-            const jogos = data.listaResultadoEquipeEsportiva || data.jogos || [];
+            const jogos = get(data, 'listaResultadoEquipeEsportiva','jogos') || [];
+            // Verifica se os placares estão zerados (bug da API)
+            const todosZerados = jogos.length > 0 && jogos.every(j => {
+                const g1 = get(j,'nuGolEquipeUm','golEquipeUm') ?? 0;
+                const g2 = get(j,'nuGolEquipeDois','golEquipeDois') ?? 0;
+                return g1 === 0 && g2 === 0;
+            });
+
             if (jogos.length > 0) {
-                numbersHtml = `
-                    <div style="max-height:200px;overflow-y:auto;background:#f8fafc;border-radius:6px;padding:4px;margin:4px 0;">
-                        ${jogos.map((j, idx) => {
-                            const g1 = j.nuGolEquipeUm ?? j.golEquipeUm ?? 0;
-                            const g2 = j.nuGolEquipeDois ?? j.golEquipeDois ?? 0;
-                            let col = 'X';
-                            if (g1 > g2) col = '1';
-                            else if (g1 < g2) col = '2';
-                            const cores = {
-                                'X': { bg:'#fff3cd', color:'#856404' },
-                                '1': { bg:'#d4edda', color:'#155724' },
-                                '2': { bg:'#cce5ff', color:'#004085' }
-                            };
-                            const c = cores[col];
-                            const e1 = j.nomeEquipeUm || '?';
-                            const e2 = j.nomeEquipeDois || '?';
-                            return `
-                                <div style="display:grid;grid-template-columns:18px 1fr auto 1fr 18px;gap:3px;align-items:center;padding:3px 2px;border-bottom:1px solid #e2e8f0;font-size:0.68rem;">
-                                    <span style="font-weight:bold;color:${color};text-align:center;">${idx+1}</span>
-                                    <span style="text-align:right;color:#1e293b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${e1}</span>
-                                    <span style="background:#0f172a;color:#fff;padding:1px 5px;border-radius:3px;font-weight:bold;font-size:0.66rem;">${g1}-${g2}</span>
-                                    <span style="color:#1e293b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${e2}</span>
-                                    <span style="background:${c.bg};color:${c.color};border-radius:3px;font-weight:bold;font-size:0.62rem;text-align:center;">${col}</span>
-                                </div>`;
-                        }).join('')}
-                    </div>`;
+                numbersHtml = `<div style="max-height:220px;overflow-y:auto;background:#f8fafc;border-radius:6px;padding:4px;margin:4px 0;">
+                    ${jogos.map((j, idx) => {
+                        const g1 = get(j,'nuGolEquipeUm','golEquipeUm') ?? 0;
+                        const g2 = get(j,'nuGolEquipeDois','golEquipeDois') ?? 0;
+                        const colOriginal = get(j, 'colunaVencedora') || '';
+                        // Deriva coluna
+                        let col = colOriginal;
+                        if (!col) {
+                            if (g1 > g2) col = '1'; else if (g1 < g2) col = '2'; else col = 'X';
+                        }
+                        const cores = {
+                            'X': { bg:'#fef3c7', color:'#92400e', label:'EMP' },
+                            '1': { bg:'#d4edda', color:'#155724', label:'CASA' },
+                            '2': { bg:'#cce5ff', color:'#004085', label:'FORA' }
+                        };
+                        const c = cores[col] || cores['X'];
+                        const e1 = get(j,'nomeEquipeUm','nomeTime1') || '?';
+                        const e2 = get(j,'nomeEquipeDois','nomeTime2') || '?';
+                        // Se tudo zerado, mostra a coluna em vez do placar
+                        const placar = todosZerados
+                            ? `<span style="background:${c.bg};color:${c.color};padding:1px 6px;border-radius:3px;font-weight:bold;font-size:0.65rem;min-width:28px;text-align:center;">${col}</span>`
+                            : `<span style="background:#0f172a;color:#fff;padding:1px 6px;border-radius:3px;font-weight:bold;font-size:0.66rem;">${g1}-${g2}</span>`;
+
+                        return `<div style="display:grid;grid-template-columns:18px 1fr auto 1fr;gap:4px;align-items:center;padding:3px 2px;border-bottom:1px solid #e2e8f0;font-size:0.68rem;">
+                            <span style="font-weight:bold;color:${color};text-align:center;">${idx+1}</span>
+                            <span style="text-align:right;color:#1e293b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${e1}</span>
+                            ${placar}
+                            <span style="color:#1e293b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${e2}</span>
+                        </div>`;
+                    }).join('')}
+                </div>
+                ${todosZerados ? `<div style="font-size:0.6rem;color:#94a3b8;text-align:center;margin-top:-2px;font-style:italic;">Colunas vencedoras (placar ainda não divulgado)</div>` : ''}`;
             } else {
                 numbersHtml = `<div style="text-align:center;padding:20px;color:#999;font-size:0.8rem;">Aguardando jogos</div>`;
             }
@@ -119,83 +146,83 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // ---------- FEDERAL ----------
         else if (nome === 'Federal') {
-            const dz = data.listaDezenas || [];
+            const dz = get(data, 'listaDezenas','dezenas','bilhetes') || [];
             if (dz.length > 0) {
                 numbersHtml = `<div style="background:#f8fafc;border-radius:6px;padding:6px;margin:4px 0;">
-                    ${dz.slice(0,5).map((b,i)=>`
-                        <div style="display:flex;justify-content:space-between;font-size:0.75rem;padding:2px 4px;border-bottom:1px solid #e2e8f0;">
-                            <span style="color:#64748b;font-weight:600;">${i+1}º Prêmio</span>
-                            <span style="font-family:monospace;font-weight:bold;color:${color};letter-spacing:1px;">${b}</span>
-                        </div>`).join('')}
+                    ${dz.slice(0,5).map((b,i)=>{
+                        let v = b;
+                        if (b && typeof b === 'object') v = get(b,'numero','bilhete','dezena','premio','valor','number') || JSON.stringify(b);
+                        return `<div style="display:flex;justify-content:space-between;align-items:center;font-size:0.75rem;padding:3px 4px;border-bottom:1px solid #e2e8f0;">
+                            <span style="color:#64748b;font-weight:600;font-size:0.65rem;">${i+1}º PRÊMIO</span>
+                            <span style="font-family:monospace;font-weight:bold;color:${color};letter-spacing:1.5px;font-size:0.82rem;">${v}</span>
+                        </div>`;
+                    }).join('')}
                 </div>`;
             }
         }
 
-        // ---------- DUPLA SENA (2 sorteios) ----------
+        // ---------- DUPLA SENA ----------
         else if (nome === 'Dupla Sena') {
-            const d1 = data.listaDezenas || [];
-            const d2 = data.listaDezenasSegundoSorteio || [];
-            const fmtArr = (arr) => arr.map(n => String(parseInt(n,10)).padStart(2,'0')).join(' - ');
+            const d1 = get(data, 'listaDezenas','dezenas') || [];
+            const d2 = get(data, 'listaDezenasSegundoSorteio','dezenasSegundoSorteio') || [];
+            const fmtArr = (arr) => arr.map(n => String(parseInt(n,10)).padStart(2,'0')).join(' • ');
             if (d1.length > 0) {
                 numbersHtml = `<div style="margin:4px 0;">
-                    <div style="font-size:0.68rem;color:#64748b;font-weight:600;margin-bottom:2px;">1º Sorteio</div>
-                    <div style="font-size:0.82rem;color:${color};font-weight:bold;letter-spacing:0.3px;">${fmtArr(d1)}</div>
-                    ${d2.length > 0 ? `
-                        <div style="font-size:0.68rem;color:#64748b;font-weight:600;margin-top:6px;margin-bottom:2px;">2º Sorteio</div>
+                    <div style="display:flex;align-items:center;gap:4px;margin-bottom:3px;">
+                        <span style="background:${color};color:#fff;font-size:0.6rem;font-weight:bold;padding:1px 6px;border-radius:10px;">1º</span>
+                        <div style="font-size:0.82rem;color:${color};font-weight:bold;letter-spacing:0.3px;">${fmtArr(d1)}</div>
+                    </div>
+                    ${d2.length > 0 ? `<div style="display:flex;align-items:center;gap:4px;">
+                        <span style="background:#64748b;color:#fff;font-size:0.6rem;font-weight:bold;padding:1px 6px;border-radius:10px;">2º</span>
                         <div style="font-size:0.82rem;color:${color};font-weight:bold;letter-spacing:0.3px;">${fmtArr(d2)}</div>
-                    ` : ''}
+                    </div>` : ''}
                 </div>`;
             }
         }
 
         // ---------- DEMAIS ----------
         else {
-            const dz = data.listaDezenas || data.dezenas || [];
+            const dz = get(data, 'listaDezenas','dezenas','numerosSorteados') || [];
             if (dz.length > 0) {
                 const fmt = dz.map(n => String(parseInt(n,10)).padStart(2,'0'));
                 if (nome === 'Lotomania') {
-                    numbersHtml = `<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:3px;margin:6px 0;">
-                        ${fmt.map(n=>`<span style="background:${color};color:#fff;text-align:center;padding:3px 0;border-radius:3px;font-size:0.72rem;font-weight:bold;">${n}</span>`).join('')}
+                    numbersHtml = `<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:3px;margin:8px 0;">
+                        ${fmt.map(n=>`<span style="background:linear-gradient(135deg,${color},${color}dd);color:#fff;text-align:center;padding:4px 0;border-radius:4px;font-size:0.72rem;font-weight:bold;box-shadow:0 1px 3px rgba(0,0,0,0.15);">${n}</span>`).join('')}
                     </div>`;
                 } else if (nome === 'Super Sete') {
-                    numbersHtml = `<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin:6px 0;">
-                        ${fmt.map(n=>`<span style="background:${color};color:#fff;text-align:center;padding:5px 0;border-radius:3px;font-size:0.85rem;font-weight:bold;">${n}</span>`).join('')}
+                    numbersHtml = `<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin:8px 0;">
+                        ${fmt.map(n=>`<span style="background:linear-gradient(135deg,${color},${color}dd);color:#fff;text-align:center;padding:6px 0;border-radius:4px;font-size:0.85rem;font-weight:bold;box-shadow:0 1px 3px rgba(0,0,0,0.15);">${n}</span>`).join('')}
                     </div>`;
                 } else if (nome === '+Milionária') {
-                    numbersHtml = `<div style="display:flex;flex-wrap:wrap;gap:4px;margin:6px 0;justify-content:center;">
-                        ${fmt.map(n=>`<span style="background:${color};color:#fff;text-align:center;width:30px;height:30px;line-height:30px;border-radius:50%;font-size:0.75rem;font-weight:bold;">${n}</span>`).join('')}
-                        ${(data.trevosSorteados||[]).map(t=>`<span style="background:#FFD700;color:#000;text-align:center;width:30px;height:30px;line-height:30px;border-radius:50%;font-size:0.75rem;font-weight:bold;">★${t}</span>`).join('')}
+                    const trevos = get(data, 'trevosSorteados','trevos') || [];
+                    numbersHtml = `<div style="display:flex;flex-wrap:wrap;gap:5px;margin:8px 0;justify-content:center;">
+                        ${fmt.map(n=>`<span style="background:linear-gradient(135deg,${color},${color}dd);color:#fff;text-align:center;width:32px;height:32px;line-height:32px;border-radius:50%;font-size:0.78rem;font-weight:bold;box-shadow:0 2px 4px rgba(0,0,0,0.15);">${n}</span>`).join('')}
+                        ${trevos.map(t=>`<span style="background:linear-gradient(135deg,#FFD700,#f59e0b);color:#000;text-align:center;width:32px;height:32px;line-height:32px;border-radius:50%;font-size:0.78rem;font-weight:bold;box-shadow:0 2px 4px rgba(0,0,0,0.15);">★${t}</span>`).join('')}
                     </div>`;
                 } else {
-                    numbersHtml = `<div style="display:flex;flex-wrap:wrap;gap:4px;margin:6px 0;justify-content:center;">
-                        ${fmt.map(n=>`<span style="background:${color};color:#fff;text-align:center;width:30px;height:30px;line-height:30px;border-radius:50%;font-size:0.75rem;font-weight:bold;">${n}</span>`).join('')}
+                    numbersHtml = `<div style="display:flex;flex-wrap:wrap;gap:5px;margin:8px 0;justify-content:center;">
+                        ${fmt.map(n=>`<span style="background:linear-gradient(135deg,${color},${color}dd);color:#fff;text-align:center;width:32px;height:32px;line-height:32px;border-radius:50%;font-size:0.78rem;font-weight:bold;box-shadow:0 2px 4px rgba(0,0,0,0.15);">${n}</span>`).join('')}
                     </div>`;
                 }
-            } else {
-                numbersHtml = `<div style="text-align:center;padding:20px;color:#999;font-size:0.8rem;">Sem números</div>`;
-            }
+            } else numbersHtml = `<div style="text-align:center;padding:20px;color:#999;font-size:0.8rem;">Sem números</div>`;
         }
 
-        // ---------- RATEIO (colapsável) ----------
+        // ---------- RATEIO ----------
         let rateioHtml = '';
-        const rateio = data.listaRateioPremio || [];
-        if (rateio.length > 0) {
+        const rateio = get(data, 'listaRateioPremio','rateio') || [];
+        if (Array.isArray(rateio) && rateio.length > 0) {
             rateioHtml = rateio.map(r => {
-                const g = r.numeroDeGanhadores || 0;
+                const g = r.numeroDeGanhadores ?? r.ganhadores ?? 0;
                 const gTxt = g === 0 ? '<span style="color:#dc2626;font-weight:bold;">Não houve</span>'
                     : `<span style="color:#059669;font-weight:bold;">${g.toLocaleString('pt-BR')} ${g===1?'ganhador':'ganhadores'}</span>`;
                 return `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px dotted #e2e8f0;font-size:0.72rem;">
                     <span style="color:#475569;font-weight:600;">${r.descricaoFaixa || 'Faixa '+r.faixa}</span>
-                    <div style="text-align:right;">
-                        <div>${gTxt}</div>
-                        <div style="color:#0f172a;font-weight:bold;">${fmtR$(r.valorPremio)}</div>
-                    </div>
+                    <div style="text-align:right;"><div>${gTxt}</div><div style="color:#0f172a;font-weight:bold;">${fmtR$(r.valorPremio || r.valor)}</div></div>
                 </div>`;
             }).join('');
         }
 
-        // ---------- BADGES ----------
-        const mesSorte = limparZeros(data.nomeTimeCoracaoMesSorte);
+        const mesSorte = limparZeros(get(data, 'nomeTimeCoracaoMesSorte','mesSorte') || '');
         let badgeExtra = '';
         if (nome === 'Dia de Sorte' && mesSorte) badgeExtra = `<span class="badge-extra"><i class="fa-solid fa-calendar-alt"></i> ${mesSorte}</span>`;
         else if (nome === 'Timemania' && mesSorte) badgeExtra = `<span class="badge-extra"><i class="fa-solid fa-shield-halved"></i> ${mesSorte}</span>`;
@@ -213,6 +240,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     ${acumulado
                         ? '<span class="badge-accumulated"><i class="fa-solid fa-fire"></i> Acumulou!</span>'
                         : '<span class="badge-extra" style="background:#e8f5e9;color:#2e7d32;"><i class="fa-solid fa-trophy"></i> Teve Ganhador!</span>'}
+                    ${especial ? '<span class="badge-extra" style="background:#fef3c7;color:#92400e;"><i class="fa-solid fa-star"></i> Especial</span>' : ''}
                     ${badgeExtra}
                 </div>
 
@@ -225,11 +253,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 ${estimativa > 0 ? `
                 <div style="background:linear-gradient(135deg,${color}15,${color}05);border:1px solid ${color}30;border-radius:6px;padding:6px 8px;margin:4px 0;">
-                    <div style="font-size:0.65rem;color:#64748b;font-weight:600;text-transform:uppercase;">Próximo Concurso</div>
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:2px;">
-                        <span style="color:${color};font-weight:bold;font-size:0.9rem;">${fmtR$k(estimativa)}</span>
-                        ${dataProx ? `<span style="font-size:0.7rem;color:#475569;font-weight:600;">${dataProx}</span>` : ''}
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <span style="font-size:0.62rem;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:0.3px;">Próximo ${proxConcurso ? '#'+proxConcurso : ''}</span>
+                        ${dataProx ? `<span style="font-size:0.65rem;color:#64748b;font-weight:600;"><i class="fa-regular fa-calendar"></i> ${dataProx}</span>` : ''}
                     </div>
+                    <div style="color:${color};font-weight:bold;font-size:0.95rem;margin-top:1px;">${fmtR$k(estimativa)}</div>
                 </div>` : ''}
 
                 ${rateioHtml ? `
@@ -237,9 +265,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <span><i class="fa-solid fa-trophy"></i> Premiação</span>
                         <i class="fa-solid fa-chevron-down" id="icon_${cardId}"></i>
                     </button>
-                    <div id="${cardId}" style="display:none;background:#fff;border:1px solid #e2e8f0;border-radius:5px;padding:6px 8px;margin-top:2px;max-height:180px;overflow-y:auto;">
-                        ${rateioHtml}
-                    </div>` : ''}
+                    <div id="${cardId}" style="display:none;background:#fff;border:1px solid #e2e8f0;border-radius:5px;padding:6px 8px;margin-top:2px;max-height:180px;overflow-y:auto;">${rateioHtml}</div>` : ''}
 
                 <button class="btn-generate" style="background:${color};margin-top:6px;" onclick="window.location.href='generator.html?lottery=${encodeURIComponent(nome)}'">
                     <i class="fa-solid fa-filter"></i> Gerar por Filtro
@@ -247,19 +273,27 @@ document.addEventListener('DOMContentLoaded', async () => {
             </div>`;
     }
 
-    // ===== CARDS VIP =====
-    const vipCard = (titulo, desc, cor, icone, url) => `
-        <div class="lottery-card vip-protected" onclick="navegarProtegido('${url}')" style="border-top-color:${cor};cursor:pointer;position:relative;">
-            <span style="position:absolute;top:8px;right:8px;background:#dc2626;color:#fff;font-size:0.65rem;font-weight:bold;padding:2px 7px;border-radius:10px;z-index:10;"><i class="fa-solid fa-lock"></i> VIP</span>
-            <div style="text-align:center;padding:6px 0;">
-                <i class="fa-solid ${icone}" style="font-size:1.8rem;color:${cor};"></i>
-                <h3 style="color:${cor};margin:6px 0 2px 0;font-size:1rem;">${titulo}</h3>
-                <p style="color:#64748b;font-size:0.72rem;margin:0 0 8px 0;line-height:1.3;">${desc}</p>
-                <div style="background:${cor};color:#fff;padding:5px 12px;border-radius:20px;font-weight:bold;font-size:0.72rem;display:inline-block;">
-                    <i class="fa-solid fa-arrow-right"></i> Acessar
+    // ============================================================
+    // CARDS VIP
+    // ============================================================
+    const vipCard = (titulo, desc, cor, icone, url) => {
+        const isVip = window.isSubscriber === true;
+        const lockedClass = isVip ? '' : 'vip-card-locked';
+        const badgeHtml = isVip ? '' :
+            '<span class="vip-badge" style="position:absolute;top:8px;right:8px;background:#dc2626;color:#fff;font-size:0.65rem;font-weight:bold;padding:2px 7px;border-radius:10px;z-index:10;"><i class="fa-solid fa-lock"></i> VIP</span>';
+        return `
+            <div class="lottery-card vip-protected ${lockedClass}" onclick="navegarProtegido('${url}')" style="border-top-color:${cor};cursor:pointer;position:relative;">
+                ${badgeHtml}
+                <div style="text-align:center;padding:6px 0;">
+                    <i class="fa-solid ${icone}" style="font-size:1.8rem;color:${cor};"></i>
+                    <h3 style="color:${cor};margin:6px 0 2px 0;font-size:1rem;">${titulo}</h3>
+                    <p style="color:#64748b;font-size:0.72rem;margin:0 0 8px 0;line-height:1.3;">${desc}</p>
+                    <div style="background:${cor};color:#fff;padding:5px 12px;border-radius:20px;font-weight:bold;font-size:0.72rem;display:inline-block;">
+                        <i class="fa-solid fa-arrow-right"></i> Acessar
+                    </div>
                 </div>
-            </div>
-        </div>`;
+            </div>`;
+    };
 
     window.togglePrizes = function(id) {
         const el = document.getElementById(id);
@@ -270,7 +304,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (ic) ic.className = aberto ? 'fa-solid fa-chevron-down' : 'fa-solid fa-chevron-up';
     };
 
-    // ===== RENDER =====
+    // ============================================================
+    // RENDER
+    // ============================================================
     try {
         const dados = await fetchTodas();
         let html = '';
@@ -289,9 +325,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 /* ============================================================
-   FUNÇÕES GLOBAIS — navegação protegida e modal
+   FUNÇÕES GLOBAIS
    ============================================================ */
-
 window.navegarProtegido = function(url) {
     let emailSalvo = localStorage.getItem('user_email');
     if (!emailSalvo) {
@@ -300,65 +335,37 @@ window.navegarProtegido = function(url) {
             if (u && u.email) emailSalvo = u.email;
         } catch (e) {}
     }
-
-    if (!emailSalvo) {
-        alert("Por favor, faça login com sua conta do Google para continuar.\nPlease sign in with your Google account.\nPor favor, inicie sesión con su cuenta de Google.");
-        return;
-    }
-
-    if (window.isSubscriber === true) {
-        window.location.href = url;
-        return;
-    }
-
+    if (!emailSalvo) { alert("Faça login com Google para continuar."); return; }
+    if (window.isSubscriber === true) { window.location.href = url; return; }
     if (typeof window.verificarAssinaturaFirestore === 'function') {
         window.verificarAssinaturaFirestore(emailSalvo).then(function(isAss) {
             window.isSubscriber = isAss;
             localStorage.setItem('isSubscriber', isAss ? 'true' : 'false');
-            if (isAss) {
-                window.location.href = url;
-            } else {
-                window.mostrarDialogoNaoAssinante(localStorage.getItem('user_name') || emailSalvo);
-            }
-        }).catch(function() {
-            window.mostrarDialogoNaoAssinante(emailSalvo);
+            if (isAss) window.location.href = url;
+            else window.mostrarDialogoNaoAssinante(localStorage.getItem('user_name') || emailSalvo);
         });
         return;
     }
-
     window.mostrarDialogoNaoAssinante(emailSalvo);
 };
 
 window.mostrarDialogoNaoAssinante = function(nomeUsuario) {
     const antigo = document.getElementById('modal-assinatura-exclusivo');
     if (antigo) antigo.remove();
-
     const modal = document.createElement('div');
     modal.id = 'modal-assinatura-exclusivo';
     modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(5px);display:flex;align-items:center;justify-content:center;z-index:99999;';
-
     modal.innerHTML = `
         <div style="background:#fff;border-radius:16px;padding:30px 24px;max-width:440px;width:90%;text-align:center;box-shadow:0 15px 35px rgba(0,0,0,0.3);border-top:6px solid #209869;font-family:inherit;">
-            <div style="width:65px;height:65px;background:#e8f5e9;color:#209869;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 20px auto;box-shadow:0 4px 10px rgba(32,152,105,0.2);">
-                <i class="fa-solid fa-crown"></i>
-            </div>
-            <h3 style="color:#1a1a1a;margin:0 0 10px 0;font-size:1.3rem;">Olá / Hello / Hola, ${nomeUsuario || 'Visitante'}!</h3>
-            <div style="color:#555;font-size:0.88rem;line-height:1.45;margin-bottom:20px;text-align:left;">
-                <p style="margin-bottom:8px;"><strong>PT:</strong> Identificamos que você ainda não possui assinatura ativa. Baixe o app no Google Play para desbloquear.</p>
-                <p style="margin-bottom:8px;"><strong>EN:</strong> You don't have an active subscription yet. Download our app on Google Play to unlock.</p>
-                <p style="margin:0;"><strong>ES:</strong> Aún no tienes suscripción activa. Descarga nuestra app en Google Play para desbloquear.</p>
-            </div>
-            <a href="https://play.google.com/store/apps/details?id=com.fabioribeiroromelli.geradordejogos" target="_blank" style="display:block;background:#209869;color:#fff;text-decoration:none;padding:13px 20px;border-radius:30px;font-weight:bold;font-size:0.95rem;box-shadow:0 4px 15px rgba(32,152,105,0.4);margin-bottom:12px;">
+            <div style="width:65px;height:65px;background:#e8f5e9;color:#209869;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 20px auto;"><i class="fa-solid fa-crown"></i></div>
+            <h3 style="color:#1a1a1a;margin:0 0 10px 0;font-size:1.3rem;">Olá, ${nomeUsuario || 'Visitante'}!</h3>
+            <p style="color:#555;font-size:0.9rem;line-height:1.5;margin-bottom:20px;">Esta função é exclusiva para assinantes. Baixe o app no Google Play para desbloquear.</p>
+            <a href="https://play.google.com/store/apps/details?id=com.fabioribeiroromelli.geradordejogos" target="_blank" style="display:block;background:#209869;color:#fff;text-decoration:none;padding:13px 20px;border-radius:30px;font-weight:bold;font-size:0.95rem;margin-bottom:12px;">
                 <i class="fa-brands fa-google-play"></i> Baixar App e Assinar
             </a>
-            <button onclick="document.getElementById('modal-assinatura-exclusivo').remove()" style="background:transparent;border:none;color:#888;font-size:0.85rem;cursor:pointer;padding:8px;font-weight:600;text-decoration:underline;">
-                Continuar navegando / Continue browsing
-            </button>
+            <button onclick="document.getElementById('modal-assinatura-exclusivo').remove()" style="background:transparent;border:none;color:#888;font-size:0.85rem;cursor:pointer;padding:8px;text-decoration:underline;">Fechar</button>
         </div>
     `;
-
     document.body.appendChild(modal);
-    modal.addEventListener('click', function(e) {
-        if (e.target === modal) modal.remove();
-    });
+    modal.addEventListener('click', function(e) { if (e.target === modal) modal.remove(); });
 };
