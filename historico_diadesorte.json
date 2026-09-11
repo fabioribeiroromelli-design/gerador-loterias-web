@@ -32,5 +32,20 @@
     "valorEstimadoProximoConcurso": 520000,
     "dataProximoConcurso": "10/09/2026",
     "mesSorte": "Novembro"
+  },
+  {
+    "concurso": "1294",
+    "data": "10/09/2026",
+    "dezenas": [
+      "01",
+      "02",
+      "03",
+      "06",
+      "19",
+      "29",
+      "30"
+    ],
+    "acumulado": true,
+    "mesSorte": "Fevereiro"
   }
 ]
