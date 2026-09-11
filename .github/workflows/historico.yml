@@ -11,9 +11,11 @@ jobs:
   atualizar-historico:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout do repositório
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
 
@@ -23,11 +25,11 @@ jobs:
       - name: Rodar robô do histórico
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-        run: node scripts/robo_historico.js
+        run: node robo_historico.js
 
-      - name: Commit dos JSONs
+      - name: Commit dos JSONs atualizados
         run: |
-          git config user.name  "github-actions[bot]"
+          git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add historico_*.json
           git diff --quiet && git diff --staged --quiet || git commit -m "🤖 Atualiza históricos [skip ci]"
