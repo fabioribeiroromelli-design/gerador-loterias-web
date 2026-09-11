@@ -1,6 +1,6 @@
 /* ============================================================
    ROBÔ 2 — Histórico COMPLETO em historico_loterias/{id}
-   - Prioridade: FIRESTORE primeiro, JSON local só como fallback
+   VERSÃO 4 (FINAL) — sempre sincroniza JSON ↔ Firestore
    ============================================================ */
 
 const fs = require('fs');
@@ -98,8 +98,7 @@ async function baixarIntervalo(urlApi, inicio, fim, loteria) {
 
 async function atualizarHistorico() {
     const t0 = Date.now();
-    console.log(`\n=== ROBÔ HISTÓRICO — ${new Date().toLocaleString('pt-BR')} ===\n`);
-    console.log(`🔧 Modo: PRIORIDADE FIRESTORE (ignora JSON local se Firestore for maior)\n`);
+    console.log(`\n=== ROBÔ HISTÓRICO v4 — ${new Date().toLocaleString('pt-BR')} ===\n`);
 
     for (const loteria of LOTERIAS) {
         const urlApi = `https://servicebus2.caixa.gov.br/portaldeloterias/api/${loteria}`;
@@ -108,7 +107,22 @@ async function atualizarHistorico() {
 
         try {
             // ============================================================
-            // 1) PRIORIDADE: pega o Firestore (historico_loterias/{id})
+            // 1) Lê JSON local
+            // ============================================================
+            let historicoLocal = [];
+            if (fs.existsSync(caminho)) {
+                try {
+                    historicoLocal = JSON.parse(fs.readFileSync(caminho, 'utf-8'));
+                    if (!Array.isArray(historicoLocal)) historicoLocal = [];
+                } catch (e) {
+                    console.warn(`⚠️ ${nomeArq} corrompido, ignorando.`);
+                    historicoLocal = [];
+                }
+            }
+            console.log(`   📄 JSON local: ${historicoLocal.length}`);
+
+            // ============================================================
+            // 2) Lê Firestore
             // ============================================================
             const docRef = db.collection('historico_loterias').doc(loteria);
             const snap = await docRef.get();
@@ -116,32 +130,15 @@ async function atualizarHistorico() {
             if (snap.exists && Array.isArray(snap.data().concursos)) {
                 historicoFirestore = snap.data().concursos;
             }
-            console.log(`   🔥 Firestore tem: ${historicoFirestore.length} concursos`);
+            console.log(`   🔥 Firestore: ${historicoFirestore.length}`);
 
             // ============================================================
-            // 2) FALLBACK: JSON local (só se o Firestore estiver vazio)
+            // 3) Escolhe o MAIOR entre JSON e Firestore
             // ============================================================
-            let historicoLocal = [];
-            if (historicoFirestore.length === 0) {
-                if (fs.existsSync(caminho)) {
-                    try {
-                        historicoLocal = JSON.parse(fs.readFileSync(caminho, 'utf-8'));
-                        if (!Array.isArray(historicoLocal)) historicoLocal = [];
-                        console.log(`   📄 JSON local tem: ${historicoLocal.length} concursos (fallback)`);
-                    } catch (e) {
-                        console.warn(`   ⚠️ JSON corrompido`);
-                        historicoLocal = [];
-                    }
-                }
-            }
-
-            // ============================================================
-            // 3) ESCOLHE a base: Firestore ganha sempre
-            //    JSON local só entra se o Firestore estiver completamente vazio
-            // ============================================================
-            const historicoBase = historicoFirestore.length > 0
-                ? historicoFirestore
-                : historicoLocal;
+            const historicoBase = historicoLocal.length >= historicoFirestore.length
+                ? historicoLocal
+                : historicoFirestore;
+            console.log(`   📦 Base escolhida: ${historicoBase.length} concursos`);
 
             let ultimoBase = 0;
             if (historicoBase.length > 0) {
@@ -165,7 +162,7 @@ async function atualizarHistorico() {
             // ============================================================
             let novos = [];
             if (historicoBase.length === 0) {
-                console.log(`   📥 Histórico VAZIO. Baixando TUDO de #1 até #${ultimoApi}`);
+                console.log(`   📥 Vazio. Baixando de #1 até #${ultimoApi}`);
                 const TAM_BLOCO = 200;
                 for (let c = 1; c <= ultimoApi; c += TAM_BLOCO) {
                     const fim = Math.min(c + TAM_BLOCO - 1, ultimoApi);
@@ -174,12 +171,11 @@ async function atualizarHistorico() {
                     novos.push(...bloco);
                 }
             } else if (ultimoApi > ultimoBase) {
-                console.log(`   📥 Complementando do #${ultimoBase + 1} até #${ultimoApi}`);
+                console.log(`   📥 Complementando #${ultimoBase + 1} até #${ultimoApi}`);
                 const bloco = await baixarIntervalo(urlApi, ultimoBase + 1, ultimoApi, loteria);
                 novos.push(...bloco);
             } else {
-                console.log(`   ✅ Já está completo\n`);
-                continue;
+                console.log(`   ✅ Já tem tudo da API (base=${ultimoBase}, api=${ultimoApi})`);
             }
 
             // ============================================================
@@ -187,15 +183,22 @@ async function atualizarHistorico() {
             // ============================================================
             const todos = [...historicoBase, ...novos];
             const mapa = new Map();
-            todos.forEach(i => mapa.set(String(i.concurso), i));
+            todos.forEach(i => {
+                if (i && i.concurso) mapa.set(String(i.concurso), i);
+            });
             const historicoFinal = Array.from(mapa.values())
                 .sort((a, b) => Number(a.concurso) - Number(b.concurso));
 
-            fs.writeFileSync(caminho, JSON.stringify(historicoFinal, null, 2), 'utf-8');
-            console.log(`   📄 Total salvo em ${nomeArq}: ${historicoFinal.length} concursos`);
+            console.log(`   📊 Total final: ${historicoFinal.length}`);
 
             // ============================================================
-            // 7) Salva no Firestore (decrescente)
+            // 7) SEMPRE salva JSON local
+            // ============================================================
+            fs.writeFileSync(caminho, JSON.stringify(historicoFinal, null, 2), 'utf-8');
+            console.log(`   💾 JSON: ${historicoFinal.length}`);
+
+            // ============================================================
+            // 8) SEMPRE salva Firestore (mesmo se "já completo")
             // ============================================================
             const ordenadoDesc = historicoFinal.slice().sort((a, b) =>
                 Number(b.concurso) - Number(a.concurso)
@@ -205,7 +208,18 @@ async function atualizarHistorico() {
             const tamanhoMB = jsonStr.length / (1024 * 1024);
 
             if (tamanhoMB > 0.9) {
-                console.log(`   ⚠️ ${loteria} tem ${tamanhoMB.toFixed(2)} MB — pulando Firestore (precisa chunks)\n`);
+                console.log(`   ⚠️ ${tamanhoMB.toFixed(2)} MB — salvando só os últimos 5000`);
+                const truncado = ordenadoDesc.slice(0, 5000);
+                await docRef.set({
+                    concursos: truncado,
+                    total: historicoFinal.length,
+                    totalSalvo: truncado.length,
+                    truncated: true,
+                    ultimoConcurso: truncado[0] ? truncado[0].concurso : null,
+                    primeiroConcurso: truncado[truncado.length - 1] ? truncado[truncado.length - 1].concurso : null,
+                    atualizadoEm: new Date().toISOString()
+                }, { merge: true });
+                console.log(`   💾 Firestore: 5000 (truncado, real ${historicoFinal.length})\n`);
             } else {
                 await docRef.set({
                     concursos: ordenadoDesc,
@@ -214,14 +228,14 @@ async function atualizarHistorico() {
                     primeiroConcurso: ordenadoDesc[ordenadoDesc.length - 1] ? ordenadoDesc[ordenadoDesc.length - 1].concurso : null,
                     atualizadoEm: new Date().toISOString()
                 }, { merge: true });
-                console.log(`   💾 Firestore: ${ordenadoDesc.length} concursos (${tamanhoMB.toFixed(2)} MB)\n`);
+                console.log(`   💾 Firestore: ${ordenadoDesc.length} (${tamanhoMB.toFixed(2)} MB)\n`);
             }
         } catch (err) {
             console.error(`❌ ${loteria}: ${err.message}\n`);
         }
     }
 
-    console.log(`=== Histórico concluído em ${((Date.now() - t0)/1000).toFixed(1)}s ===\n`);
+    console.log(`=== Concluído em ${((Date.now() - t0)/1000).toFixed(1)}s ===\n`);
 }
 
 atualizarHistorico().catch(err => {
