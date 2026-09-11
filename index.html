@@ -4,23 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gerador de Jogos - Loterias</title>
-    
+
     <!-- Estilos Externos & Ícones -->
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+
     <!-- Google Identity Services (GSI) SDK -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
 
-    <!-- Google AdSense Script (Verificação Automática do Site) -->
+    <!-- Google AdSense -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2348094023361642" crossorigin="anonymous"></script>
 
-    <!-- FIREBASE SDK (Módulos v10) -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-        import { getAuth, GoogleAuthProvider, signInWithCredential, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-
+    <!-- FIREBASE SDK (compat — apenas Firestore, sem Auth) -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script>
         const firebaseConfig = {
             apiKey: "AIzaSyBc1Ab14Fo6Ua-u3i1SDudf4EfVijVmONY",
             authDomain: "gerador-loterias-web.firebaseapp.com",
@@ -30,60 +28,45 @@
             appId: "1:539211828205:web:138dc9c6f09169bde2b5e4"
         };
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.firestore();
 
-        // Autenticação Firebase com Google
-        window.autenticarFirebaseComGoogle = async function (googleIdToken) {
+        // ============================================================
+        // CONSULTA ASSINANTE NO FIRESTORE
+        // Estrutura: usuarios/{docId} → { email: "...", assinante: true }
+        // ============================================================
+        window.verificarAssinaturaFirestore = async function (email) {
+            if (!email) return false;
+            const cleanEmail = String(email).toLowerCase().trim();
+            console.log("[Firestore] Consultando assinatura para:", cleanEmail);
+
             try {
-                const credential = GoogleAuthProvider.credential(googleIdToken);
-                const userCredential = await signInWithCredential(auth, credential);
-                console.log("[Firebase Auth] Login no Firebase concluído. UID:", userCredential.user.uid);
-                return true;
-            } catch (error) {
-                console.error("[Firebase Auth] ERRO ao autenticar no Firebase com o token do Google:", error);
-                return false;
-            }
-        };
+                let snap = await db.collection("usuarios")
+                    .where("email", "==", cleanEmail)
+                    .limit(1)
+                    .get();
 
-        window.sairDoFirebase = async function () {
-            try {
-                await signOut(auth);
-                console.log("[Firebase Auth] Logout do Firebase concluído.");
-            } catch (error) {
-                console.warn("[Firebase Auth] Erro ao sair do Firebase:", error);
-            }
-        };
+                // Se não achou com minúsculo, tenta com o e-mail exato
+                if (snap.empty && email !== cleanEmail) {
+                    snap = await db.collection("usuarios")
+                        .where("email", "==", email)
+                        .limit(1)
+                        .get();
+                }
 
-        // Função de verificação no Firestore
-        window.verificarAssinaturaFirestore = async function(email) {
-            try {
-                const cleanEmail = email.toLowerCase().trim();
-                console.log("[Firestore] Consultando assinatura para:", cleanEmail);
-
-                const q = query(
-                    collection(db, "usuarios"), 
-                    where("email", "==", cleanEmail)
-                );
-                const querySnapshot = await getDocs(q);
-                
-                if (querySnapshot.empty) {
-                    console.log("[Firestore] Nenhum documento encontrado em 'usuarios' com este e-mail.");
+                if (snap.empty) {
+                    console.log("[Firestore] Nenhum documento encontrado com:", cleanEmail);
                     return false;
                 }
 
-                let eAssinante = false;
-                querySnapshot.forEach((doc) => {
-                    const data = doc.data();
-                    if (data.assinante === true || data.assinante === "true") {
-                        eAssinante = true;
-                    }
-                });
+                const data = snap.docs[0].data();
+                console.log("[Firestore] Documento encontrado:", data);
+                return data.assinante === true || data.assinante === "true";
 
-                return eAssinante;
-            } catch (error) {
-                console.error("[Firestore] ERRO ao consultar a base de dados:", error);
+            } catch (e) {
+                console.error("[Firestore] Erro ao consultar:", e);
                 return false;
             }
         };
@@ -180,11 +163,11 @@
         .carousel-btn:hover { background: rgba(0,0,0,0.8); }
         .carousel-btn.prev { left: 10px; }
         .carousel-btn.next { right: 10px; }
-        
-        .carousel-dots { 
-            text-align: center; 
-            padding: 12px; 
-            background: rgba(0,0,0,0.2); 
+
+        .carousel-dots {
+            text-align: center;
+            padding: 12px;
+            background: rgba(0,0,0,0.2);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -201,8 +184,8 @@
             cursor: pointer;
             transition: all 0.3s ease;
         }
-        .dot.active { 
-            background-color: #38bdf8; 
+        .dot.active {
+            background-color: #38bdf8;
             transform: scale(1.2);
         }
 
@@ -434,7 +417,9 @@
             localStorage.removeItem('currentUser');
             currentUser = null;
         }
-        let isSubscriber = localStorage.getItem('isSubscriber') === 'true';
+
+        // ⚠️ Usar window.isSubscriber para ficar acessível de outros scripts
+        window.isSubscriber = localStorage.getItem('isSubscriber') === 'true';
 
         function parseJwt(token) {
             try {
@@ -459,10 +444,16 @@
             authContainer.innerHTML = '';
 
             if (currentUser) {
+                // Badge de assinante
+                const badgeAssinante = window.isSubscriber
+                    ? '<span style="background: #e8f5e9; color: #209869; padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: bold; margin-left: 4px;">VIP</span>'
+                    : '';
+
                 authContainer.innerHTML = `
                     <div style="display: flex; align-items: center; gap: 8px; background: rgba(255, 255, 255, 0.15); padding: 5px 12px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.3);">
                         ${currentUser.picture ? `<img src="${currentUser.picture}" style="width: 26px; height: 26px; border-radius: 50%; object-fit: cover;" alt="Usuário">` : '<i class="fa-solid fa-circle-user" style="font-size: 1.3rem; color: #fff;"></i>'}
                         <span style="font-size: 0.85rem; font-weight: 600; color: #fff; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${currentUser.name || currentUser.email}</span>
+                        ${badgeAssinante}
                         <button onclick="logoutGoogle()" style="background: #e74c3c; color: white; border: none; padding: 4px 8px; border-radius: 12px; cursor: pointer; font-size: 0.75rem; font-weight: bold; margin-left: 4px;" title="Sair">
                             <i class="fa-solid fa-right-from-bracket"></i>
                         </button>
@@ -508,19 +499,15 @@
             }
         }
 
-        window.logoutGoogle = function() {
+        window.logoutGoogle = function () {
             currentUser = null;
-            isSubscriber = false;
-            
+            window.isSubscriber = false;
+
             localStorage.removeItem('currentUser');
             localStorage.removeItem('isSubscriber');
 
             if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
                 google.accounts.id.disableAutoSelect();
-            }
-
-            if (typeof window.sairDoFirebase === "function") {
-                window.sairDoFirebase();
             }
 
             updateUIAuth();
@@ -538,6 +525,7 @@
                 return;
             }
 
+            // Aguarda o módulo do Firestore carregar
             let tentativas = 0;
             while (typeof window.verificarAssinaturaFirestore !== "function" && tentativas < 20) {
                 await new Promise(r => setTimeout(r, 200));
@@ -550,10 +538,7 @@
                 return;
             }
 
-            if (typeof window.autenticarFirebaseComGoogle === "function") {
-                await window.autenticarFirebaseComGoogle(response.credential);
-            }
-
+            // Verifica no Firestore
             const eAssinante = await window.verificarAssinaturaFirestore(userEmail);
 
             currentUser = {
@@ -562,36 +547,41 @@
                 picture: responsePayload.picture || ''
             };
 
-            isSubscriber = eAssinante;
+            window.isSubscriber = eAssinante;
 
             localStorage.setItem('currentUser', JSON.stringify(currentUser));
-            localStorage.setItem('isSubscriber', isSubscriber ? 'true' : 'false');
+            localStorage.setItem('isSubscriber', eAssinante ? 'true' : 'false');
 
             updateUIAuth();
             applyVipLocks();
 
-            if (isSubscriber) {
+            if (eAssinante) {
                 alert(`Seja bem-vindo(a)! Sua assinatura VIP foi confirmada.`);
             } else {
                 alert("Aviso: O e-mail informado não possui uma assinatura ativa.");
             }
         }
 
+        // ============================================================
+        // VIP LOCKS — bloqueia cards se NÃO for assinante
+        // ============================================================
         let isLockingVip = false;
+
         const applyVipLocks = () => {
             const grid = document.getElementById('lottery_grid');
             if (!grid) return;
 
             const cards = Array.from(grid.children).slice(0, 5);
+            const liberado = Boolean(currentUser) && window.isSubscriber === true;
 
-            if (currentUser && isSubscriber) {
-                cards.forEach(card => {
+            cards.forEach(card => {
+                if (liberado) {
                     card.classList.remove('vip-card-locked');
                     const badge = card.querySelector('.vip-badge');
                     if (badge) badge.remove();
-                });
-            } else {
-                cards.forEach(card => {
+                    // Remove listeners de bloqueio clonando (garante clique liberado)
+                    card.style.pointerEvents = '';
+                } else {
                     card.classList.add('vip-card-locked');
                     if (!card.querySelector('.vip-badge')) {
                         const badge = document.createElement('span');
@@ -599,12 +589,24 @@
                         badge.innerHTML = '<i class="fa-solid fa-lock"></i> VIP';
                         card.appendChild(badge);
                     }
-                });
-            }
+                }
+            });
+
+            console.log(`[VIP] Locks aplicados. Liberado: ${liberado}`);
         };
 
         document.addEventListener('DOMContentLoaded', () => {
-            updateUIAuth();
+            // Se já tem usuário salvo, revalida a assinatura no Firestore
+            if (currentUser && currentUser.email) {
+                window.verificarAssinaturaFirestore(currentUser.email).then(isAss => {
+                    window.isSubscriber = isAss;
+                    localStorage.setItem('isSubscriber', isAss ? 'true' : 'false');
+                    updateUIAuth();
+                    applyVipLocks();
+                });
+            } else {
+                updateUIAuth();
+            }
 
             // Lógica do Carrossel
             let slideIndex = 0;
@@ -630,7 +632,7 @@
 
             if (btnNext) btnNext.addEventListener('click', () => { updateSlide(slideIndex + 1); startAutoSlide(); });
             if (btnPrev) btnPrev.addEventListener('click', () => { updateSlide(slideIndex - 1); startAutoSlide(); });
-            
+
             dots.forEach(dot => {
                 dot.addEventListener('click', (e) => {
                     updateSlide(parseInt(e.target.dataset.index));
@@ -640,7 +642,7 @@
 
             startAutoSlide();
 
-            // Modal VIP Exclusivo
+            // Modal VIP Exclusivo (para não assinantes)
             const showVipModal = () => {
                 if (document.getElementById('vip-modal')) return;
 
@@ -684,9 +686,11 @@
                 observer.observe(grid, { childList: true, subtree: true });
                 applyVipLocks();
 
+                // Bloqueia clique nos cards travados SE NÃO for assinante
                 grid.addEventListener('click', (e) => {
                     const card = e.target.closest('.lottery-card, .vip-card-locked');
-                    if (card && card.classList.contains('vip-card-locked') && !isSubscriber) {
+                    if (!card) return;
+                    if (card.classList.contains('vip-card-locked') && !window.isSubscriber) {
                         e.preventDefault();
                         e.stopPropagation();
                         showVipModal();
