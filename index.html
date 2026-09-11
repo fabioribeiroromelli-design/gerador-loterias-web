@@ -17,7 +17,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
     
     <script>
-        // Configuração do Firebase Atualizada
+        // Configuração do Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyAd_6aSOdCFGbMCkcUSXVHeENKNBfJ75yA",
             authDomain: "gerador-de-jogos-5e787.firebaseapp.com",
@@ -28,12 +28,12 @@
             measurementId: "G-68JK4JKSCQ"
         };
 
-        // Inicializa o Firebase
+        // Inicializa o Firebase se ainda não foi inicializado
         if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
         }
 
-        // Conecta aos serviços unificados
+        // Conecta aos serviços
         const db = firebase.firestore();
         const auth = firebase.auth();
 
@@ -67,7 +67,7 @@
             --muted-text: #cbd5e1;
         }
         body { font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif; margin:0; padding:0; background:#f4f6f9; color:#333; }
-        .toolbar { background:var(--primary-bg); color:var(--text-color); display:flex; justify-content:space-between; align-items:center; padding:12px 24px; box-shadow:0 2px 10px rgba(0,0,0,0.1); }
+        .toolbar { background:var(--primary-bg); color:var(--text-color); display:flex; justify-space-between; align-items:center; padding:12px 24px; box-shadow:0 2px 10px rgba(0,0,0,0.1); }
         .ad-container { max-width:1200px; margin:20px auto; text-align:center; overflow:hidden; }
         .carousel-container { position:relative; max-width:1200px; margin:20px auto; overflow:hidden; border-radius:12px; box-shadow:0 4px 15px rgba(0,0,0,0.15); background:#1e293b; color:var(--text-color); }
         .carousel-slides { display:flex; transition:transform 0.4s ease-in-out; width:100%; }
@@ -111,8 +111,8 @@
     </div>
 
     <section class="carousel-container">
-        <button class="carousel-btn prev" id="btnPrev"><i class="fa-solid fa-chevron-left"></i></button>
-        <button class="carousel-btn next" id="btnNext"><i class="fa-solid fa-chevron-right"></i></button>
+        <button class="carousel-btn prev" id="btnPrev" aria-label="Slide Anterior"><i class="fa-solid fa-chevron-left"></i></button>
+        <button class="carousel-btn next" id="btnNext" aria-label="Próximo Slide"><i class="fa-solid fa-chevron-right"></i></button>
 
         <div class="carousel-slides" id="carouselSlides">
             <div class="carousel-slide">
@@ -201,7 +201,10 @@
         try {
             const s = localStorage.getItem('currentUser');
             currentUser = s ? JSON.parse(s) : null;
-        } catch (e) { currentUser = null; localStorage.removeItem('currentUser'); }
+        } catch (e) { 
+            currentUser = null; 
+            localStorage.removeItem('currentUser'); 
+        }
 
         window.isSubscriber = localStorage.getItem('isSubscriber') === 'true';
 
@@ -211,7 +214,9 @@
                 const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
                 const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
                 return JSON.parse(jsonPayload);
-            } catch (e) { return null; }
+            } catch (e) { 
+                return null; 
+            }
         }
 
         let isGoogleInitialized = false;
@@ -227,10 +232,10 @@
                     : '';
                 c.innerHTML = `
                     <div style="display:flex; align-items:center; gap:8px; background:rgba(255,255,255,0.15); padding:5px 12px; border-radius:20px; border:1px solid rgba(255,255,255,0.3);">
-                        ${currentUser.picture ? `<img src="${currentUser.picture}" style="width:26px;height:26px;border-radius:50%;object-fit:cover;">` : '<i class="fa-solid fa-circle-user" style="font-size:1.3rem;color:#fff;"></i>'}
+                        ${currentUser.picture ? `<img src="${currentUser.picture}" style="width:26px;height:26px;border-radius:50%;object-fit:cover;" alt="Avatar">` : '<i class="fa-solid fa-circle-user" style="font-size:1.3rem;color:#fff;"></i>'}
                         <span style="font-size:0.85rem; font-weight:600; color:#fff; max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${currentUser.name || currentUser.email}</span>
                         ${badge}
-                        <button onclick="logoutGoogle()" style="background:#e74c3c;color:#fff;border:none;padding:4px 8px;border-radius:12px;cursor:pointer;font-size:0.75rem;font-weight:bold;margin-left:4px;">
+                        <button onclick="logoutGoogle()" style="background:#e74c3c;color:#fff;border:none;padding:4px 8px;border-radius:12px;cursor:pointer;font-size:0.75rem;font-weight:bold;margin-left:4px;" title="Sair">
                             <i class="fa-solid fa-right-from-bracket"></i>
                         </button>
                     </div>`;
@@ -271,7 +276,9 @@
             window.isSubscriber = false;
             localStorage.removeItem('currentUser');
             localStorage.removeItem('isSubscriber');
-            if (typeof google !== 'undefined' && google.accounts) google.accounts.id.disableAutoSelect();
+            if (typeof google !== 'undefined' && google.accounts) {
+                google.accounts.id.disableAutoSelect();
+            }
             updateUIAuth();
             applyVipLocks();
         };
@@ -280,14 +287,19 @@
             if (!response || !response.credential) return;
             const payload = parseJwt(response.credential);
             const email = payload?.email;
-            if (!email) { alert("Não foi possível obter o e-mail."); return; }
+            if (!email) { 
+                alert("Não foi possível obter o e-mail."); 
+                return; 
+            }
 
             let t = 0;
             while (typeof window.verificarAssinaturaFirestore !== "function" && t < 20) {
-                await new Promise(r => setTimeout(r, 200)); t++;
+                await new Promise(r => setTimeout(r, 200)); 
+                t++;
             }
             if (typeof window.verificarAssinaturaFirestore !== "function") {
-                alert("Não foi possível conectar. Verifique sua internet."); return;
+                alert("Não foi possível conectar. Verifique sua internet."); 
+                return;
             }
 
             const eAssinante = await window.verificarAssinaturaFirestore(email);
@@ -301,11 +313,14 @@
             updateUIAuth();
             applyVipLocks();
 
-            if (eAssinante) alert(`Bem-vindo(a), ${payload.name || 'Usuário'}! Assinatura VIP confirmada.`);
-            else alert(`Olá, ${payload.name || 'Usuário'}! O e-mail ${email} não possui assinatura ativa.`);
+            if (eAssinante) {
+                alert(`Bem-vindo(a), ${payload.name || 'Usuário'}! Assinatura VIP confirmada.`);
+            } else {
+                alert(`Olá, ${payload.name || 'Usuário'}! O e-mail ${email} não possui assinatura ativa.`);
+            }
         }
 
-        // VIP LOCKS — SÓ afeta cards com a classe .vip-protected
+        // Aplica travas VIP apenas em elementos com classe .vip-protected
         let isLockingVip = false;
 
         const applyVipLocks = () => {
@@ -346,21 +361,33 @@
                 updateUIAuth();
             }
 
-            // Carrossel
+            // Lógica do Carrossel
             let slideIndex = 0, autoSlideInterval;
             const slides = document.getElementById('carouselSlides');
             const total = slides ? slides.children.length : 0;
             const dots = document.querySelectorAll('.dot');
+            
             const updateSlide = (i) => {
                 if (!slides || total === 0) return;
                 slideIndex = (i + total) % total;
                 slides.style.transform = `translateX(-${slideIndex * 100}%)`;
                 dots.forEach((d, idx) => d.classList.toggle('active', idx === slideIndex));
             };
-            const startAuto = () => { clearInterval(autoSlideInterval); autoSlideInterval = setInterval(() => updateSlide(slideIndex + 1), 4000); };
+            
+            const startAuto = () => { 
+                clearInterval(autoSlideInterval); 
+                autoSlideInterval = setInterval(() => updateSlide(slideIndex + 1), 4000); 
+            };
+            
             document.getElementById('btnNext')?.addEventListener('click', () => { updateSlide(slideIndex + 1); startAuto(); });
             document.getElementById('btnPrev')?.addEventListener('click', () => { updateSlide(slideIndex - 1); startAuto(); });
-            dots.forEach(d => d.addEventListener('click', (e) => { updateSlide(parseInt(e.target.dataset.index)); startAuto(); }));
+            dots.forEach(d => d.addEventListener('click', (e) => { 
+                const idx = parseInt(e.target.getAttribute('data-index'), 10);
+                if (!isNaN(idx)) {
+                    updateSlide(idx); 
+                    startAuto(); 
+                }
+            }));
             startAuto();
 
             // Modal VIP
@@ -393,6 +420,7 @@
                     observer.observe(grid, { childList: true, subtree: true });
                     isLockingVip = false;
                 });
+                
                 observer.observe(grid, { childList: true, subtree: true });
                 applyVipLocks();
 
