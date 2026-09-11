@@ -1,33 +1,39 @@
+/* ============================================================
+   ROBÔ — Sincroniza últimos concursos das Loterias com Firestore
+   Roda 1x/dia no GitHub Actions
+   Salva TODOS os campos (rateio, arrecadação, ganhadores, etc.)
+   ============================================================ */
+
 const fs = require('fs');
 const path = require('path');
 const https = require('https');
 const admin = require('firebase-admin');
 
-// 1. Inicializa o SDK do Firebase Admin usando a Secret do GitHub
+// Inicializa Firebase Admin
 if (process.env.FIREBASE_SERVICE_ACCOUNT) {
     try {
         const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-        admin.initializeApp({
-            credential: admin.credential.cert(serviceAccount)
-        });
-        console.log("🔥 Conectado ao Firebase Admin com sucesso!");
+        admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
+        console.log("🔥 Firebase Admin conectado!");
     } catch (e) {
-        console.error("⚠️ Erro ao inicializar o Firebase Admin:", e.message);
+        console.error("⚠️ Erro Firebase Admin:", e.message);
     }
 } else {
-    console.warn("⚠️ Variável FIREBASE_SERVICE_ACCOUNT não encontrada. O script vai atualizar apenas os arquivos JSON.");
+    console.warn("⚠️ FIREBASE_SERVICE_ACCOUNT não definida.");
 }
-
 const db = admin.apps.length ? admin.firestore() : null;
 
-// Lista de loterias suportadas (Federal e Loteca incluídas)
-const loterias = [
-    'megasena', 'lotofacil', 'quina', 
-    'lotomania', 'timemania', 'duplasena', 
-    'diadesorte', 'supersete', 'maismilionaria', 'loteca', 'federal'
+// Lista das loterias
+const LOTERIAS = [
+    'megasena', 'lotofacil', 'quina',
+    'lotomania', 'timemania', 'duplasena',
+    'diadesorte', 'supersete', 'maismilionaria',
+    'loteca', 'federal'
 ];
 
-// Requisita dados da API da Caixa simulando um navegador real
+// ============================================================
+// FETCH da API Caixa
+// ============================================================
 function fetchCaixa(url) {
     return new Promise((resolve, reject) => {
         const options = {
@@ -37,31 +43,24 @@ function fetchCaixa(url) {
                 'Accept-Language': 'pt-BR,pt;q=0.9',
                 'Referer': 'https://loterias.caixa.gov.br/'
             },
-            timeout: 10000
+            timeout: 15000
         };
-
         https.get(url, options, (res) => {
-            if (res.statusCode === 404) {
-                return resolve(null);
-            }
-            if (res.statusCode !== 200) {
-                return reject(new Error(`HTTP Status ${res.statusCode}`));
-            }
-
+            if (res.statusCode === 404) return resolve(null);
+            if (res.statusCode !== 200) return reject(new Error(`HTTP ${res.statusCode}`));
             let body = '';
             res.on('data', chunk => body += chunk);
             res.on('end', () => {
-                try {
-                    resolve(JSON.parse(body));
-                } catch (e) {
-                    reject(new Error('Erro ao fazer parse do JSON'));
-                }
+                try { resolve(JSON.parse(body)); }
+                catch (e) { reject(new Error('JSON inválido')); }
             });
-        }).on('error', (err) => reject(err));
+        }).on('error', reject);
     });
 }
 
-// Converte os dados brutos da Caixa para a estrutura padrão do seu app/site
+// ============================================================
+// FORMATA — agora salva TODOS os campos importantes
+// ============================================================
 function formatarConcurso(data, loteria) {
     if (!data || !data.numero) return null;
 
@@ -69,216 +68,257 @@ function formatarConcurso(data, loteria) {
     let jogosLoteca = [];
     let premiosFederal = [];
 
+    // ---- LOTECA ----
     if (loteria === 'loteca') {
-        const arrayLoteca = data.listaResultadoLoteca || data.listaResultadoEquipeEsportiva || [];
-        jogosLoteca = arrayLoteca.map(item => ({
-            numJogo: item.numJogo || item.sequencial || 0,
-            nomeEquipeUm: item.nomeEquipeUm || item.equipeUm || "",
-            nomeEquipeDois: item.nomeEquipeDois || item.equipeDois || "",
-            golEquipeUm: item.golEquipeUm ?? 0,
-            golEquipeDois: item.golEquipeDois ?? 0,
-            colunaVencedora: item.resultado === 'COLUNA_UM' ? '1' : item.resultado === 'COLUNA_DOIS' ? '2' : 'X'
-        }));
-        
-        // Dezenas/Colunas representativas para a Loteca
+        const arrayLoteca = data.listaResultadoEquipeEsportiva || data.listaResultadoLoteca || [];
+        jogosLoteca = arrayLoteca.map((item, idx) => {
+            const g1 = item.nuGolEquipeUm ?? item.golEquipeUm ?? 0;
+            const g2 = item.nuGolEquipeDois ?? item.golEquipeDois ?? 0;
+            let col = item.colunaVencedora;
+            if (!col) col = (g1 > g2 ? '1' : g1 < g2 ? '2' : 'X');
+            return {
+                numJogo: idx + 1,
+                nomeEquipeUm: item.nomeEquipeUm || item.equipeUm || '',
+                nomeEquipeDois: item.nomeEquipeDois || item.equipeDois || '',
+                golEquipeUm: g1,
+                golEquipeDois: g2,
+                colunaVencedora: col,
+                diaSemana: item.diaSemana || '',
+                dtJogo: item.dtJogo || '',
+                nomeCampeonato: item.nomeCampeonato || ''
+            };
+        });
         dezenas = jogosLoteca.map(j => j.colunaVencedora);
-
-    } else if (loteria === 'federal') {
-        const listaPremios = data.listaDezenas || data.dezenasSorteadasOrdemSorteio || [];
-        premiosFederal = listaPremios.map((bilhete, index) => ({
-            faixa: index + 1,
+    }
+    // ---- FEDERAL ----
+    else if (loteria === 'federal') {
+        const lista = data.listaDezenas || data.dezenasSorteadasOrdemSorteio || [];
+        premiosFederal = lista.map((bilhete, i) => ({
+            faixa: i + 1,
             bilhete: String(bilhete).padStart(5, '0')
         }));
-
-        dezenas = listaPremios.map(d => String(d).padStart(5, '0'));
-
-    } else {
-        const arrayDezenas = data.listaDezenas || [];
-        dezenas = arrayDezenas.map(d => parseInt(d, 10));
+        dezenas = lista.map(d => String(d).padStart(5, '0'));
+    }
+    // ---- DEMAIS ----
+    else {
+        const arr = data.listaDezenas || [];
+        dezenas = arr.map(d => String(d).padStart(2, '0'));
     }
 
+    // ---- MONTAGEM BASE ----
     const resultado = {
+        // Concurso
         concurso: data.numero,
-        dataApuracao: data.dataApuracao || data.data || "",
-        data: data.dataApuracao || data.data || "",
+        numero: data.numero,
+        data: data.dataApuracao || data.data || '',
+        dataApuracao: data.dataApuracao || data.data || '',
+        dataProximoConcurso: data.dataProximoConcurso || '',
+
+        // Números
         dezenas: dezenas,
-        acumulou: data.acumulado || false,
+        listaDezenas: dezenas,
+
+        // Status
+        acumulado: data.acumulado === true,
+        acumulou: data.acumulado === true,
+        indicadorConcursoEspecial: data.indicadorConcursoEspecial || 0,
+
+        // Valores
+        valorArrecadado: data.valorArrecadado || 0,
+        valorAcumuladoProximoConcurso: data.valorAcumuladoProximoConcurso || 0,
+        valorAcumuladoConcursoEspecial: data.valorAcumuladoConcursoEspecial || 0,
         valorEstimadoProximoConcurso: data.valorEstimadoProximoConcurso || 0,
-        dataProximoConcurso: data.dataProximoConcurso || ""
+        valorTotalPremioFaixaUm: data.valorTotalPremioFaixaUm || 0,
+        valorSaldoReservaGarantidora: data.valorSaldoReservaGarantidora || 0,
+
+        // Rateio completo
+        listaRateioPremio: (data.listaRateioPremio || []).map(r => ({
+            descricaoFaixa: r.descricaoFaixa || `Faixa ${r.faixa}`,
+            faixa: r.faixa || 0,
+            numeroDeGanhadores: r.numeroDeGanhadores || 0,
+            valorPremio: r.valorPremio || 0
+        })),
+
+        // Ganhadores por cidade/UF
+        listaMunicipioUFGanhadores: (data.listaMunicipioUFGanhadores || []).map(g => ({
+            municipio: g.municipio || '',
+            uf: g.uf || '',
+            ganhadores: g.ganhadores || 0
+        })),
+
+        // Local do sorteio
+        localSorteio: (data.localSorteio || '').replace(/\u0000/g, '').trim(),
+        nomeMunicipioUFSorteio: (data.nomeMunicipioUFSorteio || '').replace(/\u0000/g, '').trim(),
+
+        // Números do próximo/anterior
+        numeroConcursoAnterior: data.numeroConcursoAnterior || '',
+        numeroConcursoProximo: data.numeroConcursoProximo || '',
+
+        // Tipo de jogo
+        tipoJogo: data.tipoJogo || ''
     };
 
+    // ---- CAMPOS ESPECÍFICOS ----
     if (loteria === 'loteca') {
         resultado.jogos = jogosLoteca;
+        resultado.listaResultadoEquipeEsportiva = jogosLoteca;
     }
-
     if (loteria === 'federal') {
         resultado.premios = premiosFederal;
     }
-
-    if (loteria === 'duplasena' && data.listaDezenasSegundoSorteio) {
-        resultado.segundoSorteio = data.listaDezenasSegundoSorteio.map(d => parseInt(d, 10));
+    if (loteria === 'duplasena') {
+        const d2 = data.listaDezenasSegundoSorteio || [];
+        resultado.dezenasSorteio2 = d2.map(d => String(d).padStart(2, '0'));
+        resultado.segundoSorteio = resultado.dezenasSorteio2;
     }
-    if (loteria === 'maismilionaria' && data.trevosSorteados) {
-        resultado.trevos = data.trevosSorteados.map(d => parseInt(d, 10));
+    if (loteria === 'maismilionaria') {
+        const trevos = data.trevosSorteados || [];
+        resultado.trevos = trevos.map(d => String(d).padStart(2, '0'));
+        resultado.trevosSorteados = resultado.trevos;
     }
     if (loteria === 'diadesorte') {
-        resultado.mesSorte = data.nomeMesSorte || data.nomeTimeCoracaoMesSorte || "";
+        const mes = (data.nomeTimeCoracaoMesSorte || data.nomeMesSorte || data.mesSorte || '')
+            .replace(/\u0000/g, '').trim();
+        resultado.mesSorte = mes;
+        resultado.nomeTimeCoracaoMesSorte = mes;
     }
     if (loteria === 'timemania') {
-        resultado.timeCoracao = data.nomeTimeCoracao || data.nomeTimeCoracaoMesSorte || "";
+        const time = (data.nomeTimeCoracaoMesSorte || data.nomeTimeCoracao || data.timeCoracao || '')
+            .replace(/\u0000/g, '').trim();
+        resultado.timeCoracao = time;
+        resultado.nomeTimeCoracaoMesSorte = time;
     }
 
     return resultado;
 }
 
-// Função principal de atualização
+// ============================================================
+// MAIN
+// ============================================================
 async function atualizarLoterias() {
+    const inicio = new Date();
     console.log(`\n==================================================`);
-    console.log(`[${new Date().toLocaleString('pt-BR')}] Iniciando sincronização do histórico...`);
+    console.log(`[${inicio.toLocaleString('pt-BR')}] Sincronização iniciada`);
     console.log(`==================================================\n`);
 
-    for (const loteria of loterias) {
+    for (const loteria of LOTERIAS) {
         const urlApi = `https://servicebus2.caixa.gov.br/portaldeloterias/api/${loteria}`;
 
         try {
-            // Consulta o concurso mais recente na API da Caixa
-            const ultimoConcursoApiData = await fetchCaixa(urlApi);
-
-            if (!ultimoConcursoApiData || !ultimoConcursoApiData.numero) {
-                console.error(`❌ [${loteria.toUpperCase()}] Erro ao consultar último concurso na API.`);
+            const dataApi = await fetchCaixa(urlApi);
+            if (!dataApi || !dataApi.numero) {
+                console.error(`❌ [${loteria}] API não retornou dados.`);
                 continue;
             }
 
-            const ultimoFormatado = formatarConcurso(ultimoConcursoApiData, loteria);
+            const concursoFormatado = formatarConcurso(dataApi, loteria);
+            if (!concursoFormatado) {
+                console.error(`❌ [${loteria}] Formatação falhou.`);
+                continue;
+            }
 
-            // TRATAMENTO PARA LOTECA E FEDERAL (sem arquivo JSON e sem histórico)
+            console.log(`🔹 ${loteria.toUpperCase()} — Concurso ${concursoFormatado.concurso}`);
+
+            // ----- LOTECA e FEDERAL: salva só o último -----
             if (loteria === 'loteca' || loteria === 'federal') {
-                console.log(`🔹 ${loteria.toUpperCase()}: Atualizando apenas o último concurso (Concurso ${ultimoFormatado.concurso})`);
-
                 if (db) {
                     await db.collection('loterias').doc(loteria).set({
-                        concurso: String(ultimoFormatado.concurso),
-                        data: ultimoFormatado.dataApuracao,
-                        dezenas: ultimoFormatado.dezenas,
-                        acumulou: ultimoFormatado.acumulou,
-                        valorEstimadoProximoConcurso: ultimoFormatado.valorEstimadoProximoConcurso,
-                        dataProximoConcurso: ultimoFormatado.dataProximoConcurso,
-                        jogos: ultimoFormatado.jogos || [],
-                        premios: ultimoFormatado.premios || [],
-                        ultimoConcurso: ultimoFormatado,
+                        // Todos os campos na raiz
+                        ...concursoFormatado,
+                        ultimoConcurso: concursoFormatado,
                         ultimaAtualizacao: new Date().toISOString()
                     }, { merge: true });
-
-                    console.log(`   🔥 Sincronizado no Firestore em 'loterias/${loteria}'\n`);
+                    console.log(`   💾 Salvo no Firestore.\n`);
                 }
                 continue;
             }
 
-            // TRATAMENTO PARA DEMAIS LOTERIAS (com JSON e Histórico)
+            // ----- DEMAIS: histórico em JSON + Firestore -----
             const nomeArquivo = `historico_${loteria}.json`;
-            const caminhoArquivo = path.join(__dirname, nomeArquivo);
-            let historicoLocal = [];
+            const caminho = path.join(__dirname, '..', nomeArquivo);
+            let historico = [];
 
-            // 1. Carrega o histórico local existente
-            if (fs.existsSync(caminhoArquivo)) {
+            if (fs.existsSync(caminho)) {
                 try {
-                    const conteudo = fs.readFileSync(caminhoArquivo, 'utf-8');
-                    historicoLocal = JSON.parse(conteudo);
-                    if (!Array.isArray(historicoLocal)) historicoLocal = [];
+                    historico = JSON.parse(fs.readFileSync(caminho, 'utf-8'));
+                    if (!Array.isArray(historico)) historico = [];
                 } catch (e) {
-                    console.warn(`⚠️ Não foi possível ler ${nomeArquivo}, iniciando novo histórico.`);
-                    historicoLocal = [];
+                    console.warn(`   ⚠️ ${nomeArquivo} corrompido, iniciando novo.`);
+                    historico = [];
                 }
             }
 
-            // 2. Identifica o último concurso salvo localmente
-            let ultimoConcursoLocal = 0;
-            if (historicoLocal.length > 0) {
-                ultimoConcursoLocal = Math.max(...historicoLocal.map(item => item.concurso || item.contestNumber || 0));
+            let ultimoLocal = 0;
+            if (historico.length > 0) {
+                ultimoLocal = Math.max(...historico.map(i => Number(i.concurso) || 0));
             }
+            const ultimoApi = Number(concursoFormatado.concurso);
 
-            const ultimoConcursoApi = ultimoConcursoApiData.numero;
+            console.log(`   Local: ${ultimoLocal} | API: ${ultimoApi}`);
 
-            console.log(`🔹 ${loteria.toUpperCase()}: Local = ${ultimoConcursoLocal} | Caixa = ${ultimoConcursoApi}`);
-
-            if (ultimoConcursoApi <= ultimoConcursoLocal) {
-                console.log(`   ✔ Já está atualizado.\n`);
+            if (ultimoApi <= ultimoLocal) {
+                console.log(`   ✅ Já atualizado.\n`);
                 continue;
             }
 
-            // 3. Baixa os novos concursos do mais antigo faltante até o mais recente
-            const inicio = ultimoConcursoLocal > 0 ? ultimoConcursoLocal + 1 : ultimoConcursoApi;
-            let novosAdicionados = 0;
+            // Baixa concursos faltantes
+            const inicioLoop = ultimoLocal > 0 ? ultimoLocal + 1 : ultimoApi;
+            let novos = 0;
 
-            for (let c = inicio; c <= ultimoConcursoApi; c++) {
-                let dataConcurso = null;
-
-                if (c === ultimoConcursoApi) {
-                    dataConcurso = ultimoConcursoApiData;
+            for (let c = inicioLoop; c <= ultimoApi; c++) {
+                let dataConc = null;
+                if (c === ultimoApi) {
+                    dataConc = dataApi;
                 } else {
-                    dataConcurso = await fetchCaixa(`${urlApi}/${c}`);
+                    dataConc = await fetchCaixa(`${urlApi}/${c}`);
                 }
-
-                if (dataConcurso) {
-                    const formatado = formatarConcurso(dataConcurso, loteria);
-                    if (formatado) {
-                        historicoLocal.push(formatado);
-                        novosAdicionados++;
-                    }
+                if (dataConc) {
+                    const fmt = formatarConcurso(dataConc, loteria);
+                    if (fmt) { historico.push(fmt); novos++; }
                 }
-
-                await new Promise(r => setTimeout(r, 80));
+                await new Promise(r => setTimeout(r, 100));
             }
 
-            // Ordena os concursos em ordem crescente
-            historicoLocal.sort((a, b) => a.concurso - b.concurso);
+            // Ordena CRESCENTE (menor → maior) para o JSON ficar cronológico
+            historico.sort((a, b) => Number(a.concurso) - Number(b.concurso));
 
-            // 4. Salva no Arquivo JSON local
-            fs.writeFileSync(caminhoArquivo, JSON.stringify(historicoLocal, null, 2), 'utf-8');
-            console.log(`   ✔ Sucesso: ${novosAdicionados} novo(s) concurso(s) salvo(s) em ${nomeArquivo}.`);
+            fs.writeFileSync(caminho, JSON.stringify(historico, null, 2), 'utf-8');
+            console.log(`   📄 ${novos} novo(s) salvo(s) em ${nomeArquivo}.`);
 
-            // 5. Atualiza no Firebase Firestore
+            // Salva no Firestore
             if (db) {
-                const historicoFirebase = historicoLocal.map(item => {
-                    const itemCopia = { ...item };
-                    if (Array.isArray(itemCopia.dezenas)) {
-                        itemCopia.dezenas = itemCopia.dezenas.map(d => String(d).padStart(2, '0'));
-                    }
-                    return itemCopia;
-                });
+                // Pega o ÚLTIMO (maior concurso)
+                let ultimo = historico[0];
+                for (const i of historico) {
+                    if (Number(i.concurso) > Number(ultimo.concurso)) ultimo = i;
+                }
 
-                const ultimo = historicoFirebase[historicoFirebase.length - 1];
+                // Ordena o histórico DECRESCENTE para o site
+                const historicoDesc = historico.slice().sort((a, b) =>
+                    Number(b.concurso) - Number(a.concurso)
+                );
 
                 await db.collection('loterias').doc(loteria).set({
-                    // Campos na raiz para o frontend ler direto
-                    concurso: String(ultimo.concurso),
-                    data: ultimo.dataApuracao || ultimo.data || "",
-                    dezenas: ultimo.dezenas || [],
-                    acumulou: ultimo.acumulou || false,
-                    valorEstimadoProximoConcurso: ultimo.valorEstimadoProximoConcurso || 0,
-                    dataProximoConcurso: ultimo.dataProximoConcurso || "",
-                    mesSorte: ultimo.mesSorte || "",
-                    timeCoracao: ultimo.timeCoracao || "",
-                    dezenasSorteio2: (ultimo.segundoSorteio || []).map(d => String(d).padStart(2, '0')),
-                    trevos: (ultimo.trevos || []).map(d => String(d).padStart(2, '0')),
-                    
-                    // Objeto completo e histórico
+                    // Raiz: campos do ÚLTIMO concurso (para o index ler rápido)
+                    ...ultimo,
                     ultimoConcurso: ultimo,
-                    historico: historicoFirebase,
+                    historico: historicoDesc,
                     ultimaAtualizacao: new Date().toISOString()
                 }, { merge: true });
 
-                console.log(`   🔥 Sincronizado no Firestore em 'loterias/${loteria}'\n`);
+                console.log(`   💾 Firestore atualizado.\n`);
             }
-
         } catch (err) {
-            console.error(`❌ Erro ao processar ${loteria}: ${err.message}\n`);
+            console.error(`❌ [${loteria}] ${err.message}\n`);
         }
     }
 
     console.log(`==================================================`);
-    console.log(`Sincronização de todas as loterias concluída!`);
+    console.log(`✅ Sincronização concluída em ${((new Date() - inicio)/1000).toFixed(1)}s`);
     console.log(`==================================================\n`);
 }
 
-atualizarLoterias();
+atualizarLoterias().catch(err => {
+    console.error("💥 Erro fatal:", err);
+    process.exit(1);
+});
