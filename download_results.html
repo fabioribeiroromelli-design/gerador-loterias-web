@@ -270,14 +270,16 @@
 let dadosAtuais = [];
 let loteriaNomeAtual = 'Mega-Sena';
 
-async function carregarHistorico(slug, nomeExibicao) {
+async function carregarHistorico(slug, nomeExibicao, elementoBotao) {
     loteriaNomeAtual = nomeExibicao;
     document.getElementById('title_loteria').innerText = nomeExibicao;
     const contentEl = document.getElementById('historico_content');
     
-    // Atualiza botões ativos
+    // Atualiza o estado visual do botão selecionado sem quebrar o código
     document.querySelectorAll('.btn-lotaria').forEach(btn => btn.classList.remove('active'));
-    if(event && event.target) event.target.classList.add('active');
+    if (elementoBotao) {
+        elementoBotao.classList.add('active');
+    }
 
     contentEl.innerHTML = `
         <div class="loading-state">
@@ -287,13 +289,12 @@ async function carregarHistorico(slug, nomeExibicao) {
 
     try {
         const cacheBuster = new Date().getTime();
-        // Lê diretamente do arquivo gerado pelo robô do GitHub
         const res = await fetch(`./historico_${slug}.json?v=${cacheBuster}`);
         
         if (!res.ok) throw new Error("Arquivo de histórico não encontrado.");
         
         const dados = await res.json();
-        dadosAtuais = Array.isArray(dados) ? dados.reverse() : [dados]; // Exibe do mais recente para o mais antigo
+        dadosAtuais = Array.isArray(dados) ? dados.slice().reverse() : [dados];
 
         if (dadosAtuais.length === 0) {
             contentEl.innerHTML = `<div class="error-state">Nenhum concurso encontrado neste histórico.</div>`;
@@ -301,7 +302,7 @@ async function carregarHistorico(slug, nomeExibicao) {
         }
 
         let html = '';
-        dadosAtuais.slice(0, 50).forEach(item => { // Mostra os últimos 50 concursos na tela
+        dadosAtuais.slice(0, 50).forEach(item => {
             const concurso = item.concurso || item.numero || '--';
             const data = item.dataApuracao || item.data || '--';
             const dezenas = item.dezenas || item.listaDezenas || [];
@@ -357,11 +358,9 @@ function baixarHistoricoTXT() {
     URL.revokeObjectURL(url);
 }
 
-// Carrega a Mega-Sena automaticamente ao abrir
+// Inicializa automaticamente com a Mega-Sena assim que a página abre
 document.addEventListener('DOMContentLoaded', () => {
-    carregarHistorico('megasena', 'Mega-Sena');
+    const btnMega = document.querySelector('.btn-megasena');
+    carregarHistorico('megasena', 'Mega-Sena', btnMega);
 });
 </script>
-
-</body>
-</html>
