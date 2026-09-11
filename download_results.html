@@ -3,189 +3,363 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Downloads de Resultados</title>
-    <!-- FontAwesome -->
+    <title>Histórico das Loterias</title>
+    <!-- FontAwesome & Fontes -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
     <style>
+        :root {
+            --primary: #6b21a8;
+            --primary-hover: #581c87;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+        }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f4f6f9;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
             margin: 0;
-            padding: 20px;
-            color: #333;
+            padding: 0;
+            color: var(--text-main);
         }
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-            background: #fff;
-            padding: 25px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-        }
-        h1 {
-            text-align: center;
-            color: #1b365d;
-            margin-bottom: 20px;
-        }
-        .lottery-item {
+
+        /* Topbar Header */
+        .header-bar {
+            background: linear-gradient(135deg, #7e22ce, #581c87);
+            color: #fff;
+            padding: 16px 24px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 15px;
-            border-bottom: 1px solid #e2e8f0;
-            transition: background 0.2s;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
-        .lottery-item:hover {
-            background-color: #f8fafc;
-        }
-        .lottery-info {
+
+        .header-bar h1 {
+            margin: 0;
+            font-size: 1.3rem;
             display: flex;
-            flex-direction: column;
-            gap: 4px;
+            align-items: center;
+            gap: 10px;
         }
-        .lottery-name {
-            font-size: 1.1rem;
-            font-weight: bold;
-            color: #0f172a;
-        }
-        .lottery-details {
-            font-size: 0.85rem;
-            color: #64748b;
-        }
-        .dezenas-container {
-            margin-top: 6px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 4px;
-        }
-        .dezena-tag {
-            background: #2563eb;
-            color: #fff;
-            font-size: 0.75rem;
-            font-weight: bold;
-            padding: 2px 7px;
-            border-radius: 12px;
-        }
-        .btn-download {
-            background-color: #209869;
+
+        .btn-voltar {
+            background: rgba(255,255,255,0.15);
             color: white;
             border: none;
-            padding: 10px 16px;
-            border-radius: 6px;
+            padding: 8px 16px;
+            border-radius: 8px;
             cursor: pointer;
-            font-weight: bold;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+        }
+
+        .btn-voltar:hover {
+            background: rgba(255,255,255,0.25);
+        }
+
+        .main-container {
+            max-width: 1000px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        /* Seletor de Loterias */
+        .selector-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            margin-bottom: 25px;
+        }
+
+        .selector-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .lottery-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .btn-lotaria {
+            border: none;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: white;
+            cursor: pointer;
+            opacity: 0.75;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .btn-lotaria:hover, .btn-lotaria.active {
+            opacity: 1;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        }
+
+        /* Cores Temáticas de Cada Loteria */
+        .btn-megasena { background-color: #209869; }
+        .btn-lotofacil { background-color: #930089; }
+        .btn-quina { background-color: #260085; }
+        .btn-lotomania { background-color: #f78100; }
+        .btn-timemania { background-color: #00ff87; color: #044b23 !important; }
+        .btn-duplasena { background-color: #a61324; }
+        .btn-diadesorte { background-color: #cb8321; }
+        .btn-supersete { background-color: #a8cf45; color: #234700 !important; }
+        .btn-maismilionaria { background-color: #1b3156; }
+
+        /* Card de Exibição de Resultados */
+        .results-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            min-height: 250px;
+        }
+
+        .results-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 2px solid #f1f5f9;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        .results-header h2 {
+            margin: 0;
+            font-size: 1.4rem;
+            color: var(--text-main);
+        }
+
+        .btn-download-all {
+            background-color: #10b981;
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
             display: flex;
             align-items: center;
             gap: 8px;
             text-decoration: none;
             transition: background 0.2s;
         }
-        .btn-download:hover {
-            background-color: #15803d;
+
+        .btn-download-all:hover {
+            background-color: #059669;
         }
-        #loading {
+
+        /* Lista de Concursos */
+        .concurso-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .concurso-item:last-child {
+            border-bottom: none;
+        }
+
+        .concurso-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .concurso-num {
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .concurso-data {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .dezenas-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .ball {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: #3b82f6;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        .loading-state, .error-state {
             text-align: center;
-            padding: 40px;
-            font-size: 1.1rem;
-            color: #64748b;
+            padding: 50px 20px;
+            color: var(--text-muted);
         }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1><i class="fa-solid fa-file-arrow-down"></i> Resultados e Downloads</h1>
-    <div id="loading"><i class="fa-solid fa-spinner fa-spin"></i> Carregando resultados...</div>
-    <div id="results_list"></div>
-</div>
+    <div class="header-bar">
+        <a href="index.html" class="btn-voltar"><i class="fa-solid fa-arrow-left"></i> Voltar</a>
+        <h1><i class="fa-solid fa-clock-rotate-left"></i> Histórico das Loterias</h1>
+        <div></div>
+    </div>
+
+    <div class="main-container">
+        <!-- Botoes de Selecao -->
+        <div class="selector-card">
+            <div class="selector-title"><i class="fa-solid fa-gamepad"></i> Selecione a Loteria</div>
+            <div class="lottery-buttons">
+                <button class="btn-lotaria btn-megasena active" onclick="carregarHistorico('megasena', 'Mega-Sena')">Mega-Sena</button>
+                <button class="btn-lotaria btn-lotofacil" onclick="carregarHistorico('lotofacil', 'Lotofácil')">Lotofácil</button>
+                <button class="btn-lotaria btn-quina" onclick="carregarHistorico('quina', 'Quina')">Quina</button>
+                <button class="btn-lotaria btn-lotomania" onclick="carregarHistorico('lotomania', 'Lotomania')">Lotomania</button>
+                <button class="btn-lotaria btn-timemania" onclick="carregarHistorico('timemania', 'Timemania')">Timemania</button>
+                <button class="btn-lotaria btn-duplasena" onclick="carregarHistorico('duplasena', 'Dupla Sena')">Dupla Sena</button>
+                <button class="btn-lotaria btn-diadesorte" onclick="carregarHistorico('diadesorte', 'Dia de Sorte')">Dia de Sorte</button>
+                <button class="btn-lotaria btn-supersete" onclick="carregarHistorico('supersete', 'Super Sete')">Super Sete</button>
+                <button class="btn-lotaria btn-maismilionaria" onclick="carregarHistorico('maismilionaria', '+Milionária')">+Milionária</button>
+            </div>
+        </div>
+
+        <!-- Painel de Resultados -->
+        <div class="results-card">
+            <div class="results-header">
+                <h2 id="title_loteria">Mega-Sena</h2>
+                <button class="btn-download-all" id="btn_download_file" onclick="baixarHistoricoTXT()">
+                    <i class="fa-solid fa-file-arrow-down"></i> Baixar TXT Completo
+                </button>
+            </div>
+
+            <div id="historico_content">
+                <div class="loading-state">
+                    <i class="fa-solid fa-spinner fa-spin fa-2x"></i>
+                    <p style="margin-top:10px;">Carregando histórico atualizado...</p>
+                </div>
+            </div>
+        </div>
+    </div>
 
 <script>
-window.downloadResultado = function(nome, concurso, dataApuracao, dezenasStr) {
-    const conteudo = `=====================================\nRESULTADO: ${nome.toUpperCase()}\nCONCURSO: ${concurso}\nDATA: ${dataApuracao}\nDEZENAS: ${dezenasStr}\n=====================================`;
-    const blob = new Blob([conteudo], { type: 'text/plain;charset=utf-8' });
+let dadosAtuais = [];
+let loteriaNomeAtual = 'Mega-Sena';
+
+async function carregarHistorico(slug, nomeExibicao) {
+    loteriaNomeAtual = nomeExibicao;
+    document.getElementById('title_loteria').innerText = nomeExibicao;
+    const contentEl = document.getElementById('historico_content');
+    
+    // Atualiza botões ativos
+    document.querySelectorAll('.btn-lotaria').forEach(btn => btn.classList.remove('active'));
+    if(event && event.target) event.target.classList.add('active');
+
+    contentEl.innerHTML = `
+        <div class="loading-state">
+            <i class="fa-solid fa-spinner fa-spin fa-2x"></i>
+            <p style="margin-top:10px;">Buscando ${nomeExibicao}...</p>
+        </div>`;
+
+    try {
+        const cacheBuster = new Date().getTime();
+        // Lê diretamente do arquivo gerado pelo robô do GitHub
+        const res = await fetch(`./historico_${slug}.json?v=${cacheBuster}`);
+        
+        if (!res.ok) throw new Error("Arquivo de histórico não encontrado.");
+        
+        const dados = await res.json();
+        dadosAtuais = Array.isArray(dados) ? dados.reverse() : [dados]; // Exibe do mais recente para o mais antigo
+
+        if (dadosAtuais.length === 0) {
+            contentEl.innerHTML = `<div class="error-state">Nenhum concurso encontrado neste histórico.</div>`;
+            return;
+        }
+
+        let html = '';
+        dadosAtuais.slice(0, 50).forEach(item => { // Mostra os últimos 50 concursos na tela
+            const concurso = item.concurso || item.numero || '--';
+            const data = item.dataApuracao || item.data || '--';
+            const dezenas = item.dezenas || item.listaDezenas || [];
+
+            const bolasHtml = dezenas.map(d => `<div class="ball">${String(d).padStart(2, '0')}</div>`).join('');
+
+            html += `
+                <div class="concurso-item">
+                    <div class="concurso-meta">
+                        <span class="concurso-num">Concurso ${concurso}</span>
+                        <span class="concurso-data">Data: ${data}</span>
+                    </div>
+                    <div class="dezenas-grid">${bolasHtml || '<em>Sem dezenas</em>'}</div>
+                </div>`;
+        });
+
+        contentEl.innerHTML = html;
+
+    } catch (err) {
+        console.error(err);
+        contentEl.innerHTML = `
+            <div class="error-state">
+                <i class="fa-solid fa-triangle-exclamation fa-2x" style="color:#ef4444;"></i>
+                <p style="margin-top:10px;">Não foi possível carregar o arquivo <strong>historico_${slug}.json</strong>.</p>
+            </div>`;
+    }
+}
+
+function baixarHistoricoTXT() {
+    if (!dadosAtuais || dadosAtuais.length === 0) {
+        alert("Não há dados disponíveis para baixar.");
+        return;
+    }
+
+    let txtContent = `=====================================\nHISTÓRICO COMPLETO: ${loteriaNomeAtual.toUpperCase()}\n=====================================\n\n`;
+
+    dadosAtuais.forEach(item => {
+        const concurso = item.concurso || item.numero || '--';
+        const data = item.dataApuracao || item.data || '--';
+        const dezenas = Array.isArray(item.dezenas) ? item.dezenas.join(' - ') : (item.listaDezenas || []).join(' - ');
+
+        txtContent += `Concurso: ${concurso} | Data: ${data}\nDezenas: ${dezenas}\n-------------------------------------\n`;
+    });
+
+    const blob = new Blob([txtContent], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${nome.toLowerCase().replace(/\s+/g, '_')}_${concurso}.txt`;
+    a.download = `historico_${loteriaNomeAtual.toLowerCase().replace(/\s+/g, '_')}.txt`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-};
+}
 
-document.addEventListener('DOMContentLoaded', async () => {
-    const listContainer = document.getElementById('results_list');
-    const loadingContainer = document.getElementById('loading');
-
-    // Mapeia para os nomes exatos dos arquivos JSON do seu repositório
-    const LOTERIAS = {
-        'Dia de Sorte': 'historico_diadesorte.json',
-        'Dupla Sena': 'historico_duplasena.json',
-        'Lotofácil': 'historico_lotofacil.json',
-        'Lotomania': 'historico_lotomania.json',
-        '+Milionária': 'historico_maismilionaria.json',
-        'Mega-Sena': 'historico_megasena.json',
-        'Quina': 'historico_quina.json',
-        'Super Sete': 'historico_supersete.json',
-        'Timemania': 'historico_timemania.json'
-    };
-
-    let html = '';
-    const cacheBuster = new Date().getTime();
-
-    for (const [nome, arquivoJson] of Object.entries(LOTERIAS)) {
-        let itemData = null;
-
-        try {
-            const res = await fetch(`./${arquivoJson}?v=${cacheBuster}`);
-            if (res.ok) {
-                const dados = await res.json();
-                const ultimo = Array.isArray(dados) ? dados[dados.length - 1] : dados;
-
-                if (ultimo) {
-                    itemData = {
-                        concurso: ultimo.concurso || ultimo.numero || '--',
-                        data: ultimo.dataApuracao || ultimo.data || '--',
-                        dezenas: ultimo.dezenas || ultimo.listaDezenas || []
-                    };
-                }
-            }
-        } catch (err) {
-            console.error(`Erro ao ler ${arquivoJson}:`, err);
-        }
-
-        if (itemData) {
-            const dezenasArr = Array.isArray(itemData.dezenas) ? itemData.dezenas : [];
-            const dezenasTexto = dezenasArr.join(' - ');
-            const tagsHtml = dezenasArr.map(d => `<span class="dezena-tag">${String(d).padStart(2, '0')}</span>`).join('');
-
-            html += `
-                <div class="lottery-item">
-                    <div class="lottery-info">
-                        <span class="lottery-name">${nome}</span>
-                        <span class="lottery-details">Concurso: <strong>${itemData.concurso}</strong> | Data: <strong>${itemData.data}</strong></span>
-                        <div class="dezenas-container">${tagsHtml || '<em>Sem dezenas</em>'}</div>
-                    </div>
-                    <button class="btn-download" onclick="downloadResultado('${nome}', '${itemData.concurso}', '${itemData.data}', '${dezenasTexto}')">
-                        <i class="fa-solid fa-download"></i> Baixar TXT
-                    </button>
-                </div>
-            `;
-        } else {
-            html += `
-                <div class="lottery-item">
-                    <div class="lottery-info">
-                        <span class="lottery-name">${nome}</span>
-                        <span class="lottery-details" style="color:#ef4444;">Dados não encontrados.</span>
-                    </div>
-                </div>
-            `;
-        }
-    }
-
-    loadingContainer.style.display = 'none';
-    listContainer.innerHTML = html;
+// Carrega a Mega-Sena automaticamente ao abrir
+document.addEventListener('DOMContentLoaded', () => {
+    carregarHistorico('megasena', 'Mega-Sena');
 });
 </script>
 
