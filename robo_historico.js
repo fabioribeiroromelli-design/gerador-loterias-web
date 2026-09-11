@@ -1,9 +1,7 @@
 /* ============================================================
-   ROBÔ 2 — Preenche o HISTÓRICO (array) em loterias/{id}.historico
-   - Roda 1x/dia às 06h
-   - Baixa só os concursos faltantes
-   - Salva JSON local (backup) + Firestore
-   - NÃO salva dados de rateio (só o essencial para estatística)
+   ROBÔ 2 — Histórico em COLEÇÃO SEPARADA
+   Coleção: historico_loterias/{id}
+   Estrutura: { concursos: [...], total: N, atualizadoEm: "..." }
    ============================================================ */
 
 const fs = require('fs');
@@ -30,7 +28,6 @@ const LOTERIAS = [
     'megasena', 'lotofacil', 'quina',
     'lotomania', 'timemania', 'duplasena',
     'diadesorte', 'supersete', 'maismilionaria'
-    // ⚠️ Federal e Loteca NÃO entram (não fazem sentido histórico)
 ];
 
 function fetchCaixa(url) {
@@ -59,7 +56,6 @@ function fetchCaixa(url) {
 
 const limpar = (s) => (s || '').replace(/\u0000/g, '').trim();
 
-// ---- Formato ENXUTO (só o que estatística precisa) ----
 function formatarHistorico(data, loteria) {
     if (!data || !data.numero) return null;
 
@@ -95,10 +91,10 @@ async function atualizarHistorico() {
     for (const loteria of LOTERIAS) {
         const urlApi = `https://servicebus2.caixa.gov.br/portaldeloterias/api/${loteria}`;
         const nomeArq = `historico_${loteria}.json`;
-        const caminho = path.join(__dirname, '..', nomeArq);
+        const caminho = path.join(__dirname, nomeArq);
 
         try {
-            // 1) Carrega JSON local
+            // 1) Carrega JSON local (se existir)
             let historico = [];
             if (fs.existsSync(caminho)) {
                 try {
@@ -115,7 +111,7 @@ async function atualizarHistorico() {
                 ultimoLocal = Math.max(...historico.map(i => Number(i.concurso) || 0));
             }
 
-            // 2) Consulta a API
+            // 2) Consulta API
             const dataApi = await fetchCaixa(urlApi);
             if (!dataApi || !dataApi.numero) {
                 console.log(`⚠️ ${loteria}: API sem resposta`);
@@ -125,15 +121,21 @@ async function atualizarHistorico() {
 
             console.log(`🔹 ${loteria}: Local=${ultimoLocal} | API=${ultimoApi}`);
 
-            if (ultimoApi <= ultimoLocal) {
+            // 3) Define início
+            let inicio;
+            if (historico.length === 0) {
+                inicio = 1;
+                console.log(`   📥 Histórico vazio, baixando do #1 até #${ultimoApi}`);
+            } else if (ultimoApi > ultimoLocal) {
+                inicio = ultimoLocal + 1;
+                console.log(`   📥 Baixando do #${inicio} até #${ultimoApi}`);
+            } else {
                 console.log(`   ✅ Já atualizado`);
                 continue;
             }
 
-            // 3) Baixa faltantes
-            const inicio = ultimoLocal > 0 ? ultimoLocal + 1 : ultimoApi;
+            // 4) Baixa
             let novos = 0;
-
             for (let c = inicio; c <= ultimoApi; c++) {
                 let dataConc = (c === ultimoApi) ? dataApi : await fetchCaixa(`${urlApi}/${c}`);
                 if (dataConc) {
@@ -143,25 +145,28 @@ async function atualizarHistorico() {
                 await new Promise(r => setTimeout(r, 100));
             }
 
-            // 4) Ordena crescente
+            // 5) Ordena crescente para o JSON
             historico.sort((a, b) => Number(a.concurso) - Number(b.concurso));
 
-            // 5) Salva JSON
+            // 6) Salva JSON local
             fs.writeFileSync(caminho, JSON.stringify(historico, null, 2), 'utf-8');
             console.log(`   📄 +${novos} salvo(s) em ${nomeArq}`);
 
-            // 6) Salva no Firestore (ordem decrescente para o site)
-            const ordenado = historico.slice().sort((a, b) =>
+            // 7) Salva na COLEÇÃO SEPARADA historico_loterias/{id}
+            //    Ordem DECRESCENTE para consultas rápidas
+            const ordenadoDesc = historico.slice().sort((a, b) =>
                 Number(b.concurso) - Number(a.concurso)
             );
 
-            await db.collection('loterias').doc(loteria).set({
-                historico: ordenado,
-                totalConcursos: historico.length,
-                ultimaAtualizacaoHistorico: new Date().toISOString()
+            await db.collection('historico_loterias').doc(loteria).set({
+                concursos: ordenadoDesc,
+                total: historico.length,
+                ultimoConcurso: ordenadoDesc[0] ? ordenadoDesc[0].concurso : null,
+                primeiroConcurso: ordenadoDesc[ordenadoDesc.length - 1] ? ordenadoDesc[ordenadoDesc.length - 1].concurso : null,
+                atualizadoEm: new Date().toISOString()
             }, { merge: true });
 
-            console.log(`   💾 Firestore: ${ordenado.length} concursos\n`);
+            console.log(`   💾 Firestore (historico_loterias/${loteria}): ${ordenadoDesc.length} concursos\n`);
         } catch (err) {
             console.error(`❌ ${loteria}: ${err.message}\n`);
         }
