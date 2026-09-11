@@ -8,13 +8,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.head.appendChild(fa);
     }
 
-    // Garante que a flag global de controle exista corretamente
     if (window._googleAuthInitialized === undefined) {
         window._googleAuthInitialized = false;
     }
 
-    // Verifica se já existe um usuário logado anteriormente ao carregar a página
-    verificarLoginSalvo();
+    // 1.1) Se vier ?assinante=true na URL (retorno do app/pagamento), grava a flag
+    aplicarAssinaturaViaURL();
+
+    // 1.2) Revalida assinatura (servidor) e atualiza a UI
+    await verificarLoginSalvo();
 
     const existingGsiScript = document.getElementById('google-gsi-script');
     if (!existingGsiScript) {
@@ -23,30 +25,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         gsi.src = 'https://accounts.google.com/gsi/client';
         gsi.async = true;
         gsi.defer = true;
-        gsi.onload = () => {
-            initGoogleAuth();
-        };
+        gsi.onload = () => initGoogleAuth();
         document.head.appendChild(gsi);
     } else {
         if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
             initGoogleAuth();
         } else {
-            existingGsiScript.addEventListener('load', () => {
-                initGoogleAuth();
-            }, { once: true });
+            existingGsiScript.addEventListener('load', () => initGoogleAuth(), { once: true });
         }
     }
 
     function initGoogleAuth() {
         if (window._googleAuthInitialized) return;
-        
-        if (typeof google === 'undefined' || !google.accounts || !google.accounts.id) {
-            return;
-        }
+        if (typeof google === 'undefined' || !google.accounts || !google.accounts.id) return;
 
         window._googleAuthInitialized = true;
 
-        // Procura um container específico para o login ou cria de forma segura sem afetar o grid principal
         let authContainer = document.getElementById('google_auth_container');
         if (!authContainer) {
             authContainer = document.querySelector('.login-container') || document.querySelector('.toolbar');
@@ -69,7 +63,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 { theme: "outline", size: "medium", text: "signin_with" }
             );
         } catch (error) {
-            console.error("Erro ao inicializar Google Auth / Error initializing Google Auth:", error);
+            console.error("Erro ao inicializar Google Auth:", error);
             window._googleAuthInitialized = false;
         }
     }
@@ -118,7 +112,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     createShortcuts();
 
-    // ===== 3. CORES E ÍCONES DAS LOTERIAS =====
+    // ===== 3. CORES E ÍCONES =====
     const COLORS = {
         'Dia de Sorte': '#cb8322', 'Dupla Sena': '#a61324', 'Federal': '#002f6c',
         'Loteca': '#ca1518', 'Lotofácil': '#930089', 'Lotomania': '#F78100',
@@ -221,14 +215,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             rateioHtml = data.listaRateioPremio.map(item => {
                 const desc = item.descricaoFaixa || `${item.faixa} acertos`;
                 const g = item.numeroDeGanhadores;
-                const ganhadoresTxt = g === 0 
-                    ? '<span style="color:#d9534f; font-weight:bold;">Não houve</span>' 
+                const ganhadoresTxt = g === 0
+                    ? '<span style="color:#d9534f; font-weight:bold;">Não houve</span>'
                     : `${g.toLocaleString('pt-BR')} ${g === 1 ? 'ganhador' : 'ganhadores'}`;
-                
-                const valTxt = item.valorPremio > 0 
-                    ? `<strong style="color:#209869;">R$ ${Number(item.valorPremio).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>` 
+                const valTxt = item.valorPremio > 0
+                    ? `<strong style="color:#209869;">R$ ${Number(item.valorPremio).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>`
                     : 'R$ 0,00';
-                
                 return `
                     <div style="display: grid; grid-template-columns: 1fr auto; gap: 8px; border-bottom: 1px dotted #e0e0e0; padding: 4px 0; font-size: 0.72rem; text-align: left;">
                         <span style="color: #333; font-weight: 600;">${desc}</span>
@@ -250,8 +242,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             extraBadge = `<span class="badge-extra"><i class="fa-solid fa-star"></i> Trevos: ${data.trevosSorteados.join(' - ')}</span>`;
         }
 
-        const estimativaFormatada = estimativa > 0 
-            ? 'R$ ' + Number(estimativa).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) 
+        const estimativaFormatada = estimativa > 0
+            ? 'R$ ' + Number(estimativa).toLocaleString('pt-BR', { minimumFractionDigits: 2 })
             : 'R$ 0,00';
 
         return `
@@ -261,10 +253,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <span class="badge-conc">Conc: ${concurso}</span>
                 </div>
                 <div class="drawn-numbers">${numbersDisplay}</div>
-                
+
                 <div style="display: flex; flex-wrap: wrap; gap: 4px; margin: 4px 0;">
-                    ${acumulado 
-                        ? '<span class="badge-accumulated"><i class="fa-solid fa-fire"></i> Acumulou!</span>' 
+                    ${acumulado
+                        ? '<span class="badge-accumulated"><i class="fa-solid fa-fire"></i> Acumulou!</span>'
                         : '<span class="badge-extra" style="background:#e8f5e9; color:#2e7d32;"><i class="fa-solid fa-trophy"></i> Teve Ganhador!</span>'
                     }
                     ${extraBadge}
@@ -297,7 +289,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         `;
     }
 
-    // ===== CARDS ESPECIAIS COM PROTEÇÃO DE NAVEGAÇÃO =====
     function renderPremiumCard() {
         return `
             <div class="lottery-card premium-card" onclick="navegarProtegido('estrategias.html')">
@@ -410,7 +401,63 @@ document.addEventListener('DOMContentLoaded', async () => {
     grid.innerHTML = html;
 });
 
-// ===== FUNÇÃO PARA ATUALIZAR A INTERFACE QUANDO LOGADO =====
+/* =========================================================
+   HELPERS DE ASSINATURA (CORRIGIDOS)
+   ========================================================= */
+
+// Lê a flag de assinante aceitando "true", "1", "sim", "yes"
+function isUsuarioAssinante() {
+    const valor = localStorage.getItem("is_subscriber");
+    if (valor === null || valor === undefined) return false;
+    const v = String(valor).toLowerCase().trim();
+    return v === "true" || v === "1" || v === "sim" || v === "yes";
+}
+
+// Define a flag (chame isso após uma compra/validação manual)
+window.setUsuarioAssinante = function(status) {
+    localStorage.setItem("is_subscriber", status ? "true" : "false");
+    console.log("[Assinatura] is_subscriber =", status ? "true" : "false");
+};
+
+// Aplica ?assinante=true|false na URL — útil para retorno do app/pagamento
+function aplicarAssinaturaViaURL() {
+    try {
+        const params = new URLSearchParams(window.location.search);
+        if (params.has('assinante')) {
+            const val = params.get('assinante');
+            const ativo = val === 'true' || val === '1' || val === 'sim' || val === 'yes';
+            setUsuarioAssinante(ativo);
+            // Limpa a URL para não ficar poluída
+            params.delete('assinante');
+            const nova = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+            window.history.replaceState({}, '', nova);
+        }
+    } catch (e) {
+        console.warn("Falha ao processar ?assinante na URL:", e);
+    }
+}
+
+// Verifica assinatura no servidor (AJUSTE A URL PARA O SEU ENDPOINT)
+async function verificarAssinaturaNoServidor(email) {
+    if (!email) return null;
+    try {
+        const resp = await fetch(`/api/verificar-assinatura?email=${encodeURIComponent(email)}`, {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' }
+        });
+        if (!resp.ok) return null;
+        const data = await resp.json();
+        // Aceita qualquer um dos formatos: { isAssinante } ou { isSubscriber }
+        if (typeof data.isAssinante === 'boolean') return data.isAssinante;
+        if (typeof data.isSubscriber === 'boolean') return data.isSubscriber;
+        return null;
+    } catch (e) {
+        // Sem backend disponível — não quebra o site
+        return null;
+    }
+}
+
+// ===== ATUALIZA INTERFACE =====
 function atualizarInterfaceUsuario(nome, isAssinante) {
     let authContainer = document.getElementById('google_auth_container');
     if (!authContainer) {
@@ -422,7 +469,9 @@ function atualizarInterfaceUsuario(nome, isAssinante) {
             <div style="display: flex; align-items: center; gap: 8px; font-size: 0.9rem; font-weight: bold; color: #333;">
                 <i class="fa-solid fa-user-check" style="color: ${isAssinante ? '#209869' : '#e67e22'};"></i>
                 <span>${nome}</span>
-                ${isAssinante ? '<span style="background: #e8f5e9; color: #209869; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem;">Assinante / Subscriber / Suscriptor</span>' : '<span style="background: #fff3cd; color: #856404; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem;">Não Assinante</span>'}
+                ${isAssinante
+                    ? '<span style="background: #e8f5e9; color: #209869; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem;">Assinante / Subscriber / Suscriptor</span>'
+                    : '<span style="background: #fff3cd; color: #856404; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem;">Não Assinante</span>'}
                 <button onclick="sairConta()" title="Sair da Conta / Logout / Salir" style="background: transparent; border: none; color: #d9534f; cursor: pointer; font-size: 0.9rem; margin-left: 6px;">
                     <i class="fa-solid fa-right-from-bracket"></i>
                 </button>
@@ -431,37 +480,46 @@ function atualizarInterfaceUsuario(nome, isAssinante) {
     }
 }
 
-// ===== VERIFICAÇÃO DE LOGIN SALVO AO CARREGAR =====
-function verificarLoginSalvo() {
+// ===== VERIFICAÇÃO DE LOGIN SALVO (agora assíncrona e revalida no servidor) =====
+async function verificarLoginSalvo() {
     const emailSalvo = localStorage.getItem("user_email");
     const nomeSalvo = localStorage.getItem("user_name");
-    const isAssinante = localStorage.getItem("is_subscriber") === "true";
+    if (!emailSalvo) return;
 
-    if (emailSalvo) {
-        atualizarInterfaceUsuario(nomeSalvo || emailSalvo, isAssinante);
+    // 1) Tenta confirmar no servidor
+    const statusServidor = await verificarAssinaturaNoServidor(emailSalvo);
+
+    // 2) Se o servidor respondeu, atualiza a flag
+    if (statusServidor !== null) {
+        setUsuarioAssinante(statusServidor);
     }
+
+    // 3) Atualiza UI com o valor atual (servidor OU localStorage)
+    atualizarInterfaceUsuario(nomeSalvo || emailSalvo, isUsuarioAssinante());
 }
 
-// ===== NAVEGAÇÃO PROTEGIDA =====
+// ===== NAVEGAÇÃO PROTEGIDA (CORRIGIDA) =====
 function navegarProtegido(url) {
     const emailSalvo = localStorage.getItem("user_email");
-    const isAssinante = localStorage.getItem("is_subscriber") === "true";
 
+    // Não logado → pede login
     if (!emailSalvo) {
-        alert("Por favor, faça login com sua conta do Google para continuar.\nPlease sign in with your Google account.\nPor favor, inicie sesión con sua cuenta de Google.");
+        alert("Por favor, faça login com sua conta do Google para continuar.\nPlease sign in with your Google account.\nPor favor, inicie sesión con su cuenta de Google.");
         return;
     }
 
-    if (!isAssinante) {
+    // Logado mas NÃO é assinante → mostra modal de assinatura
+    if (!isUsuarioAssinante()) {
         const nomeSalvo = localStorage.getItem("user_name");
         mostrarDialogoNaoAssinante(nomeSalvo);
         return;
     }
 
+    // Logado E assinante → libera
     window.location.href = url;
 }
 
-// ===== FUNÇÃO DE LOGOUT =====
+// ===== LOGOUT =====
 window.sairConta = function() {
     localStorage.removeItem("user_email");
     localStorage.removeItem("user_name");
@@ -469,7 +527,7 @@ window.sairConta = function() {
     location.reload();
 };
 
-// ===== DIÁLOGO ELEGANTE PARA NÃO ASSINANTES (MULTILÍNGUE PT/EN/ES) =====
+// ===== DIÁLOGO PARA NÃO ASSINANTES =====
 function mostrarDialogoNaoAssinante(nomeUsuario) {
     const modalAntigo = document.getElementById('modal-assinatura-exclusivo');
     if (modalAntigo) modalAntigo.remove();
@@ -496,15 +554,15 @@ function mostrarDialogoNaoAssinante(nomeUsuario) {
             ">
                 <i class="fa-solid fa-crown"></i>
             </div>
-            
+
             <h3 style="color: #1a1a1a; margin: 0 0 10px 0; font-size: 1.4rem;">Olá / Hello / Hola, ${nomeUsuario || 'Visitante'}!</h3>
-            
+
             <div style="color: #555; font-size: 0.88rem; line-height: 1.4; margin-bottom: 20px; text-align: left;">
                 <p style="margin-bottom: 8px;"><strong>PT:</strong> Identificamos que você ainda não possui uma assinatura ativa. Para desbloquear recursos exclusivos, baixe nosso aplicativo no Google Play!</p>
                 <p style="margin-bottom: 8px;"><strong>EN:</strong> You don't have an active subscription yet. Unlock exclusive features by downloading our app from Google Play!</p>
                 <p style="margin: 0;"><strong>ES:</strong> Aún no tienes una suscripción activa. ¡Desbloquea recursos exclusivos descargando nuestra app en Google Play!</p>
             </div>
-            
+
             <a href="https://play.google.com/store/apps/details?id=com.fabioribeiroromelli.geradordejogos" target="_blank" style="
                 display: block; background: #209869; color: white; text-decoration: none;
                 padding: 14px 20px; border-radius: 30px; font-weight: bold; font-size: 0.95rem;
@@ -529,14 +587,12 @@ function mostrarDialogoNaoAssinante(nomeUsuario) {
     });
 
     overlay.addEventListener('click', (e) => {
-        if (e.target === overlay) {
-            overlay.remove();
-        }
+        if (e.target === overlay) overlay.remove();
     });
 }
 
-// ===== LOGIN DO GOOGLE AUTH =====
-function handleCredentialResponse(response) {
+// ===== LOGIN DO GOOGLE AUTH (CORRIGIDO) =====
+async function handleCredentialResponse(response) {
     if (!response || !response.credential) {
         console.error("Nenhuma credencial retornada pelo Google.");
         return;
@@ -552,9 +608,18 @@ function handleCredentialResponse(response) {
             console.warn("Não foi possível salvar os dados do usuário no localStorage:", e);
         }
 
-        const isAssinante = localStorage.getItem("is_subscriber") === "true";
+        // ✅ CORREÇÃO PRINCIPAL: consulta o servidor para saber se é assinante
+        const statusServidor = await verificarAssinaturaNoServidor(responsePayload.email);
 
-        // Atualiza a tela imediatamente para exibir o nome do usuário logado
+        // Se o servidor respondeu, atualiza a flag.
+        // Se não respondeu, PRESERVA a flag existente (não sobrescreve para false!)
+        if (statusServidor !== null) {
+            setUsuarioAssinante(statusServidor);
+        }
+
+        const isAssinante = isUsuarioAssinante();
+
+        // Atualiza UI
         atualizarInterfaceUsuario(responsePayload.name || responsePayload.email, isAssinante);
 
         if (!isAssinante) {
@@ -574,7 +639,6 @@ function parseJwt(token) {
         const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
             return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
         }).join(''));
-
         return JSON.parse(jsonPayload);
     } catch (e) {
         console.error("Erro ao decodificar JWT:", e);

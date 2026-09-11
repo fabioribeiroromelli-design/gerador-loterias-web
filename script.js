@@ -18,8 +18,19 @@ let generatedGames = [];
 
 document.addEventListener('DOMContentLoaded', () => {
     initEvents();
+    
+    // Captura o parâmetro de URL ?lottery=NomeSeletor (ex: generator.html?lottery=Mega-Sena)
+    const urlParams = new URLSearchParams(window.location.search);
+    const lotteryParam = urlParams.get('lottery');
+    if (lotteryParam) {
+        const foundKey = Object.keys(LOTTERIES_CONFIG).find(
+            key => LOTTERIES_CONFIG[key].name.toLowerCase() === lotteryParam.toLowerCase()
+        );
+        if (foundKey) currentLottery = foundKey;
+    }
+
     switchLottery(currentLottery);
-    initGoogleAuthUI(); // Inicializa o login do Google de forma segura
+    initGoogleAuthUI();
 });
 
 function initEvents() {
@@ -49,13 +60,13 @@ function initEvents() {
     if (btnDownload) btnDownload.addEventListener('click', downloadTXT);
 }
 
-// Função segura para inicializar o Google Sign-In sem duplicar chamadas
+// ===== GOOGLE AUTH UI INTEGRADO =====
 function initGoogleAuthUI() {
     if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
         try {
             google.accounts.id.initialize({
                 client_id: "383374785711-e00t37fkf9q6aqe5imqi0nnh29v2npq4.apps.googleusercontent.com",
-                callback: handleCredentialResponse,
+                callback: typeof handleCredentialResponse !== 'undefined' ? handleCredentialResponse : () => {},
                 ux_mode: "popup"
             });
 
@@ -72,11 +83,6 @@ function initGoogleAuthUI() {
     }
 }
 
-function handleCredentialResponse(response) {
-    console.log("Token ID Google recebido com sucesso.");
-    // Aqui você pode decodificar o JWT se precisar extrair o e-mail do usuário
-}
-
 function switchLottery(type) {
     if (!LOTTERIES_CONFIG[type]) return;
     currentLottery = type;
@@ -87,6 +93,15 @@ function switchLottery(type) {
 
     const volanteTitle = document.getElementById('volante_title');
     if (volanteTitle) volanteTitle.textContent = `Volante de Seleção (${config.name})`;
+
+    // Destaca o botão ativo da loteria se existir a lista de botões
+    document.querySelectorAll('.btn-lottery').forEach(btn => {
+        if (btn.getAttribute('data-type') === type) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
 
     clearSelections();
     buildGrid();
@@ -174,8 +189,8 @@ function updateSummary() {
     if (!summaryInfo) return;
 
     if (config.isSuperSete) {
-        const fixos = Array.from(fixedNumbers).join(', ') || 'Nenhum';
-        const excl = Array.from(excludedNumbers).join(', ') || 'Nenhum';
+        const fixos = Array.from(fixedNumbers).join(', ') || 'Nenhum / None / Ninguno';
+        const excl = Array.from(excludedNumbers).join(', ') || 'Nenhum / None / Ninguno';
         summaryInfo.innerHTML = `
             Fixos: <strong style="color: #28a745;">${fixos}</strong> | 
             Excluídos: <strong style="color: #dc3545;">${excl}</strong>
@@ -183,8 +198,8 @@ function updateSummary() {
         return;
     }
 
-    const fixos = Array.from(fixedNumbers).sort((a,b)=>a-b).map(n => String(n).padStart(2, '0')).join(', ') || 'Nenhum';
-    const excl = Array.from(excludedNumbers).sort((a,b)=>a-b).map(n => String(n).padStart(2, '0')).join(', ') || 'Nenhum';
+    const fixos = Array.from(fixedNumbers).sort((a,b)=>a-b).map(n => String(n).padStart(2, '0')).join(', ') || 'Nenhum / None / Ninguno';
+    const excl = Array.from(excludedNumbers).sort((a,b)=>a-b).map(n => String(n).padStart(2, '0')).join(', ') || 'Nenhum / None / Ninguno';
 
     summaryInfo.innerHTML = `
         Fixos: <strong style="color: #28a745;">${fixos}</strong> | 
@@ -227,8 +242,10 @@ function clearSelections() {
     fixedNumbers.clear();
     excludedNumbers.clear();
     generatedGames = [];
+    
     const genList = document.getElementById('generated_games_list');
     if (genList) genList.innerHTML = '';
+    
     buildGrid();
     updateSummary();
 }
@@ -240,7 +257,7 @@ function populateFilterSelects() {
     ['select_pares', 'select_impares', 'select_primos'].forEach(id => {
         const select = document.getElementById(id);
         if (!select) return;
-        select.innerHTML = '<option value="">Todos</option>';
+        select.innerHTML = '<option value="">Todos / All / Todos</option>';
         for (let i = 0; i <= max; i++) {
             select.innerHTML += `<option value="${i}">${i}</option>`;
         }
@@ -290,9 +307,16 @@ function generateGames() {
         if (!fixedNumbers.has(i) && !excludedNumbers.has(i)) pool.push(i);
     }
 
-    let tentativas = 0;
+    // Validação de segurança para garantir espaço no conjunto
+    if (fixedNumbers.size > config.defaultSelect) {
+        alert(`Você fixou mais números (${fixedNumbers.size}) do que a quantidade padrão da aposta (${config.defaultSelect})!\nPor favor, remova alguns fixos.`);
+        return;
+    }
 
-    while (generatedGames.length < qtdGames && tentativas < 2000) {
+    let tentativas = 0;
+    const maxTentativas = 5000;
+
+    while (generatedGames.length < qtdGames && tentativas < maxTentativas) {
         tentativas++;
         let game = [...Array.from(fixedNumbers)];
         let tempPool = [...pool].sort(() => Math.random() - 0.5);
@@ -300,6 +324,8 @@ function generateGames() {
         while (game.length < config.defaultSelect && tempPool.length > 0) {
             game.push(tempPool.pop());
         }
+
+        if (game.length < config.defaultSelect) break;
 
         game.sort((a, b) => a - b);
 
@@ -317,6 +343,10 @@ function generateGames() {
         }
     }
 
+    if (generatedGames.length < qtdGames) {
+        alert("Não foi possível gerar todos os jogos com a combinação de filtros selecionada.\nTente relaxar os filtros (ex: deixar Pares ou Primos em 'Todos').");
+    }
+
     renderGeneratedGames();
 }
 
@@ -326,7 +356,7 @@ function renderGeneratedGames() {
     container.innerHTML = '';
 
     if (generatedGames.length === 0) {
-        container.innerHTML = '<p style="color: #666;">Nenhum jogo gerado com esses filtros.</p>';
+        container.innerHTML = '<p style="color: #666; text-align: center;">Nenhum jogo gerado com esses filtros / No games generated / Ningún juego generado.</p>';
         return;
     }
 
@@ -349,9 +379,21 @@ function renderGeneratedGames() {
 
 function saveGames() {
     if (generatedGames.length === 0) {
-        alert("Gere pelo menos um jogo antes de salvar!");
+        alert("Gere pelo menos um jogo antes de salvar!\nGenerate at least one game before saving!");
         return;
     }
+
+    // Proteção de assinatura ao salvar no LocalStorage
+    const isAssinante = localStorage.getItem("is_subscriber") === "true";
+    if (!isAssinante) {
+        if (typeof mostrarDialogoNaoAssinante === 'function') {
+            mostrarDialogoNaoAssinante(localStorage.getItem("user_name"));
+        } else {
+            alert("Apenas assinantes podem salvar jogos!\nOnly subscribers can save games!");
+        }
+        return;
+    }
+
     const saved = JSON.parse(localStorage.getItem('saved_games_list') || '[]');
     generatedGames.forEach(game => {
         saved.push({
@@ -361,12 +403,12 @@ function saveGames() {
         });
     });
     localStorage.setItem('saved_games_list', JSON.stringify(saved));
-    alert(`${generatedGames.length} jogo(s) salvo(s) com sucesso!`);
+    alert(`${generatedGames.length} jogo(s) salvo(s) com sucesso! / Saved successfully!`);
 }
 
 function downloadTXT() {
     if (generatedGames.length === 0) {
-        alert("Gere pelo menos um jogo antes de baixar!");
+        alert("Gere pelo menos um jogo antes de baixar!\nGenerate at least one game before downloading!");
         return;
     }
     const config = LOTTERIES_CONFIG[currentLottery];
