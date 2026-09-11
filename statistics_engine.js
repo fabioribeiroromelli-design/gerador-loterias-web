@@ -10,10 +10,6 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- SDKs do Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-
     <style>
         :root {
             --bg: #121019;
@@ -287,7 +283,7 @@
             </button>
             <div class="header-titles">
                 <h1 data-i18n="page_title">Estatísticas das loterias</h1>
-                <p data-i18n="page_subtitle">Análise histórica com salvamento local inteligente</p>
+                <p data-i18n="page_subtitle">Análise histórica inteligente via arquivos locais</p>
             </div>
         </div>
         <select id="lang_selector" class="lang-selector" onchange="mudarIdioma(this.value)">
@@ -320,7 +316,7 @@
 
         <div id="stats_container"></div>
 
-        <p class="rodape-nota" data-i18n="footer_note">As estatísticas utilizam cache local no navegador. Caso ocorra um novo sorteio oficial, limpe os dados ou atualize diretamente pela base.</p>
+        <p class="rodape-nota" data-i18n="footer_note">As estatísticas utilizam os arquivos JSON locais do repositório para análise dinâmica dos concursos oficiais.</p>
     </main>
 
     <script>
@@ -331,7 +327,7 @@
             pt: {
                 back: "Voltar",
                 page_title: "Estatísticas das loterias",
-                page_subtitle: "Análise histórica com salvamento local inteligente",
+                page_subtitle: "Análise histórica inteligente via arquivos locais",
                 select_lottery: "Selecione uma loteria",
                 waiting: "Aguardando...",
                 checking: "Verificando dados...",
@@ -354,12 +350,12 @@
                 times_drawn: (count) => `Saiu ${count} ${count === 1 ? 'vez' : 'vezes'}.`,
                 last_draws_label: "Últimos concursos: ",
                 number_label: "Número ",
-                footer_note: "As estatísticas utilizam cache local no navegador. Caso ocorra um novo sorteio oficial, limpe os dados ou atualize diretamente pela base."
+                footer_note: "As estatísticas utilizam os arquivos JSON locais do repositório para análise dinâmica dos concursos oficiais."
             },
             en: {
                 back: "Back",
                 page_title: "Lottery Statistics",
-                page_subtitle: "Historical analysis with intelligent local caching",
+                page_subtitle: "Smart historical analysis via local files",
                 select_lottery: "Select a lottery",
                 waiting: "Waiting...",
                 checking: "Checking data...",
@@ -382,12 +378,12 @@
                 times_drawn: (count) => `Drawn ${count} ${count === 1 ? 'time' : 'times'}.`,
                 last_draws_label: "Recent draws: ",
                 number_label: "Number ",
-                footer_note: "Statistics use local browser caching. If a new official draw happens, clear data or update directly."
+                footer_note: "Statistics use local repository JSON files for dynamic analysis of official draws."
             },
             es: {
                 back: "Volver",
                 page_title: "Estadísticas de Loterías",
-                page_subtitle: "Análisis histórico con almacenamiento local inteligente",
+                page_subtitle: "Análisis histórico inteligente mediante archivos locales",
                 select_lottery: "Seleccione una lotería",
                 waiting: "Esperando...",
                 checking: "Verificando datos...",
@@ -410,7 +406,7 @@
                 times_drawn: (count) => `Salió ${count} ${count === 1 ? 'vez' : 'veces'}.`,
                 last_draws_label: "Últimos sorteos: ",
                 number_label: "Número ",
-                footer_note: "Las estadísticas utilizan caché local en el navegador. Si ocurre un nuevo sorteo oficial, limpie los datos o actualice."
+                footer_note: "Las estadísticas utilizan los archivos JSON locales del repositorio para el análisis dinámico de los sorteos oficiales."
             }
         };
 
@@ -439,41 +435,23 @@
             carregarEstatisticas(currentLottery);
         }
 
-        async function obterHistoricoFirebase(loteria) {
-            const cacheKey = `cache_loterias_${loteria}`;
-            const dadosLocais = localStorage.getItem(cacheKey);
-            if (dadosLocais) {
-                try {
-                    const historicoParsed = JSON.parse(dadosLocais);
-                    if (Array.isArray(historicoParsed) && historicoParsed.length > 0) {
-                        return { historico: historicoParsed, origem: 'Cache Local' };
-                    }
-                } catch (e) {
-                    console.error("Erro ao ler cache local:", e);
-                }
-            }
-
+        // Função ajustada para ler diretamente os arquivos JSON locais do repositório (ex: historico_quina.json)
+        async function obterHistoricoLocal(loteria) {
             try {
-                if (typeof db === 'undefined') {
-                    console.error("Instância 'db' do Firestore não encontrada.");
-                    return { historico: [], origem: 'Erro' };
+                const arquivoJson = `historico_${loteria.toLowerCase()}.json`;
+                const response = await fetch(arquivoJson);
+                
+                if (!response.ok) {
+                    throw new Error(`Arquivo ${arquivoJson} não encontrado (404)`);
                 }
-
-                const docRef = db.collection('loterias').doc(loteria);
-                const docSnap = await docRef.get();
-
-                if (docSnap.exists) {
-                    const dados = docSnap.data();
-                    const historico = dados.historico || [];
-                    if (historico.length > 0) {
-                        localStorage.setItem(cacheKey, JSON.stringify(historico));
-                    }
-                    return { historico, origem: 'Firebase' };
-                } else {
-                    return { historico: [], origem: 'Vazio' };
+                
+                const historico = await response.json();
+                if (Array.isArray(historico) && historico.length > 0) {
+                    return { historico, origem: 'JSON Local' };
                 }
+                return { historico: [], origem: 'Vazio' };
             } catch (error) {
-                console.error("Erro ao buscar dados do Firebase:", error);
+                console.error("Erro ao carregar histórico JSON local:", error);
                 return { historico: [], origem: 'Erro' };
             }
         }
@@ -481,7 +459,6 @@
         function getConcursoHeader(draw) { return draw.concurso || draw.numero || draw.id || '?'; }
         function getDataConcurso(draw) { return draw.data || draw.dataApuracao || draw.dataSorteio || draw.date || null; }
 
-        // Cálculo estatístico completo com atraso (delay) real baseado no histórico
         function calcularEstatisticasNumeros(draws, loteria) {
             const isSuperSete = (loteria === 'supersete');
             const totalNumeros = TOTAL_NUMEROS[loteria] || 60;
@@ -491,8 +468,7 @@
             const freq = {}, ocorrencias = {}, atrasoAtual = {};
             numeros.forEach(n => { freq[n] = 0; ocorrencias[n] = []; atrasoAtual[n] = draws.length; });
 
-            // Percorre do mais antigo para o mais recente para calcular frequências e aparências
-            draws.forEach((draw, index) => {
+            draws.forEach((draw) => {
                 const concursoNum = getConcursoHeader(draw);
                 const numerosDraw = (draw.dezenas || draw.listaDezenas || []).map(n => parseInt(n, 10));
                 
@@ -500,15 +476,12 @@
                     if (numeroValido(n)) {
                         freq[n] = (freq[n] || 0) + 1;
                         ocorrencias[n].push(concursoNum);
-                        // Reseta o atraso toda vez que o número é sorteado
                         atrasoAtual[n] = 0;
                     }
                 });
 
-                // Incrementa o atraso para os números que não saíram neste concurso
                 numeros.forEach(n => {
                     if (!numerosDraw.includes(n)) {
-                        // Se o número já apareceu antes, incrementa seu contador de ausência
                         if (ocorrencias[n].length > 0) {
                             atrasoAtual[n]++;
                         }
@@ -527,7 +500,6 @@
             const count = stats.freq[num] || 0;
             const atraso = stats.atrasoAtual[num] || 0;
 
-            // Se o atraso for muito alto (ex: acima de 1.5x a média de ausência ou limite crítico), classifica como atrasado/delay
             if (atraso >= 15 && count > 0) return 'delay';
             if (count > stats.media + stats.desvio * 0.7) return 'hot';
             if (count < stats.media - stats.desvio * 0.7) return 'cold';
@@ -553,7 +525,7 @@
             document.getElementById('badge_fonte').innerText = t.checking;
             document.getElementById('stats_subtitle').innerText = t.loading;
 
-            const resultado = await obterHistoricoFirebase(loteria);
+            const resultado = await obterHistoricoLocal(loteria);
             const draws = resultado.historico;
             const origemDados = resultado.origem;
 
@@ -570,7 +542,6 @@
 
             const ultimoConcurso = draws[draws.length - 1];
             const numUltimo = getConcursoHeader(ultimoConcurso);
-            const dataUltima = getDataConcurso(ultimoConcurso);
 
             document.getElementById('stats_subtitle').innerText = t.analyzed_total(draws.length);
             document.getElementById('badge_fonte').innerText = t.source_label(origemDados, numUltimo);
