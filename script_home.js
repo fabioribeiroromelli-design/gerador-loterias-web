@@ -1,5 +1,102 @@
+/* ============================================================
+   FIREBASE — CONFIGURAÇÃO E CONSULTA DE ASSINANTE
+   Estrutura do Firestore esperada:
+   usuarios/{docId} → { email: "xxx@gmail.com", assinante: true }
+   ============================================================ */
+
+const firebaseConfig = {
+    apiKey: "AIzaSyBc1Ab14Fo6Ua-u3i1SDudf4EfVijVmONY",
+    authDomain: "gerador-loterias-web.firebaseapp.com",
+    projectId: "gerador-loterias-web",
+    storageBucket: "gerador-loterias-web.firebasestorage.app",
+    messagingSenderId: "539211828205",
+    appId: "1:539211828205:web:138dc9c6f09169bde2b5e4"
+};
+
+if (typeof firebase !== 'undefined' && !firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+}
+const db = (typeof firebase !== 'undefined') ? firebase.firestore() : null;
+
+// Consulta no Firestore se o e-mail é assinante
+async function verificarAssinanteFirebase(email) {
+    if (!email || !db) return false;
+    const emailLower = String(email).toLowerCase().trim();
+
+    try {
+        // Tenta e-mail minúsculo
+        let snap = await db.collection('usuarios')
+            .where('email', '==', emailLower)
+            .limit(1)
+            .get();
+
+        // Se não achou, tenta com o e-mail exato do Google (case sensitive)
+        if (snap.empty && email !== emailLower) {
+            snap = await db.collection('usuarios')
+                .where('email', '==', email)
+                .limit(1)
+                .get();
+        }
+
+        if (snap.empty) {
+            console.log(`[Assinatura] Nenhum documento para: ${email}`);
+            return false;
+        }
+
+        const dados = snap.docs[0].data();
+        console.log(`[Assinatura] Documento encontrado:`, dados);
+        return dados.assinante === true;
+
+    } catch (e) {
+        console.error("[Firebase] Erro ao verificar assinante:", e);
+        return false;
+    }
+}
+
+// Cache em memória (evita reconsultar a cada clique)
+let _cacheEmail = null;
+let _cacheAssinante = null;
+
+function isUsuarioAssinante() {
+    const email = localStorage.getItem("user_email");
+    if (_cacheEmail === email && _cacheAssinante !== null) {
+        return _cacheAssinante;
+    }
+    return false;
+}
+
+async function atualizarStatusAssinante(email) {
+    const ativo = await verificarAssinanteFirebase(email);
+    _cacheEmail = email;
+    _cacheAssinante = ativo;
+    localStorage.setItem("is_subscriber", ativo ? "true" : "false");
+    console.log(`[Assinatura] ${email} → ${ativo ? "ASSINANTE ✅" : "NÃO ASSINANTE ❌"}`);
+    return ativo;
+}
+
+// Aplica ?assinante=true|false via URL (retorno do app / pagamento)
+function aplicarAssinaturaViaURL() {
+    try {
+        const params = new URLSearchParams(window.location.search);
+        if (params.has('assinante')) {
+            const val = params.get('assinante');
+            const ativo = val === 'true' || val === '1' || val === 'sim' || val === 'yes';
+            localStorage.setItem("is_subscriber", ativo ? "true" : "false");
+            params.delete('assinante');
+            const nova = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+            window.history.replaceState({}, '', nova);
+        }
+    } catch (e) {
+        console.warn("Falha ao processar ?assinante na URL:", e);
+    }
+}
+
+/* ============================================================
+   MAIN
+   ============================================================ */
 document.addEventListener('DOMContentLoaded', async () => {
-    // ===== 1. INJETAR FONTAWESOME E BIBLIOTECA GOOGLE AUTH =====
+
+    // ===== 1. FONT AWESOME + GOOGLE AUTH =====
     if (!document.getElementById('fa-icons')) {
         const fa = document.createElement('link');
         fa.id = 'fa-icons';
@@ -12,10 +109,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         window._googleAuthInitialized = false;
     }
 
-    // 1.1) Se vier ?assinante=true na URL (retorno do app/pagamento), grava a flag
+    // Aplica flag vinda da URL (ex: retorno do app)
     aplicarAssinaturaViaURL();
 
-    // 1.2) Revalida assinatura (servidor) e atualiza a UI
+    // Restaura login salvo e consulta Firebase
     await verificarLoginSalvo();
 
     const existingGsiScript = document.getElementById('google-gsi-script');
@@ -68,7 +165,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // ===== 2. BARRA DE ATALHOS PROTEGIDA =====
+    // ===== 2. BARRA DE ATALHOS =====
     function createShortcuts() {
         let container = document.querySelector('.shortcuts-bar');
         if (container) return container;
@@ -402,60 +499,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 /* =========================================================
-   HELPERS DE ASSINATURA (CORRIGIDOS)
+   FUNÇÕES GLOBAIS
    ========================================================= */
-
-// Lê a flag de assinante aceitando "true", "1", "sim", "yes"
-function isUsuarioAssinante() {
-    const valor = localStorage.getItem("is_subscriber");
-    if (valor === null || valor === undefined) return false;
-    const v = String(valor).toLowerCase().trim();
-    return v === "true" || v === "1" || v === "sim" || v === "yes";
-}
-
-// Define a flag (chame isso após uma compra/validação manual)
-window.setUsuarioAssinante = function(status) {
-    localStorage.setItem("is_subscriber", status ? "true" : "false");
-    console.log("[Assinatura] is_subscriber =", status ? "true" : "false");
-};
-
-// Aplica ?assinante=true|false na URL — útil para retorno do app/pagamento
-function aplicarAssinaturaViaURL() {
-    try {
-        const params = new URLSearchParams(window.location.search);
-        if (params.has('assinante')) {
-            const val = params.get('assinante');
-            const ativo = val === 'true' || val === '1' || val === 'sim' || val === 'yes';
-            setUsuarioAssinante(ativo);
-            // Limpa a URL para não ficar poluída
-            params.delete('assinante');
-            const nova = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
-            window.history.replaceState({}, '', nova);
-        }
-    } catch (e) {
-        console.warn("Falha ao processar ?assinante na URL:", e);
-    }
-}
-
-// Verifica assinatura no servidor (AJUSTE A URL PARA O SEU ENDPOINT)
-async function verificarAssinaturaNoServidor(email) {
-    if (!email) return null;
-    try {
-        const resp = await fetch(`/api/verificar-assinatura?email=${encodeURIComponent(email)}`, {
-            method: 'GET',
-            headers: { 'Accept': 'application/json' }
-        });
-        if (!resp.ok) return null;
-        const data = await resp.json();
-        // Aceita qualquer um dos formatos: { isAssinante } ou { isSubscriber }
-        if (typeof data.isAssinante === 'boolean') return data.isAssinante;
-        if (typeof data.isSubscriber === 'boolean') return data.isSubscriber;
-        return null;
-    } catch (e) {
-        // Sem backend disponível — não quebra o site
-        return null;
-    }
-}
 
 // ===== ATUALIZA INTERFACE =====
 function atualizarInterfaceUsuario(nome, isAssinante) {
@@ -480,42 +525,35 @@ function atualizarInterfaceUsuario(nome, isAssinante) {
     }
 }
 
-// ===== VERIFICAÇÃO DE LOGIN SALVO (agora assíncrona e revalida no servidor) =====
+// ===== VERIFICAÇÃO DE LOGIN SALVO =====
 async function verificarLoginSalvo() {
     const emailSalvo = localStorage.getItem("user_email");
     const nomeSalvo = localStorage.getItem("user_name");
     if (!emailSalvo) return;
 
-    // 1) Tenta confirmar no servidor
-    const statusServidor = await verificarAssinaturaNoServidor(emailSalvo);
-
-    // 2) Se o servidor respondeu, atualiza a flag
-    if (statusServidor !== null) {
-        setUsuarioAssinante(statusServidor);
-    }
-
-    // 3) Atualiza UI com o valor atual (servidor OU localStorage)
-    atualizarInterfaceUsuario(nomeSalvo || emailSalvo, isUsuarioAssinante());
+    // Consulta o Firebase (a verdade vem de lá)
+    const isAssinante = await atualizarStatusAssinante(emailSalvo);
+    atualizarInterfaceUsuario(nomeSalvo || emailSalvo, isAssinante);
 }
 
-// ===== NAVEGAÇÃO PROTEGIDA (CORRIGIDA) =====
-function navegarProtegido(url) {
+// ===== NAVEGAÇÃO PROTEGIDA =====
+async function navegarProtegido(url) {
     const emailSalvo = localStorage.getItem("user_email");
 
-    // Não logado → pede login
     if (!emailSalvo) {
         alert("Por favor, faça login com sua conta do Google para continuar.\nPlease sign in with your Google account.\nPor favor, inicie sesión con su cuenta de Google.");
         return;
     }
 
-    // Logado mas NÃO é assinante → mostra modal de assinatura
-    if (!isUsuarioAssinante()) {
+    // Revalida no Firebase na hora do clique (status sempre fresco)
+    const isAssinante = await atualizarStatusAssinante(emailSalvo);
+
+    if (!isAssinante) {
         const nomeSalvo = localStorage.getItem("user_name");
         mostrarDialogoNaoAssinante(nomeSalvo);
         return;
     }
 
-    // Logado E assinante → libera
     window.location.href = url;
 }
 
@@ -524,6 +562,8 @@ window.sairConta = function() {
     localStorage.removeItem("user_email");
     localStorage.removeItem("user_name");
     localStorage.removeItem("is_subscriber");
+    _cacheEmail = null;
+    _cacheAssinante = null;
     location.reload();
 };
 
@@ -591,7 +631,7 @@ function mostrarDialogoNaoAssinante(nomeUsuario) {
     });
 }
 
-// ===== LOGIN DO GOOGLE AUTH (CORRIGIDO) =====
+// ===== LOGIN DO GOOGLE AUTH =====
 async function handleCredentialResponse(response) {
     if (!response || !response.credential) {
         console.error("Nenhuma credencial retornada pelo Google.");
@@ -608,16 +648,8 @@ async function handleCredentialResponse(response) {
             console.warn("Não foi possível salvar os dados do usuário no localStorage:", e);
         }
 
-        // ✅ CORREÇÃO PRINCIPAL: consulta o servidor para saber se é assinante
-        const statusServidor = await verificarAssinaturaNoServidor(responsePayload.email);
-
-        // Se o servidor respondeu, atualiza a flag.
-        // Se não respondeu, PRESERVA a flag existente (não sobrescreve para false!)
-        if (statusServidor !== null) {
-            setUsuarioAssinante(statusServidor);
-        }
-
-        const isAssinante = isUsuarioAssinante();
+        // ✅ Consulta o Firebase — a verdade vem de lá
+        const isAssinante = await atualizarStatusAssinante(responsePayload.email);
 
         // Atualiza UI
         atualizarInterfaceUsuario(responsePayload.name || responsePayload.email, isAssinante);
