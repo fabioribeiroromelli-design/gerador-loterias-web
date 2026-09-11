@@ -13,7 +13,7 @@
             --bg: #121019; --surface: #1c1a26; --surface-2: #262432; --border: #363347;
             --text: #EDEAE3; --text-muted: #9a96ab; --gold: #E3A83B; --gold-dim: rgba(227, 168, 59, 0.16);
             --ink: #14131b; --danger: #e2704f; --delay: #c0392b; --cold: #3a3a5a; --mid: #6a5a3a;
-            --success: #10b981; --blue: #3b82f6; --purple: #8b5cf6;
+            --blue: #3b82f6; --success: #10b981; --purple: #8b5cf6;
             --radius: 10px; --font-display: 'Big Shoulders Display', sans-serif;
             --font-body: 'IBM Plex Sans', sans-serif; --font-mono: 'IBM Plex Mono', monospace;
         }
@@ -77,10 +77,8 @@
         .card-box .card-desc { margin: 0 0 14px; color: var(--text-muted); font-size: 0.8rem;
             line-height: 1.4; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
 
-        /* Grid de estatísticas */
         .stats-main-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 18px; margin-bottom: 20px; }
 
-        /* Células de número */
         .number-grid { display: grid; gap: 7px; margin-top: 4px; justify-items: center; }
         .number-cell { aspect-ratio: 1 / 1; width: 100%; min-width: 30px; max-width: 54px; border-radius: 50%;
             display: flex; align-items: center; justify-content: center; font-family: var(--font-display);
@@ -100,7 +98,6 @@
             pointer-events: none; white-space: normal; line-height: 1.5; text-align: left; }
         .number-cell:hover .tooltip { display: block; }
 
-        /* Último concurso */
         .last-draw-balls { display: flex; flex-direction: column; gap: 8px; max-height: 520px; overflow-y: auto; padding-right: 4px; }
         .last-draw-balls::-webkit-scrollbar { width: 6px; }
         .last-draw-balls::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
@@ -115,7 +112,6 @@
         .mini-ball.delay { background: var(--delay); color: #fff; border-color: var(--delay); }
         .ball-status-label { font-size: 0.78rem; color: var(--text-muted); }
 
-        /* Listas */
         .list-stats { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
         .list-row { display: grid; grid-template-columns: 40px 1fr auto; gap: 10px; align-items: center;
             padding: 8px 10px; background: var(--surface-2); border-radius: 6px; }
@@ -126,12 +122,27 @@
         .list-row .row-fill.delay { background: linear-gradient(90deg, var(--danger), #ef4444); }
         .list-row .row-val { font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted); white-space: nowrap; }
 
-        /* Cards de métricas */
         .metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-top: 6px; }
         .metric-card { background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; }
         .metric-card .lbl { font-size: 0.68rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
         .metric-card .val { font-family: var(--font-display); font-size: 1.5rem; font-weight: 700; color: var(--gold); margin-top: 4px; line-height: 1; }
-        .metric-card .sub { font-size: 0.72rem; color: var(--text-muted); margin-top: 4px; }
+
+        /* ⚠️ Grid especial do Super Sete */
+        .supersete-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 12px; margin-top: 8px; }
+        @media (max-width: 900px) { .supersete-grid { grid-template-columns: repeat(4, 1fr); } }
+        @media (max-width: 600px) { .supersete-grid { grid-template-columns: repeat(2, 1fr); } }
+        .supersete-coluna { background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 10px; }
+        .supersete-coluna h4 { margin: 0 0 8px; font-family: var(--font-display); font-size: 0.95rem; color: var(--gold); text-align: center; }
+        .supersete-coluna .mini-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; }
+        .supersete-coluna .mini-cell { aspect-ratio: 1; border-radius: 5px; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; font-size: 0.7rem; background: var(--surface); color: var(--text);
+            border: 1px solid var(--border); }
+        .supersete-coluna .mini-cell .d { font-family: var(--font-display); font-weight: 700; font-size: 0.9rem; }
+        .supersete-coluna .mini-cell .f { font-size: 0.6rem; color: var(--text-muted); }
+        .supersete-coluna .mini-cell.hot { background: var(--gold); color: var(--ink); border-color: var(--gold); }
+        .supersete-coluna .mini-cell.hot .f { color: rgba(0,0,0,0.6); }
+        .supersete-coluna .mini-cell.cold { background: var(--cold); color: var(--text-muted); }
+        .supersete-coluna .mini-cell.cold .f { color: #6b7093; }
 
         .rodape-nota { margin-top: 26px; color: var(--text-muted); font-size: 0.78rem; text-align: center; line-height: 1.5; }
         .estado-vazio { grid-column: 1 / -1; text-align: center; padding: 40px 20px; color: var(--text-muted); }
@@ -220,7 +231,9 @@
                 metric_soma: "Soma Média", metric_pares: "Média Pares", metric_impares: "Média Ímpares",
                 metric_primos: "Média Primos", metric_repetidos: "Repetem Anterior",
                 metric_seq: "Maior Sequência", metric_amplitude: "Amplitude Média",
-                metric_media: "Frequência Média", metric_atraso_max: "Maior Atraso"
+                metric_media: "Frequência Média", metric_atraso_max: "Maior Atraso",
+                supersete_title: "Super Sete por Coluna",
+                supersete_desc: "Super Sete tem 7 colunas independentes. Cada coluna tem seu próprio dígito 0-9."
             },
             en: {
                 back: "Back", page_title: "Lottery Statistics",
@@ -252,7 +265,9 @@
                 metric_soma: "Avg Sum", metric_pares: "Avg Even", metric_impares: "Avg Odd",
                 metric_primos: "Avg Primes", metric_repetidos: "Repeat Prev",
                 metric_seq: "Max Sequence", metric_amplitude: "Avg Range",
-                metric_media: "Avg Frequency", metric_atraso_max: "Max Delay"
+                metric_media: "Avg Frequency", metric_atraso_max: "Max Delay",
+                supersete_title: "Super Sete by Column",
+                supersete_desc: "Super Sete has 7 independent columns. Each column has its own digit 0-9."
             },
             es: {
                 back: "Volver", page_title: "Estadísticas de Loterías",
@@ -284,7 +299,9 @@
                 metric_soma: "Suma Media", metric_pares: "Media Pares", metric_impares: "Media Impares",
                 metric_primos: "Media Primos", metric_repetidos: "Repiten Anterior",
                 metric_seq: "Secuencia Máx", metric_amplitude: "Amplitud Media",
-                metric_media: "Frecuencia Media", metric_atraso_max: "Mayor Atraso"
+                metric_media: "Frecuencia Media", metric_atraso_max: "Mayor Atraso",
+                supersete_title: "Super Sete por Columna",
+                supersete_desc: "Super Sete tiene 7 columnas independientes. Cada columna tiene su dígito 0-9."
             }
         };
 
@@ -304,7 +321,6 @@
             maismilionaria: 'historico_maismilionaria.json'
         };
 
-        // Primos até 100 (para estatística de primos)
         const PRIMOS = [2,3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59,61,67,71,73,79,83,89,97];
 
         function mudarIdioma(lang) {
@@ -333,23 +349,23 @@
         function getConcursoHeader(draw) { return draw.concurso || draw.numero || draw.id || '?'; }
 
         // ============================================================
-        // ESTATÍSTICAS COMPLETAS
+        // ESTATÍSTICAS NORMAIS (não Super Sete)
         // ============================================================
         function calcularEstatisticasCompletas(draws, loteria) {
-            const isSuperSete = (loteria === 'supersete');
             const totalNumeros = TOTAL_NUMEROS[loteria] || 60;
-            const numeros = isSuperSete ? Array.from({length: 10}, (_, i) => i) : Array.from({length: totalNumeros}, (_, i) => i + 1);
-            const numeroValido = (n) => isSuperSete ? (n >= 0 && n <= 9) : (n >= 1 && n <= totalNumeros);
+            const numeros = Array.from({length: totalNumeros}, (_, i) => i + 1);
+            const numeroValido = (n) => (n >= 1 && n <= totalNumeros);
 
             // Ordena do mais recente ao mais antigo
             const ordenadoDesc = [...draws].sort((a, b) =>
                 Number(getConcursoHeader(b)) - Number(getConcursoHeader(a))
             );
 
-            // ============ FREQUÊNCIA E OCORRÊNCIAS ============
+            // ============ FREQUÊNCIA E ATRAZO (UMA PASSADA SÓ) ============
             const freq = {}, ocorrencias = {}, atrasoAtual = {};
-            numeros.forEach(n => { freq[n] = 0; ocorrencias[n] = []; atrasoAtual[n] = ordenadoDesc.length; });
+            numeros.forEach(n => { freq[n] = 0; ocorrencias[n] = []; atrasoAtual[n] = -1; });
 
+            // Uma passada só: marca atraso apenas no primeiro encontro (mais recente)
             ordenadoDesc.forEach((draw, idx) => {
                 const concursoNum = getConcursoHeader(draw);
                 const nums = (draw.dezenas || draw.listaDezenas || []).map(n => parseInt(n, 10));
@@ -357,10 +373,14 @@
                     if (numeroValido(n)) {
                         freq[n]++;
                         ocorrencias[n].push(concursoNum);
-                        if (atrasoAtual[n] === ordenadoDesc.length) atrasoAtual[n] = idx;
+                        // Marca atraso SÓ se ainda não foi marcado (primeiro encontro = mais recente)
+                        if (atrasoAtual[n] === -1) atrasoAtual[n] = idx;
                     }
                 });
             });
+
+            // Números que nunca saíram ficam com atraso = total
+            numeros.forEach(n => { if (atrasoAtual[n] === -1) atrasoAtual[n] = ordenadoDesc.length; });
 
             // ============ MÉTRICAS POR CONCURSO ============
             let somaTotal = 0, paresTotal = 0, imparesTotal = 0, primosTotal = 0;
@@ -377,39 +397,30 @@
                 const primos = nums.filter(n => PRIMOS.includes(n)).length;
                 const min = Math.min(...nums);
                 const max = Math.max(...nums);
-                const amplitude = max - min;
 
                 somaTotal += soma;
                 paresTotal += pares;
                 imparesTotal += impares;
                 primosTotal += primos;
-                amplitudeTotal += amplitude;
+                amplitudeTotal += (max - min);
 
-                // Sequência máxima de números consecutivos
                 const sorted = [...nums].sort((a, b) => a - b);
                 let seqAtual = 1, seqMax = 1;
                 for (let i = 1; i < sorted.length; i++) {
-                    if (sorted[i] === sorted[i-1] + 1) {
-                        seqAtual++;
-                        seqMax = Math.max(seqMax, seqAtual);
-                    } else {
-                        seqAtual = 1;
-                    }
+                    if (sorted[i] === sorted[i-1] + 1) { seqAtual++; seqMax = Math.max(seqMax, seqAtual); }
+                    else seqAtual = 1;
                 }
                 maxSequencia = Math.max(maxSequencia, seqMax);
 
-                // Repetidos do anterior
                 if (idx > 0) {
-                    const numsAnterior = (ordenadoDesc[idx-1].dezenas || ordenadoDesc[idx-1].listaDezenas || [])
-                        .map(n => parseInt(n, 10));
-                    const repetidos = nums.filter(n => numsAnterior.includes(n)).length;
-                    repetidosTotal += repetidos;
+                    const numsAnt = (ordenadoDesc[idx-1].dezenas || ordenadoDesc[idx-1].listaDezenas || []).map(n => parseInt(n, 10));
+                    const rep = nums.filter(n => numsAnt.includes(n)).length;
+                    repetidosTotal += rep;
                     contRepetidos++;
                 }
             });
 
             const totalConcursos = ordenadoDesc.length;
-
             const metricas = {
                 somaMedia: somaTotal / totalConcursos,
                 paresMedia: paresTotal / totalConcursos,
@@ -422,7 +433,6 @@
                 atrasoMax: Math.max(...Object.values(atrasoAtual))
             };
 
-            // ============ TOPS ============
             const entradas = Object.entries(freq).map(([n, f]) => ({ num: Number(n), freq: f, atraso: atrasoAtual[n] }));
             const topFreq = [...entradas].sort((a, b) => b.freq - a.freq).slice(0, 10);
             const topCold = [...entradas].sort((a, b) => a.freq - b.freq).slice(0, 10);
@@ -430,9 +440,45 @@
 
             return {
                 numeros, freq, ocorrencias, atrasoAtual, metricas,
-                topFreq, topCold, topDelay, isSuperSete, totalNumeros,
+                topFreq, topCold, topDelay, totalNumeros,
                 ultimos: ordenadoDesc.slice(0, 10)
             };
+        }
+
+        // ============================================================
+        // ESTATÍSTICAS SUPER SETE (por coluna independente)
+        // ============================================================
+        function calcularEstatisticasSuperSete(draws) {
+            const ordenadoDesc = [...draws].sort((a, b) =>
+                Number(getConcursoHeader(b)) - Number(getConcursoHeader(a))
+            );
+
+            // Por coluna (0-6), guarda frequência de cada dígito (0-9)
+            const colunas = Array.from({length: 7}, () => ({}));
+            colunas.forEach(c => { for (let d = 0; d <= 9; d++) c[d] = 0; });
+
+            const atrasoColuna = Array.from({length: 7}, () => {
+                const a = {}; for (let d = 0; d <= 9; d++) a[d] = -1; return a;
+            });
+
+            ordenadoDesc.forEach((draw, idx) => {
+                const nums = (draw.dezenas || draw.listaDezenas || []).map(n => parseInt(n, 10));
+                nums.forEach((n, colIdx) => {
+                    if (colIdx < 7 && n >= 0 && n <= 9) {
+                        colunas[colIdx][n]++;
+                        if (atrasoColuna[colIdx][n] === -1) atrasoColuna[colIdx][n] = idx;
+                    }
+                });
+            });
+
+            // Nunca saiu = total
+            for (let c = 0; c < 7; c++) {
+                for (let d = 0; d <= 9; d++) {
+                    if (atrasoColuna[c][d] === -1) atrasoColuna[c][d] = ordenadoDesc.length;
+                }
+            }
+
+            return { colunas, atrasoColuna, ultimos: ordenadoDesc.slice(0, 10), totalConcursos: ordenadoDesc.length };
         }
 
         function classificarNumero(num, stats) {
@@ -452,6 +498,9 @@
             return `${t.times_drawn(concursos.length)} ${t.last_draws_label}${recentes}. (Atraso: ${atraso})`;
         }
 
+        // ============================================================
+        // RENDER
+        // ============================================================
         async function carregarEstatisticas(loteria, nomeExibicao, elementoBotao) {
             currentLottery = loteria;
             currentLotteryName = nomeExibicao || currentLotteryName;
@@ -479,6 +528,13 @@
                 return;
             }
 
+            // ⚠️ SUPER SETE: caminho especial
+            if (loteria === 'supersete') {
+                renderSuperSete(draws, resultado, t);
+                return;
+            }
+
+            // ============ DEMAIS LOTERIAS ============
             const stats = calcularEstatisticasCompletas(draws, loteria);
             const ultimo = stats.ultimos[0];
             const numUltimo = getConcursoHeader(ultimo);
@@ -487,30 +543,30 @@
             document.getElementById('stats_subtitle').innerText = t.analyzed_total(draws.length);
             document.getElementById('badge_fonte').innerText = t.source_label(resultado.origem, numUltimo);
 
-            // ============ GRID DE NÚMEROS ============
+            // Grid de números
             let gridHtml = `<div class="number-grid" style="grid-template-columns: repeat(${colunas}, 1fr);">`;
             stats.numeros.forEach(num => {
                 const cls = classificarNumero(num, stats);
-                const displayNum = stats.isSuperSete ? num : num.toString().padStart(2, '0');
+                const displayNum = num.toString().padStart(2, '0');
                 const tooltipText = formatarTooltip(stats.ocorrencias[num] || [], stats.atrasoAtual[num]);
-                gridHtml += `<div class="number-cell ${cls}" data-number="${num}">${displayNum}<div class="tooltip">${tooltipText}</div></div>`;
+                gridHtml += `<div class="number-cell ${cls}">${displayNum}<div class="tooltip">${tooltipText}</div></div>`;
             });
             gridHtml += '</div>';
 
-            // ============ ÚLTIMO CONCURSO ============
+            // Último concurso
             const numerosUltimo = (ultimo.dezenas || ultimo.listaDezenas || []).map(n => parseInt(n, 10));
             const rotulos = { hot: t.hot_num, cold: t.cold_num, mid: t.mid_num, delay: t.delay_num };
             let linhasUltimo = '';
             [...numerosUltimo].sort((a, b) => a - b).forEach(n => {
                 const cls = classificarNumero(n, stats);
-                const display = stats.isSuperSete ? n : n.toString().padStart(2, '0');
+                const display = n.toString().padStart(2, '0');
                 linhasUltimo += `<div class="last-draw-ball-row">
                     <span class="mini-ball ${cls}">${display}</span>
                     <span class="ball-status-label">${rotulos[cls] || ''}</span>
                 </div>`;
             });
 
-            // ============ MÉTRICAS ============
+            // Métricas
             const m = stats.metricas;
             const metricsHtml = `
                 <div class="metric-grid">
@@ -525,13 +581,13 @@
                     <div class="metric-card"><div class="lbl">${t.metric_atraso_max}</div><div class="val">${m.atrasoMax}</div></div>
                 </div>`;
 
-            // ============ LISTAS TOP ============
+            // Listas
             const gerarLista = (arr, max, tipo) => arr.map(item => {
                 const pct = Math.round((item.freq / max) * 100) || 0;
                 const delayPct = Math.round((item.atraso / m.atrasoMax) * 100) || 0;
                 const pctFinal = tipo === 'delay' ? delayPct : pct;
                 const valTxt = tipo === 'delay' ? `${item.atraso} concursos` : `${item.freq}x`;
-                const displayNum = stats.isSuperSete ? item.num : String(item.num).padStart(2, '0');
+                const displayNum = String(item.num).padStart(2, '0');
                 return `<li class="list-row">
                     <span class="row-num">${displayNum}</span>
                     <div class="row-bar"><div class="row-fill ${tipo === 'cold' ? 'cold' : ''} ${tipo === 'delay' ? 'delay' : ''}" style="width: ${pctFinal}%"></div></div>
@@ -543,16 +599,15 @@
             const maxCold = stats.topCold[stats.topCold.length-1]?.freq || 1;
             const maxDelay = stats.topDelay[0]?.atraso || 1;
 
-            // ============ ÚLTIMOS 10 CONCURSOS ============
+            // Recentes
             let recentesHtml = '';
-            stats.ultimos.forEach((draw, idx) => {
+            stats.ultimos.forEach(draw => {
                 const num = getConcursoHeader(draw);
                 const data = draw.data || draw.dataApuracao || '';
                 const nums = (draw.dezenas || draw.listaDezenas || []).map(n => parseInt(n, 10)).sort((a,b) => a-b);
                 const bolas = nums.map(n => {
                     const cls = classificarNumero(n, stats);
-                    const display = stats.isSuperSete ? n : String(n).padStart(2, '0');
-                    return `<span class="mini-ball ${cls}" style="width:26px;height:26px;font-size:0.75rem;">${display}</span>`;
+                    return `<span class="mini-ball ${cls}" style="width:26px;height:26px;font-size:0.75rem;">${String(n).padStart(2,'0')}</span>`;
                 }).join('');
                 recentesHtml += `
                     <div style="display:grid;grid-template-columns:70px 1fr;gap:10px;align-items:center;padding:8px 10px;background:var(--surface-2);border-radius:6px;margin-bottom:6px;">
@@ -578,13 +633,11 @@
                         <div class="last-draw-balls">${linhasUltimo}</div>
                     </div>
                 </div>
-
                 <div class="card-box" style="margin-bottom:20px;">
                     <h3><i class="fa-solid fa-gauge-high"></i> ${t.metrics_title}</h3>
                     <p class="card-desc">${t.metrics_desc}</p>
                     ${metricsHtml}
                 </div>
-
                 <div class="stats-main-grid">
                     <div class="card-box">
                         <h3><i class="fa-solid fa-fire"></i> ${t.top_freq_title}</h3>
@@ -602,11 +655,96 @@
                         <ul class="list-stats">${gerarLista(stats.topDelay, maxDelay, 'delay')}</ul>
                     </div>
                 </div>
-
                 <div class="card-box">
                     <h3><i class="fa-solid fa-list-ol"></i> ${t.recent_title}</h3>
                     <p class="card-desc">${t.recent_desc}</p>
                     ${recentesHtml}
+                </div>`;
+        }
+
+        // ============================================================
+        // RENDER SUPER SETE (por coluna)
+        // ============================================================
+        function renderSuperSete(draws, resultado, t) {
+            const stats = calcularEstatisticasSuperSete(draws);
+            const ultimo = stats.ultimos[0];
+            const numUltimo = getConcursoHeader(ultimo);
+
+            document.getElementById('stats_subtitle').innerText = t.analyzed_total(draws.length);
+            document.getElementById('badge_fonte').innerText = t.source_label(resultado.origem, numUltimo);
+
+            // Renderiza cada coluna como um mini-grid
+            let colunasHtml = '';
+            for (let c = 0; c < 7; c++) {
+                const freqCol = stats.colunas[c];
+                const valores = Object.values(freqCol);
+                const media = valores.reduce((a, b) => a + b, 0) / 10;
+
+                let miniCells = '';
+                for (let d = 0; d <= 9; d++) {
+                    const freq = freqCol[d];
+                    const atraso = stats.atrasoColuna[c][d];
+                    const cls = freq > media * 1.15 ? 'hot' : (freq < media * 0.85 ? 'cold' : '');
+                    miniCells += `<div class="mini-cell ${cls}" title="Dígito ${d} - ${freq} vezes, atraso ${atraso}">
+                        <span class="d">${d}</span>
+                        <span class="f">${freq}x</span>
+                    </div>`;
+                }
+                colunasHtml += `
+                    <div class="supersete-coluna">
+                        <h4>Coluna ${c+1}</h4>
+                        <div class="mini-grid">${miniCells}</div>
+                    </div>`;
+            }
+
+            // Último resultado (por coluna)
+            const numsUltimo = (ultimo.dezenas || ultimo.listaDezenas || []).map(n => parseInt(n, 10));
+            let ultimoHtml = '';
+            numsUltimo.forEach((n, i) => {
+                ultimoHtml += `<div class="last-draw-ball-row">
+                    <span class="mini-ball" style="background:var(--gold);color:var(--ink);">${n}</span>
+                    <span class="ball-status-label">Coluna ${i+1}</span>
+                </div>`;
+            });
+
+            // Recentes
+            let recentesHtml = '';
+            stats.ultimos.forEach(draw => {
+                const num = getConcursoHeader(draw);
+                const data = draw.data || draw.dataApuracao || '';
+                const nums = (draw.dezenas || draw.listaDezenas || []).map(n => parseInt(n, 10));
+                const bolas = nums.map((n, i) => `<span style="display:inline-flex;flex-direction:column;align-items:center;">
+                    <span style="font-size:9px;color:var(--text-muted);">C${i+1}</span>
+                    <span style="background:var(--gold);color:var(--ink);width:26px;height:26px;line-height:26px;border-radius:50%;text-align:center;font-weight:700;font-size:0.75rem;">${n}</span>
+                </span>`).join('');
+                recentesHtml += `
+                    <div style="display:grid;grid-template-columns:70px 1fr;gap:10px;align-items:center;padding:8px 10px;background:var(--surface-2);border-radius:6px;margin-bottom:6px;">
+                        <div style="font-size:0.75rem;">
+                            <div style="color:var(--gold);font-weight:700;">#${num}</div>
+                            <div style="color:var(--text-muted);font-size:0.65rem;">${data}</div>
+                        </div>
+                        <div style="display:flex;flex-wrap:wrap;gap:6px;">${bolas}</div>
+                    </div>`;
+            });
+
+            document.getElementById('stats_container').className = 'fade-in';
+            document.getElementById('stats_container').innerHTML = `
+                <div class="card-box" style="margin-bottom:20px;">
+                    <h3><i class="fa-solid fa-table-columns"></i> ${t.supersete_title}</h3>
+                    <p class="card-desc">${t.supersete_desc}</p>
+                    <div class="supersete-grid">${colunasHtml}</div>
+                </div>
+                <div class="painel-principal">
+                    <div class="card-box">
+                        <h3><i class="fa-solid fa-list-ol"></i> ${t.recent_title}</h3>
+                        <p class="card-desc">${t.recent_desc}</p>
+                        ${recentesHtml}
+                    </div>
+                    <div class="card-box" style="border-left:3px solid var(--gold);">
+                        <h3><i class="fa-solid fa-bullseye"></i> ${t.last_draw_title(numUltimo)}</h3>
+                        <p class="card-desc">${t.last_draw_desc}</p>
+                        <div class="last-draw-balls">${ultimoHtml}</div>
+                    </div>
                 </div>`;
         }
 
