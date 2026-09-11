@@ -67,30 +67,62 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
     const LOTTERIES = Object.keys(DOC_IDS).map(n => ({ name: n }));
 
-    const fmtR$ = (v) => v > 0 ? 'R$ ' + Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}) : 'R$ 0,00';
+    const fmtR$ = (v) => {
+        const num = parseFloat(v) || 0;
+        return num > 0 ? 'R$ ' + num.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}) : 'R$ 0,00';
+    };
     const fmtR$k = (v) => {
-        if (!v || v <= 0) return 'R$ 0';
-        if (v >= 1e9) return 'R$ ' + (v/1e9).toFixed(2).replace('.',',') + ' bi';
-        if (v >= 1e6) return 'R$ ' + (v/1e6).toFixed(2).replace('.',',') + ' mi';
-        if (v >= 1e3) return 'R$ ' + (v/1e3).toFixed(1).replace('.',',') + ' mil';
-        return 'R$ ' + v.toFixed(0);
+        const num = parseFloat(v) || 0;
+        if (!num || num <= 0) return 'R$ 0';
+        if (num >= 1e9) return 'R$ ' + (num/1e9).toFixed(2).replace('.',',') + ' bi';
+        if (num >= 1e6) return 'R$ ' + (num/1e6).toFixed(2).replace('.',',') + ' mi';
+        if (num >= 1e3) return 'R$ ' + (num/1e3).toFixed(1).replace('.',',') + ' mil';
+        return 'R$ ' + num.toFixed(0);
     };
     const limpar = (s) => (s || '').replace(/\u0000/g, '').trim();
 
+    // Normalização completa de dados para garantir suporte a qualquer formato de novo banco
     function pegarDados(docData) {
         if (!docData) return null;
+        let base = docData;
         if (docData.ultimoCompleto && typeof docData.ultimoCompleto === 'object') {
-            return { ...docData, ...docData.ultimoCompleto };
+            base = { ...docData, ...docData.ultimoCompleto };
+        } else if (docData.resultado && typeof docData.resultado === 'object') {
+            base = { ...docData, ...docData.resultado };
         }
-        return docData;
+
+        return {
+            ...base,
+            concurso: base.concurso || base.numero || base.concursoAtual || '--',
+            dataApuracao: base.dataApuracao || base.data || base.dataSorteio || '',
+            dataProximoConcurso: base.dataProximoConcurso || base.dataProximo || '',
+            numeroConcursoProximo: base.numeroConcursoProximo || base.proximoConcurso || '',
+            acumulado: base.acumulado === true || base.acumulou === true || base.acumulado === 'sim',
+            valorEstimadoProximoConcurso: base.valorEstimadoProximoConcurso || base.valorEstimadoProximo || base.estimativaProximo || 0,
+            valorArrecadado: base.valorArrecadado || base.arrecadacaoTotal || 0,
+            localSorteio: base.nomeMunicipioUFSorteio || base.localSorteio || base.local || '',
+            listaDezenas: base.listaDezenas || base.dezenas || base.numeros || base.dezenasSorteio1 || [],
+            listaDezenasSegundoSorteio: base.listaDezenasSegundoSorteio || base.dezenasSorteio2 || base.dezenas2 || [],
+            listaRateioPremio: base.listaRateioPremio || base.rateio || base.premiacao || [],
+            listaResultadoEquipeEsportiva: base.listaResultadoEquipeEsportiva || base.jogos || base.jogosLoteca || [],
+            trevosSorteados: base.trevosSorteados || base.trevos || [],
+            nomeTimeCoracaoMesSorte: base.nomeTimeCoracaoMesSorte || base.nomeTimeCoracao || base.mesSorte || ''
+        };
     }
 
     async function fetchTodas() {
         const out = {};
         await Promise.all(LOTTERIES.map(async (l) => {
             try {
-                const doc = await db.collection('loterias').doc(DOC_IDS[l.name]).get();
-                if (doc.exists) out[l.name] = pegarDados(doc.data());
+                // Tenta buscar no caminho padrão da coleção 'loterias'
+                let doc = await db.collection('loterias').doc(DOC_IDS[l.name]).get();
+                if (doc.exists) {
+                    out[l.name] = pegarDados(doc.data());
+                } else {
+                    // Fallback para caso o novo banco use o nome da loteria direto como ID da coleção
+                    doc = await db.collection(DOC_IDS[l.name]).doc('latest').get();
+                    if (doc.exists) out[l.name] = pegarDados(doc.data());
+                }
             } catch (e) { console.error(`[Firestore] ❌ ${l.name}:`, e); }
         }));
         return out;
@@ -114,35 +146,36 @@ document.addEventListener('DOMContentLoaded', async () => {
             </div>`;
         }
 
-        const concurso = data.numero || data.concurso || '--';
-        const dataApur = data.dataApuracao || data.data || '';
-        const dataProx = data.dataProximoConcurso || '';
-        const proxConcurso = data.numeroConcursoProximo || '';
-        const acumulado = data.acumulado === true || data.acumulou === true;
-        const estimativa = data.valorEstimadoProximoConcurso || 0;
-        const arrecadado = data.valorArrecadado || 0;
-        const localSorteio = limpar(data.nomeMunicipioUFSorteio || data.localSorteio);
-        const listaDezenas = data.listaDezenas || data.dezenas || [];
-        const rateio = data.listaRateioPremio || [];
+        const concurso = data.concurso;
+        const dataApur = data.dataApuracao;
+        const dataProx = data.dataProximoConcurso;
+        const proxConcurso = data.numeroConcursoProximo;
+        const acumulado = data.acumulado;
+        const estimativa = data.valorEstimadoProximoConcurso;
+        const arrecadado = data.valorArrecadado;
+        const localSorteio = limpar(data.localSorteio);
+        const listaDezenas = data.listaDezenas;
+        const rateio = data.listaRateioPremio;
 
         // ================= NÚMEROS =================
         let numbersHtml = '';
 
         if (nome === 'Loteca') {
-            const jogos = data.listaResultadoEquipeEsportiva || data.jogos || [];
+            const jogos = data.listaResultadoEquipeEsportiva;
             if (jogos.length > 0) {
                 numbersHtml = `
                     <div style="max-height:260px;overflow-y:auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:6px;padding:4px;margin:6px 0;box-shadow:inset 0 1px 3px rgba(0,0,0,0.03);">
                         ${jogos.map((j, idx) => {
-                            const g1 = j.golEquipeUm ?? j.nuGolEquipeUm ?? 0;
-                            const g2 = j.golEquipeDois ?? j.nuGolEquipeDois ?? 0;
+                            const g1 = j.golEquipeUm ?? j.nuGolEquipeUm ?? j.gols1 ?? 0;
+                            const g2 = j.golEquipeDois ?? j.nuGolEquipeDois ?? j.gols2 ?? 0;
                             let corE1 = '#475569'; let corE2 = '#475569';
                             let pesoE1 = '500'; let pesoE2 = '500';
 
                             if (g1 > g2) { corE1 = '#15803d'; pesoE1 = 'bold'; corE2 = '#dc2626'; } 
                             else if (g1 < g2) { corE1 = '#dc2626'; corE2 = '#15803d'; pesoE2 = 'bold'; }
 
-                            const e1 = j.nomeEquipeUm || '?'; const e2 = j.nomeEquipeDois || '?';
+                            const e1 = j.nomeEquipeUm || j.time1 || '?'; 
+                            const e2 = j.nomeEquipeDois || j.time2 || '?';
                             return `
                                 <div style="display:grid;grid-template-columns:22px 1fr auto 1fr;gap:4px;align-items:center;padding:5px 3px;border-bottom:1px solid #f8fafc;font-size:0.7rem;">
                                     <span style="font-weight:bold;color:#cbd5e1;text-align:center;font-size:0.6rem;">${idx+1}</span>
@@ -162,11 +195,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         else if (nome === 'Federal') {
             const premios = data.premios || [];
-            const lista = premios.length > 0 ? premios.map(p => p.bilhete) : listaDezenas;
+            const lista = premios.length > 0 ? premios.map(p => p.bilhete || p) : listaDezenas;
             if (lista.length > 0) {
                 numbersHtml = `<div style="background:#f8fafc;border-radius:6px;padding:6px;margin:6px 0;">
                     ${lista.slice(0,5).map((b,i)=>{
-                        const v = (b && typeof b === 'object') ? (b.bilhete || b.numero) : b;
+                        const v = (b && typeof b === 'object') ? (b.bilhete || b.numero || b.bilheteGanho) : b;
                         return `<div style="display:flex;justify-content:space-between;align-items:center;font-size:0.75rem;padding:4px 6px;border-bottom:1px solid #e2e8f0;">
                             <span style="color:#64748b;font-weight:700;font-size:0.65rem;">${i+1}º PRÊMIO</span>
                             <span style="font-family:'Courier New',monospace;font-weight:bold;color:${color};letter-spacing:2px;font-size:0.85rem;">${String(v).padStart(5,'0')}</span>
@@ -177,7 +210,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         else if (nome === 'Dupla Sena') {
             const d1 = listaDezenas;
-            const d2 = data.listaDezenasSegundoSorteio || data.dezenasSorteio2 || [];
+            const d2 = data.listaDezenasSegundoSorteio;
             const bolas = (arr, cor) => arr.map(n => `<span style="display:inline-block;background:${cor};color:#fff;width:24px;height:24px;line-height:24px;border-radius:50%;text-align:center;font-weight:bold;font-size:0.7rem;margin:1.5px;">${String(n).padStart(2,'0')}</span>`).join('');
             numbersHtml = `<div style="margin:6px 0;">
                 <div style="font-size:0.65rem;color:#64748b;font-weight:700;margin-bottom:2px;">1º SORTEIO</div>
@@ -195,7 +228,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     ${fmt.map(n=>`<span style="background:linear-gradient(135deg,${color},${color}dd);color:#fff;width:26px;height:26px;line-height:26px;border-radius:50%;text-align:center;font-size:0.72rem;font-weight:bold;box-shadow:0 2px 4px rgba(0,0,0,0.15);">${n}</span>`).join('')}
                 </div>`;
             } else if (nome === '+Milionária') {
-                const trevos = data.trevosSorteados || data.trevos || [];
+                const trevos = data.trevosSorteados;
                 numbersHtml = `<div style="display:flex;flex-wrap:wrap;gap:4px;margin:6px 0;justify-content:center;">
                     ${fmt.map(n=>`<span style="background:linear-gradient(135deg,${color},${color}dd);color:#fff;text-align:center;width:28px;height:28px;line-height:28px;border-radius:50%;font-size:0.72rem;font-weight:bold;box-shadow:0 2px 4px rgba(0,0,0,0.15);">${n}</span>`).join('')}
                     ${trevos.map(t=>`<span style="background:linear-gradient(135deg,#FFD700,#f59e0b);color:#000;text-align:center;width:28px;height:28px;line-height:28px;border-radius:50%;font-size:0.72rem;font-weight:bold;box-shadow:0 2px 4px rgba(0,0,0,0.2);">★${t}</span>`).join('')}
@@ -212,15 +245,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         let rateioHtml = '';
         if (Array.isArray(rateio) && rateio.length > 0) {
             rateioHtml = rateio.map(r => {
-                const g = r.numeroDeGanhadores || 0;
+                const g = r.numeroDeGanhadores ?? r.ganhadores ?? 0;
+                const desc = r.descricaoFaixa || r.faixa || r.descricao || 'Faixa';
+                const val = r.valorPremio ?? r.premio ?? 0;
+
                 const gTxt = g === 0
                     ? '<span style="color:#dc2626;font-weight:bold;">Não houve</span>'
                     : `<span style="color:#059669;font-weight:bold;">${g.toLocaleString('pt-BR')} ${g===1?'ganhador':'ganhadores'}</span>`;
                 return `<div style="display:grid;grid-template-columns:1fr auto;gap:6px;padding:4px 0;border-bottom:1px dotted #e2e8f0;font-size:0.7rem;">
-                    <span style="color:#475569;font-weight:700;">${r.descricaoFaixa}</span>
+                    <span style="color:#475569;font-weight:700;">${desc}</span>
                     <div style="text-align:right;">
                         <div>${gTxt}</div>
-                        <div style="color:#0f172a;font-weight:bold;">${fmtR$(r.valorPremio)}</div>
+                        <div style="color:#0f172a;font-weight:bold;">${fmtR$(val)}</div>
                     </div>
                 </div>`;
             }).join('');
@@ -305,13 +341,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         let miniInfo = '';
         if (dados && dados.listaRateioPremio && dados.listaRateioPremio.length > 0) {
             const faixa1 = dados.listaRateioPremio[0];
-            if (faixa1 && faixa1.valorPremio > 0) {
+            const valPremio = faixa1.valorPremio ?? faixa1.premio ?? 0;
+            const numGanhadores = faixa1.numeroDeGanhadores ?? faixa1.ganhadores ?? 0;
+
+            if (faixa1 && valPremio > 0) {
                 miniInfo = `
                     <div style="background:${cor}12;border:1px dashed ${cor}40;border-radius:6px;padding:5px 6px;margin:6px 0;font-size:0.62rem;">
                         <div style="color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:0.3px;">Última faixa 1</div>
-                        <div style="color:${cor};font-weight:900;font-size:0.8rem;">${fmtR$(faixa1.valorPremio)}</div>
-                        ${faixa1.numeroDeGanhadores > 0
-                            ? `<div style="color:#059669;font-weight:700;">${faixa1.numeroDeGanhadores} ganhador${faixa1.numeroDeGanhadores===1?'':'es'}</div>`
+                        <div style="color:${cor};font-weight:900;font-size:0.8rem;">${fmtR$(valPremio)}</div>
+                        ${numGanhadores > 0
+                            ? `<div style="color:#059669;font-weight:700;">${numGanhadores} ganhador${numGanhadores===1?'':'es'}</div>`
                             : '<div style="color:#dc2626;font-weight:700;">Sem ganhador</div>'}
                     </div>`;
             }
