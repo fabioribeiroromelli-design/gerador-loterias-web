@@ -1,11 +1,22 @@
 /* ============================================================
-   script_home.js
-   - NÃO inicializa Firebase (já está no index.html)
-   - NÃO inicializa Google Auth (já está no index.html)
-   - Só: renderiza os cards de loteria
+   script_home.js — versão robusta com logs
    ============================================================ */
 
-document.addEventListener('DOMContentLoaded', async () => {
+console.log("[script_home.js] Arquivo carregado.");
+
+document.addEventListener('DOMContentLoaded', () => {
+    console.log("[script_home.js] DOMContentLoaded disparado.");
+
+    const grid = document.getElementById('lottery_grid');
+    console.log("[script_home.js] grid encontrado?", !!grid);
+
+    if (!grid) {
+        console.error("[script_home.js] ERRO: #lottery_grid não existe no HTML!");
+        return;
+    }
+
+    // Verifica se os dados carregaram
+    console.log("[script_home.js] DADOS_ULTIMOS_CONCURSOS?", window.DADOS_ULTIMOS_CONCURSOS);
 
     const COLORS = {
         'Dia de Sorte': '#cb8322', 'Dupla Sena': '#a61324', 'Federal': '#002f6c',
@@ -183,6 +194,86 @@ document.addEventListener('DOMContentLoaded', async () => {
         `;
     }
 
+    // ====== CARDS ESPECIAIS ======
+    function renderPremiumCard() {
+        return `
+            <div class="lottery-card premium-card" onclick="navegarProtegido('estrategias.html')">
+                <i class="fa-solid fa-crown" style="font-size: 2.8rem; color: #FFD700; margin-bottom: 6px;"></i>
+                <h3 style="color: #FFD700; margin: 0 0 4px 0;">Estratégias Premium</h3>
+                <p style="color: #ccc; margin: 0 0 8px 0; font-size: 0.85rem;">12 algoritmos avançados</p>
+                <span class="explore-btn"><i class="fa-solid fa-arrow-right"></i> Explorar</span>
+                <div class="lock-badge"><i class="fa-solid fa-lock"></i> Acesso exclusivo</div>
+            </div>
+        `;
+    }
+
+    function renderAvancadoCard() {
+        return `
+            <div class="lottery-card card-avancado" onclick="navegarProtegido('gerador-avancado.html')">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-microchip" style="font-size: 2rem; color: #2563eb;"></i>
+                    <h3 style="color: #1e40af; margin: 0;">Gerador Avançado</h3>
+                </div>
+                <p style="color: #1e3a5f; font-size: 0.85rem; margin: 8px 0;">12 estratégias estatísticas e matemáticas</p>
+                <span class="access-btn" style="background: #2563eb; color: white; padding: 4px 14px; border-radius: 30px; font-weight: bold; font-size: 0.8rem;">
+                    <i class="fa-solid fa-arrow-right"></i> Acessar
+                </span>
+            </div>
+        `;
+    }
+
+    function renderLotofacilRepeticaoCard() {
+        return `
+            <div class="lottery-card card-lotofacil-rep" onclick="navegarProtegido('lotofacil-repeticao.html')">
+                <i class="fa-solid fa-rotate" style="font-size: 2rem; color: #930089; margin-bottom: 6px;"></i>
+                <h3 style="color: #930089; margin: 0 0 4px 0;">Lotofácil - Repetição</h3>
+                <p style="color: #555; font-size: 0.8rem; margin: 0 0 8px 0;">Estratégia baseada na repetição do último concurso</p>
+                <span class="access-btn" style="background: #930089; color: white; padding: 4px 14px; border-radius: 30px; font-weight: bold; font-size: 0.75rem;">
+                    <i class="fa-solid fa-arrow-right"></i> Acessar
+                </span>
+            </div>
+        `;
+    }
+
+    function renderLotomaniaEstrategiaCard() {
+        return `
+            <div class="lottery-card card-lotomania-est" onclick="navegarProtegido('lotomania-estrategia.html')">
+                <i class="fa-solid fa-chart-simple" style="font-size: 2rem; color: #F78100; margin-bottom: 6px;"></i>
+                <h3 style="color: #F78100; margin: 0 0 4px 0;">Lotomania - Estratégia</h3>
+                <p style="color: #555; font-size: 0.8rem; margin: 0 0 8px 0;">Distribuição equilibrada por linhas (5 por linha)</p>
+                <span class="access-btn" style="background: #F78100; color: white; padding: 4px 14px; border-radius: 30px; font-weight: bold; font-size: 0.75rem;">
+                    <i class="fa-solid fa-arrow-right"></i> Acessar
+                </span>
+            </div>
+        `;
+    }
+
+    function renderDiadesorteRepeticaoCard() {
+        return `
+            <div class="lottery-card card-diadesorte-rep" onclick="navegarProtegido('diadesorte-repeticao.html')">
+                <i class="fa-solid fa-calendar-day" style="font-size: 2rem; color: #cb8322; margin-bottom: 6px;"></i>
+                <h3 style="color: #cb8322; margin: 0 0 4px 0;">Dia de Sorte - Repetição</h3>
+                <p style="color: #555; font-size: 0.8rem; margin: 0 0 8px 0;">Estratégia baseada na repetição do último concurso</p>
+                <span class="access-btn" style="background: #cb8322; color: white; padding: 4px 14px; border-radius: 30px; font-weight: bold; font-size: 0.75rem;">
+                    <i class="fa-solid fa-arrow-right"></i> Acessar
+                </span>
+            </div>
+        `;
+    }
+
+    function renderSorteioGloboCard() {
+        return `
+            <div class="lottery-card card-sorteio-globo" onclick="navegarProtegido('sorteio-globo.html')">
+                <i class="fa-solid fa-globe" style="font-size: 2rem; color: #60a5fa; margin-bottom: 6px;"></i>
+                <h3 style="color: #60a5fa; margin: 0 0 4px 0;">Sorteio Globo</h3>
+                <p style="color: #94a3b8; font-size: 0.8rem; margin: 0 0 8px 0;">Sorteio interativo com animações e sons</p>
+                <span class="access-btn" style="background: #2563eb; color: white; padding: 4px 14px; border-radius: 30px; font-weight: bold; font-size: 0.75rem;">
+                    <i class="fa-solid fa-arrow-right"></i> Acessar
+                </span>
+            </div>
+        `;
+    }
+
     window.togglePrizes = function(id) {
         const el = document.getElementById(id);
         const icon = document.getElementById(`icon_${id}`);
@@ -196,15 +287,28 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
-    const grid = document.getElementById('lottery_grid');
-    if (!grid) return;
+    // ====== RENDERIZA TUDO ======
+    try {
+        const results = LOTTERIES.map(lot => fetchUltimoConcursoLocal(lot.name));
+        console.log("[script_home.js] Resultados carregados:", results.filter(r => r).length, "de", results.length);
 
-    const results = LOTTERIES.map(lot => fetchUltimoConcursoLocal(lot.name));
+        let html = '';
+        html += renderPremiumCard();
+        html += renderAvancadoCard();
+        html += renderLotofacilRepeticaoCard();
+        html += renderLotomaniaEstrategiaCard();
+        html += renderDiadesorteRepeticaoCard();
+        html += renderSorteioGloboCard();
 
-    let html = '';
-    LOTTERIES.forEach((lot, index) => {
-        html += renderCard(lot.name, results[index]);
-    });
+        LOTTERIES.forEach((lot, index) => {
+            html += renderCard(lot.name, results[index]);
+        });
 
-    grid.innerHTML = html;
+        console.log("[script_home.js] HTML gerado, tamanho:", html.length);
+
+        grid.innerHTML = html;
+        console.log("[script_home.js] ✅ Cards renderizados:", grid.children.length);
+    } catch (e) {
+        console.error("[script_home.js] ❌ ERRO ao renderizar:", e);
+    }
 });
