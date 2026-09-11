@@ -6,8 +6,8 @@
     <title>Histórico das Loterias / Lottery History / Historial de Loterías</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- IMPORTAÇÃO DOS SEUS ARQUIVOS JS LOCAIS -->
+
+    <!-- Históricos locais (para upload inicial) -->
     <script src="historico_megasena.js"></script>
     <script src="historico_lotofacil.js"></script>
     <script src="historico_quina.js"></script>
@@ -19,116 +19,147 @@
     <script src="historico_maismilionaria.js"></script>
 
     <style>
-        .grid-loterias { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-top: 15px; }
-        .btn-lottery { color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.9rem; transition: transform 0.1s, opacity 0.2s; }
+        * { box-sizing: border-box; }
+        .grid-loterias { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-top: 12px; }
+        .btn-lottery { color: white; border: none; padding: 11px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.85rem; transition: all 0.15s; }
         .btn-lottery:hover { opacity: 0.9; transform: translateY(-2px); }
-        .btn-lottery.active { outline: 3px solid #222; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .btn-lottery.active { outline: 3px solid #222; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
 
-        .status-box { margin-top: 15px; padding: 12px; border-radius: 6px; font-weight: bold; text-align: center; }
-        .section-box { background: #ffffff; padding: 20px; border-radius: 8px; border: 1px solid #e0e0e0; box-shadow: 0 2px 6px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        
-        .history-table-container { margin-top: 20px; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); overflow-x: auto; }
-        table.history-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }
-        table.history-table th, table.history-table td { padding: 10px 12px; border-bottom: 1px solid #ddd; }
-        table.history-table th { background-color: #f4f6f9; color: #333; }
-        
-        .ball { display: inline-block; background: #27ae60; color: white; width: 26px; height: 26px; line-height: 26px; border-radius: 50%; text-align: center; font-weight: bold; font-size: 12px; margin-right: 4px; }
-        .badge-extra { display: inline-block; margin-top: 4px; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
-        .status-sync { font-size: 0.85rem; font-weight: bold; color: #008822; display: inline-flex; align-items: center; gap: 6px; }
+        .section-box { background: #fff; padding: 18px; border-radius: 10px; border: 1px solid #e2e8f0; box-shadow: 0 2px 8px rgba(0,0,0,0.04); margin-bottom: 18px; }
+        .history-table-container { margin-top: 18px; background: #fff; padding: 18px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); overflow-x: auto; }
 
-        .btn-admin-action { color: white; border: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 6px; }
+        table.history-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
+        table.history-table th, table.history-table td { padding: 9px 11px; border-bottom: 1px solid #e2e8f0; }
+        table.history-table th { background: #f8fafc; color: #475569; font-weight: 700; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.3px; }
+        table.history-table tr:hover { background: #f8fafc; }
+
+        .ball { display: inline-block; background: #209869; color: #fff; width: 28px; height: 28px; line-height: 28px; border-radius: 50%; text-align: center; font-weight: bold; font-size: 12px; margin: 2px 3px 2px 0; }
+        .ball-2sorteio { background: #8e44ad !important; }
+        .ball-trevo { background: #FFD700 !important; color: #000 !important; }
+        .ball-supersete { background: #a8cf45 !important; color: #222 !important; }
+
+        .badge-extra { display: inline-block; margin-top: 4px; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+
+        .admin-panel { background: #f1f5f9; padding: 12px 16px; border-radius: 8px; margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; border-left: 4px solid #800080; }
+        .admin-panel input { padding: 7px 11px; border: 1px solid #cbd5e1; border-radius: 5px; font-size: 0.85rem; }
+        .admin-panel button { padding: 7px 14px; background: #800080; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: 700; font-size: 0.82rem; }
+        .admin-panel button:hover { opacity: 0.9; }
+
+        .btn-admin-action { color: white; border: none; padding: 8px 14px; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 6px; transition: all 0.15s; }
+        .btn-admin-action:hover { transform: translateY(-1px); opacity: 0.9; }
+        .btn-admin-action:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
         .btn-upload-firebase { background: #e67e22; }
-        .btn-upload-firebase:hover { background: #d35400; }
         .btn-danger-reset { background: #c0392b; }
-        .btn-danger-reset:hover { background: #a93226; }
         .btn-fetch-api { background: #27ae60; }
-        .btn-fetch-api:hover { background: #219150; }
         .btn-rebuild-api { background: #8e44ad; }
-        .btn-rebuild-api:hover { background: #71368a; }
-        
-        .admin-panel { background: #eef2f5; padding: 10px 15px; border-radius: 6px; margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
-        .admin-panel input { padding: 6px 10px; border: 1px solid #ccc; border-radius: 4px; }
-        .admin-panel button { padding: 6px 12px; background: #34495e; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+
+        .status-sync { font-size: 0.8rem; font-weight: 700; color: #059669; display: inline-flex; align-items: center; gap: 6px; background: #ecfdf5; padding: 5px 10px; border-radius: 20px; }
+
+        .header-bar { background: linear-gradient(135deg, #800080, #5a0f7a); color: white; padding: 14px 20px; display: flex; align-items: center; gap: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+        .header-bar .btn-back { background: rgba(255,255,255,0.15); color: #fff; border: 1px solid rgba(255,255,255,0.3); padding: 7px 14px; border-radius: 6px; cursor: pointer; font-weight: 700; font-size: 0.85rem; }
+        .header-bar .btn-back:hover { background: rgba(255,255,255,0.25); }
+        .header-bar h1 { margin: 0; font-size: 1.25rem; }
+
+        @media (max-width: 640px) {
+            .grid-loterias { grid-template-columns: repeat(2, 1fr); }
+            table.history-table th, table.history-table td { padding: 6px 8px; font-size: 11px; }
+            .ball { width: 22px; height: 22px; line-height: 22px; font-size: 10px; }
+        }
     </style>
 </head>
-<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f6f9;">
+<body style="margin:0; padding:0; font-family:'Segoe UI', Tahoma, Arial, sans-serif; background:#f4f6f9; color:#1e293b;">
 
-    <header class="header-bar" style="background: #800080; color: white; padding: 15px 20px; display: flex; align-items: center; gap: 15px;">
-        <button class="btn-back" onclick="window.location.href='home.html'" style="background: white; color: #800080; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: bold;">← Voltar / Back / Volver</button>
-        <h1 style="margin: 0; font-size: 1.5rem;">Histórico das Loterias</h1>
+    <header class="header-bar">
+        <button class="btn-back" onclick="window.location.href='index.html'">
+            <i class="fa-solid fa-arrow-left"></i> Voltar / Back / Volver
+        </button>
+        <h1><i class="fa-solid fa-clock-rotate-left"></i> Histórico das Loterias</h1>
     </header>
 
-    <main class="container" style="max-width: 1000px; margin: 25px auto; padding: 0 15px;">
-        
-        <!-- PAINEL DE LOGIN DO ADMIN -->
+    <main style="max-width: 1100px; margin: 20px auto; padding: 0 15px;">
+
+        <!-- PAINEL DE LOGIN ADMIN -->
         <div class="admin-panel" id="admin_login_box">
-            <span id="admin_status_text">Área Administrativa: Faça login para enviar dados.</span>
-            <div id="login_form" style="display: flex; gap: 8px;">
+            <span id="admin_status_text">
+                <i class="fa-solid fa-lock"></i> Área Administrativa: Faça login para enviar dados.
+            </span>
+            <div id="login_form" style="display: flex; gap: 8px; flex-wrap: wrap;">
                 <input type="email" id="admin_email" placeholder="Seu e-mail">
                 <input type="password" id="admin_password" placeholder="Sua senha">
-                <button onclick="fazerLoginAdmin()">Entrar</button>
+                <button onclick="fazerLoginAdmin()"><i class="fa-solid fa-right-to-bracket"></i> Entrar</button>
             </div>
-            <button id="btn_logout" onclick="fazerLogoutAdmin()" style="display: none; background: #c0392b;">Sair</button>
+            <button id="btn_logout" onclick="fazerLogoutAdmin()" style="display:none; background:#c0392b;">
+                <i class="fa-solid fa-right-from-bracket"></i> Sair
+            </button>
         </div>
 
-        <!-- SELEÇÃO RÁPIDA DA LOTERIA -->
+        <!-- SELEÇÃO DE LOTERIA -->
         <div class="section-box">
-            <h2 style="margin-top: 0; font-size: 1.2rem; color: #333;"><i class="fa-solid fa-gamepad"></i> Selecione a Loteria / Select Lottery / Seleccione Lotería:</h2>
+            <h2 style="margin:0 0 8px 0; font-size:1.05rem; color:#334155;">
+                <i class="fa-solid fa-gamepad" style="color:#800080;"></i>
+                Selecione a Loteria / Select Lottery / Seleccione Lotería
+            </h2>
             <div class="grid-loterias">
-                <button class="btn-lottery" id="btn_megasena" onclick="carregarLoteria('megasena')" style="background: #209869;">Mega-Sena</button>
-                <button class="btn-lottery" id="btn_lotofacil" onclick="carregarLoteria('lotofacil')" style="background: #930089;">Lotofácil</button>
-                <button class="btn-lottery" id="btn_quina" onclick="carregarLoteria('quina')" style="background: #260085;">Quina</button>
-                <button class="btn-lottery" id="btn_lotomania" onclick="carregarLoteria('lotomania')" style="background: #f78100;">Lotomania</button>
-                <button class="btn-lottery" id="btn_timemania" onclick="carregarLoteria('timemania')" style="background: #008822;">Timemania</button>
-                <button class="btn-lottery" id="btn_duplasena" onclick="carregarLoteria('duplasena')" style="background: #a61324;">Dupla Sena</button>
-                <button class="btn-lottery" id="btn_diadesorte" onclick="carregarLoteria('diadesorte')" style="background: #cb831d;">Dia de Sorte</button>
-                <button class="btn-lottery" id="btn_supersete" onclick="carregarLoteria('supersete')" style="background: #7ba818;">Super Sete</button>
-                <button class="btn-lottery" id="btn_maismilionaria" onclick="carregarLoteria('maismilionaria')" style="background: #1b3582;">+Milionária</button>
+                <button class="btn-lottery" id="btn_megasena"        onclick="carregarLoteria('megasena')"         style="background:#209869;">Mega-Sena</button>
+                <button class="btn-lottery" id="btn_lotofacil"       onclick="carregarLoteria('lotofacil')"        style="background:#930089;">Lotofácil</button>
+                <button class="btn-lottery" id="btn_quina"           onclick="carregarLoteria('quina')"            style="background:#260085;">Quina</button>
+                <button class="btn-lottery" id="btn_lotomania"       onclick="carregarLoteria('lotomania')"        style="background:#F78100;">Lotomania</button>
+                <button class="btn-lottery" id="btn_timemania"       onclick="carregarLoteria('timemania')"        style="background:#2ecc71;">Timemania</button>
+                <button class="btn-lottery" id="btn_duplasena"       onclick="carregarLoteria('duplasena')"        style="background:#a61324;">Dupla Sena</button>
+                <button class="btn-lottery" id="btn_diadesorte"      onclick="carregarLoteria('diadesorte')"       style="background:#cb8322;">Dia de Sorte</button>
+                <button class="btn-lottery" id="btn_supersete"       onclick="carregarLoteria('supersete')"        style="background:#a8cf45; color:#222;">Super Sete</button>
+                <button class="btn-lottery" id="btn_maismilionaria"  onclick="carregarLoteria('maismilionaria')"   style="background:#1b365d;">+Milionária</button>
             </div>
-            <div id="status_msg" class="status-box" style="display: none;"></div>
+        </div>
+
+        <!-- PAINEL DE AÇÕES ADMIN -->
+        <div class="section-box" id="admin_actions" style="display:none;">
+            <h2 style="margin:0 0 12px 0; font-size:1.05rem; color:#334155;">
+                <i class="fa-solid fa-toolbox" style="color:#800080;"></i> Ações Administrativas
+            </h2>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <button class="btn-admin-action btn-rebuild-api" id="btn_rebuild_api" onclick="baixarTudoDoZeroDaCaixa()">
+                    <i class="fa-solid fa-cloud-arrow-down"></i> Zerar e Baixar Tudo da API
+                </button>
+                <button class="btn-admin-action btn-danger-reset" id="btn_reset_pc" onclick="sobrescreverComDadosDoPC()">
+                    <i class="fa-solid fa-trash-can"></i> Sobrescrever com Arquivo Local
+                </button>
+                <button class="btn-admin-action btn-fetch-api" id="btn_fetch_api" onclick="buscarEAtualizarAPI()">
+                    <i class="fa-solid fa-arrows-rotate"></i> Atualizar Último da API
+                </button>
+                <button class="btn-admin-action btn-upload-firebase" id="btn_upload" onclick="subirBaseJSFirebase()">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> Enviar Arquivo Local
+                </button>
+            </div>
         </div>
 
         <!-- TABELA DE RESULTADOS -->
-        <div id="history_display" class="history-table-container" style="display: none;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
-                <h3 id="table_title" style="margin: 0; color: #333;">Resultados / Results / Resultados</h3>
-                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                    
-                    <!-- BOTÕES EXCLUSIVOS PARA O ADMIN -->
-                    <button class="btn-admin-action btn-rebuild-api" id="btn_rebuild_api" onclick="baixarTudoDoZeroDaCaixa()" style="display: none;">
-                        <i class="fa-solid fa-cloud-arrow-down"></i> Zerar e Baixar Tudo da API
-                    </button>
-                    <button class="btn-admin-action btn-danger-reset" id="btn_reset_pc" onclick="sobrescreverComDadosDoPC()" style="display: none;">
-                        <i class="fa-solid fa-trash-can"></i> Sobrescrever Tudo com PC
-                    </button>
-                    <button class="btn-admin-action btn-fetch-api" id="btn_fetch_api" onclick="buscarEAtualizarAPI()" style="display: none;">
-                        <i class="fa-solid fa-arrows-rotate"></i> Atualizar Último da API
-                    </button>
-                    <button class="btn-admin-action btn-upload-firebase" id="btn_upload" onclick="subirBaseJSFirebase()" style="display: none;">
-                        <i class="fa-solid fa-cloud-arrow-up"></i> Enviar Arquivo Local
-                    </button>
-
-                    <div id="sync_status" class="status-sync">
-                        <i class="fa-solid fa-cloud-arrow-down"></i> Conectado ao Firebase
-                    </div>
+        <div id="history_display" class="history-table-container" style="display:none;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-wrap:wrap; gap:10px;">
+                <h3 id="table_title" style="margin:0; color:#334155; font-size:1.05rem;">
+                    <i class="fa-solid fa-table"></i> Resultados
+                </h3>
+                <div id="sync_status" class="status-sync">
+                    <i class="fa-solid fa-cloud-arrow-down"></i> Conectado
                 </div>
             </div>
-            
+
             <table class="history-table">
                 <thead>
                     <tr>
-                        <th>Concurso / Draw / Sorteo</th>
-                        <th>Data / Date / Fecha</th>
-                        <th>Dezenas / Numbers / Números</th>
-                        <th>Acumulado / Rollover / Acumulado</th>
+                        <th style="width:90px;">Concurso</th>
+                        <th style="width:110px;">Data</th>
+                        <th>Dezenas / Números</th>
+                        <th style="width:90px;">Acumulado</th>
                     </tr>
                 </thead>
                 <tbody id="table_body"></tbody>
             </table>
         </div>
+
     </main>
 
-    <!-- JS MÓDULO DO FIREBASE V10 -->
+    <!-- FIREBASE -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, doc, getDoc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -150,49 +181,38 @@
         let loteriaAtual = 'megasena';
         let dadosAtuais = [];
 
-        // Salva uma cópia dos dados no LocalStorage do Navegador
-        function salvarNoLocalStorage(loteria, dados) {
-            try {
-                const chave = `${loteria}_dados`;
-                localStorage.setItem(chave, JSON.stringify(dados));
-                console.log(`Dados de ${loteria} salvos no LocalStorage!`);
-            } catch (e) {
-                console.error("Erro ao salvar no LocalStorage:", e);
-            }
-        }
+        // IDs aceitos pela API Caixa
+        const API_IDS = {
+            megasena: 'megasena', lotofacil: 'lotofacil', quina: 'quina',
+            lotomania: 'lotomania', timemania: 'timemania', duplasena: 'duplasena',
+            diadesorte: 'diadesorte', supersete: 'supersete', maismilionaria: 'maismilionaria'
+        };
 
+        // ============================================================
+        // AUTH
+        // ============================================================
         onAuthStateChanged(auth, (user) => {
-            const btnUpload = document.getElementById('btn_upload');
-            const btnFetchApi = document.getElementById('btn_fetch_api');
-            const btnResetPc = document.getElementById('btn_reset_pc');
-            const btnRebuildApi = document.getElementById('btn_rebuild_api');
+            const admin_actions = document.getElementById('admin_actions');
             const loginForm = document.getElementById('login_form');
             const btnLogout = document.getElementById('btn_logout');
             const statusText = document.getElementById('admin_status_text');
 
             if (user) {
-                btnUpload.style.display = 'inline-flex';
-                btnFetchApi.style.display = 'inline-flex';
-                btnResetPc.style.display = 'inline-flex';
-                btnRebuildApi.style.display = 'inline-flex';
+                admin_actions.style.display = 'block';
                 loginForm.style.display = 'none';
                 btnLogout.style.display = 'inline-block';
-                statusText.innerHTML = `Modo Admin Ativo (${user.email})`;
+                statusText.innerHTML = `<i class="fa-solid fa-circle-check" style="color:#059669;"></i> Modo Admin (${user.email})`;
             } else {
-                btnUpload.style.display = 'none';
-                btnFetchApi.style.display = 'none';
-                btnResetPc.style.display = 'none';
-                btnRebuildApi.style.display = 'none';
+                admin_actions.style.display = 'none';
                 loginForm.style.display = 'flex';
                 btnLogout.style.display = 'none';
-                statusText.innerHTML = `Área Administrativa: Faça login para enviar dados.`;
+                statusText.innerHTML = `<i class="fa-solid fa-lock"></i> Área Administrativa: Faça login para enviar dados.`;
             }
         });
 
         window.fazerLoginAdmin = async function() {
             const email = document.getElementById('admin_email').value;
             const pass = document.getElementById('admin_password').value;
-
             try {
                 await signInWithEmailAndPassword(auth, email, pass);
                 alert("Login efetuado com sucesso!");
@@ -206,9 +226,20 @@
             alert("Você saiu do modo admin.");
         };
 
-        // APAGA TUDO E RECONSTRÓI O HISTÓRICO BAIXANDO DA API DA CAIXA CONCURSO POR CONCURSO
+        // ============================================================
+        // ORDENAÇÃO DECRESCENTE (maior concurso primeiro)
+        // ============================================================
+        function ordenarDesc(lista) {
+            return lista.slice().sort((a, b) =>
+                Number(b.concurso || b.numero || 0) - Number(a.concurso || a.numero || 0)
+            );
+        }
+
+        // ============================================================
+        // BAIXAR TUDO DO ZERO DA API
+        // ============================================================
         window.baixarTudoDoZeroDaCaixa = async function() {
-            const confirmou = confirm(`⚠️ ATENÇÃO!\n\nVocê está prestes a DELETAR TODOS os concursos de "${loteriaAtual.toUpperCase()}" e baixar do Concurso 1 até o mais recente direto da API da Caixa.\n\nEste processo pode levar alguns minutos dependendo da quantidade de concursos.\n\nDeseja continuar?`);
+            const confirmou = confirm(`⚠️ ATENÇÃO!\n\nVocê vai DELETAR TODOS os concursos de "${loteriaAtual.toUpperCase()}" e baixar do #1 até o mais recente direto da API da Caixa.\n\nProcesso pode levar alguns minutos.\n\nContinuar?`);
             if (!confirmou) return;
 
             const btn = document.getElementById('btn_rebuild_api');
@@ -216,80 +247,71 @@
             btn.disabled = true;
 
             try {
-                btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Deletando banco...`;
+                btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Deletando...`;
                 const docRef = doc(db, 'loterias', loteriaAtual);
                 await deleteDoc(docRef);
 
-                btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Verificando último concurso...`;
-                const resUltimo = await fetch(`https://servicebus2.caixa.gov.br/portaldeloterias/api/${loteriaAtual}`);
-                if (!resUltimo.ok) throw new Error("Não foi possível conectar à API da Caixa para obter o concurso recente.");
-                
+                btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Verificando último...`;
+                const apiId = API_IDS[loteriaAtual] || loteriaAtual;
+                const resUltimo = await fetch(`https://servicebus2.caixa.gov.br/portaldeloterias/api/${apiId}`);
+                if (!resUltimo.ok) throw new Error("Erro ao conectar com a API da Caixa.");
                 const dataUltimo = await resUltimo.json();
-                const totalConcursos = Number(dataUltimo.numero);
-
-                if (!totalConcursos || isNaN(totalConcursos)) {
-                    throw new Error("Resposta inválida da API da Caixa.");
-                }
+                const total = Number(dataUltimo.numero);
+                if (!total || isNaN(total)) throw new Error("API retornou concurso inválido.");
 
                 const novosDados = [];
-                for (let i = 1; i <= totalConcursos; i++) {
-                    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Baixando #${i} de ${totalConcursos}...`;
-                    
+                for (let i = 1; i <= total; i++) {
+                    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Baixando #${i}/${total}...`;
                     try {
-                        const res = await fetch(`https://servicebus2.caixa.gov.br/portaldeloterias/api/${loteriaAtual}/${i}`);
+                        const res = await fetch(`https://servicebus2.caixa.gov.br/portaldeloterias/api/${apiId}/${i}`);
                         if (res.ok) {
                             const data = await res.json();
-                            novosDados.push({
-                                concurso: String(data.numero || i),
-                                data: data.dataApuracao || data.data || '',
-                                dezenas: data.listaDezenas || data.dezenas || [],
-                                acumulado: data.acumulado || false,
-                                mesSorte: data.nomeTimeCoracaoMesSorte || data.mesSorte || '',
-                                timeCoracao: data.nomeTimeCoracaoMesSorte || data.timeCoracao || '',
-                                trevos: data.trevos || [],
-                                dezenasSorteio2: data.listaDezenasSegundoSorteio || data.dezenasSorteio2 || []
-                            });
+                            novosDados.push(formatarConcurso(data, i));
                         }
                     } catch (e) {
-                        console.warn(`Falha ao baixar concurso #${i}:`, e);
+                        console.warn(`Falha #${i}:`, e);
                     }
                 }
 
-                btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Salvando no Firebase e Local...`;
-                await setDoc(docRef, { historico: novosDados });
+                // ⚠️ ORDENA DECRESCENTE antes de salvar
+                const ordenados = ordenarDesc(novosDados);
 
-                dadosAtuais = novosDados;
-                salvarNoLocalStorage(loteriaAtual, dadosAtuais); // Atualiza LocalStorage
-                exibirDadosNaTabela(loteriaAtual, dadosAtuais);
+                btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Salvando...`;
+                await setDoc(docRef, { historico: ordenados });
 
-                alert(`🎉 Sucesso total!\n\n${novosDados.length} concursos de ${loteriaAtual.toUpperCase()} foram baixados da API da Caixa, salvos no Firebase e atualizados localmente!`);
+                dadosAtuais = ordenados;
+                salvarNoLocalStorage(loteriaAtual, ordenados);
+                exibirDadosNaTabela(loteriaAtual, ordenados);
 
+                alert(`🎉 Sucesso!\n\n${ordenados.length} concursos de ${loteriaAtual.toUpperCase()} baixados e salvos!`);
             } catch (err) {
-                alert(`Erro durante o processo: ${err.message}\n\nNota: Se ocorrer erro de CORS, certifique-se de que a API da Caixa não está bloqueando requisições do navegador.`);
+                alert(`Erro: ${err.message}`);
             } finally {
                 btn.innerHTML = originalText;
                 btn.disabled = false;
             }
         };
 
+        // ============================================================
+        // SOBRESCREVER COM DADOS DO PC (arquivos .js)
+        // ============================================================
         window.sobrescreverComDadosDoPC = async function() {
             const listaLocal = obterHistoricoJSLocal(loteriaAtual);
-
             if (!listaLocal || !Array.isArray(listaLocal) || listaLocal.length === 0) {
-                alert(`Erro: Nenhum arquivo local JS foi carregado para ${loteriaAtual.toUpperCase()}.`);
+                alert(`Nenhum arquivo local para ${loteriaAtual.toUpperCase()}.`);
                 return;
             }
 
-            const confirmou = confirm(`⚠️ ATENÇÃO!\n\nIsto apagará permanentemente todos os registros de "${loteriaAtual.toUpperCase()}" no Firebase e enviará ${listaLocal.length} concursos direto do seu PC.\n\nDeseja continuar?`);
+            const confirmou = confirm(`⚠️ Vai apagar tudo de "${loteriaAtual.toUpperCase()}" e enviar ${listaLocal.length} concursos do PC.\n\nContinuar?`);
             if (!confirmou) return;
 
             const btn = document.getElementById('btn_reset_pc');
             const originalText = btn.innerHTML;
-            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Sobrescrevendo...`;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Enviando...`;
             btn.disabled = true;
 
             try {
-                const dadosFormatados = listaLocal.map(item => ({
+                const formatados = listaLocal.map(item => ({
                     concurso: String(item.concurso || item.numero || '').trim(),
                     data: item.data || item.dataApuracao || '',
                     dezenas: item.dezenas || item.listaDezenas || [],
@@ -300,23 +322,73 @@
                     dezenasSorteio2: item.dezenasSorteio2 || item.listaDezenasSegundoSorteio || []
                 }));
 
+                // ⚠️ ORDENA DECRESCENTE antes de salvar
+                const ordenados = ordenarDesc(formatados);
+
                 const docRef = doc(db, 'loterias', loteriaAtual);
-                await setDoc(docRef, { historico: dadosFormatados });
+                await setDoc(docRef, { historico: ordenados });
 
-                dadosAtuais = dadosFormatados;
-                salvarNoLocalStorage(loteriaAtual, dadosAtuais); // Atualiza LocalStorage
-                exibirDadosNaTabela(loteriaAtual, dadosAtuais);
+                dadosAtuais = ordenados;
+                salvarNoLocalStorage(loteriaAtual, ordenados);
+                exibirDadosNaTabela(loteriaAtual, ordenados);
 
-                alert(`🎉 Sucesso!\n\nHistórico de ${loteriaAtual.toUpperCase()} regravado do zero com ${dadosFormatados.length} concursos do seu PC!`);
-
+                alert(`🎉 Sucesso!\n\n${ordenados.length} concursos regravados (ordem: mais recente primeiro).`);
             } catch (err) {
-                alert(`Erro ao sobrescrever Firebase: ${err.message}`);
+                alert(`Erro: ${err.message}`);
             } finally {
                 btn.innerHTML = originalText;
                 btn.disabled = false;
             }
         };
 
+        // ============================================================
+        // ENVIAR ARQUIVO LOCAL (sem apagar histórico, apenas merge)
+        // ============================================================
+        window.subirBaseJSFirebase = async function() {
+            const listaLocal = obterHistoricoJSLocal(loteriaAtual);
+            if (!listaLocal || !Array.isArray(listaLocal) || listaLocal.length === 0) {
+                alert(`Nenhum arquivo local para ${loteriaAtual.toUpperCase()}.`);
+                return;
+            }
+
+            const btn = document.getElementById('btn_upload');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Enviando...`;
+            btn.disabled = true;
+
+            try {
+                const formatados = listaLocal.map(item => ({
+                    concurso: String(item.concurso || item.numero || '').trim(),
+                    data: item.data || item.dataApuracao || '',
+                    dezenas: item.dezenas || item.listaDezenas || [],
+                    acumulado: item.acumulado || false,
+                    mesSorte: item.mesSorte || item.nomeTimeCoracaoMesSorte || '',
+                    timeCoracao: item.timeCoracao || item.nomeTimeCoracaoMesSorte || '',
+                    trevos: item.trevos || [],
+                    dezenasSorteio2: item.dezenasSorteio2 || item.listaDezenasSegundoSorteio || []
+                }));
+
+                const ordenados = ordenarDesc(formatados);
+
+                const docRef = doc(db, 'loterias', loteriaAtual);
+                await setDoc(docRef, { historico: ordenados }, { merge: true });
+
+                dadosAtuais = ordenados;
+                salvarNoLocalStorage(loteriaAtual, ordenados);
+                exibirDadosNaTabela(loteriaAtual, ordenados);
+
+                alert(`✅ ${ordenados.length} concursos enviados!`);
+            } catch (err) {
+                alert(`Erro: ${err.message}`);
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        };
+
+        // ============================================================
+        // ATUALIZAR APENAS O ÚLTIMO DA API
+        // ============================================================
         window.buscarEAtualizarAPI = async function() {
             const btn = document.getElementById('btn_fetch_api');
             const originalHtml = btn.innerHTML;
@@ -324,86 +396,96 @@
             btn.disabled = true;
 
             try {
-                const res = await fetch(`https://servicebus2.caixa.gov.br/portaldeloterias/api/${loteriaAtual}`);
-                if (!res.ok) throw new Error(`Status da requisição: ${res.status}`);
-
+                const apiId = API_IDS[loteriaAtual] || loteriaAtual;
+                const res = await fetch(`https://servicebus2.claixa.gov.br/portaldeloterias/api/${apiId}`.replace('claixa','caixa'));
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 const data = await res.json();
-                const numConcurso = String(data.numero || '').trim();
 
-                if (!numConcurso) throw new Error("Não foi possível identificar o número do concurso.");
+                const novo = formatarConcurso(data, null);
+                if (!novo.concurso) throw new Error("Concurso inválido.");
 
-                const novoConcurso = {
-                    concurso: numConcurso,
-                    data: data.dataApuracao || data.data || '',
-                    dezenas: data.listaDezenas || data.dezenas || [],
-                    acumulado: data.acumulado || false,
-                    mesSorte: data.nomeTimeCoracaoMesSorte || data.mesSorte || '',
-                    timeCoracao: data.nomeTimeCoracaoMesSorte || data.timeCoracao || '',
-                    trevos: data.trevos || [],
-                    dezenasSorteio2: data.listaDezenasSegundoSorteio || data.dezenasSorteio2 || []
-                };
+                const idx = dadosAtuais.findIndex(i => String(i.concurso) === String(novo.concurso));
+                if (idx >= 0) dadosAtuais[idx] = novo;
+                else dadosAtuais.unshift(novo);
 
-                const idx = dadosAtuais.findIndex(item => String(item.concurso) === String(novoConcurso.concurso));
-                if (idx >= 0) {
-                    dadosAtuais[idx] = novoConcurso;
-                } else {
-                    dadosAtuais.unshift(novoConcurso);
-                }
+                const ordenados = ordenarDesc(dadosAtuais);
 
                 const docRef = doc(db, 'loterias', loteriaAtual);
-                await setDoc(docRef, { historico: dadosAtuais }, { merge: true });
+                await setDoc(docRef, { historico: ordenados }, { merge: true });
 
-                salvarNoLocalStorage(loteriaAtual, dadosAtuais); // Atualiza LocalStorage
-                exibirDadosNaTabela(loteriaAtual, dadosAtuais);
-                alert(`Sucesso! Concurso #${novoConcurso.concurso} carregado diretamente da Caixa e atualizado na memória local.`);
+                dadosAtuais = ordenados;
+                salvarNoLocalStorage(loteriaAtual, ordenados);
+                exibirDadosNaTabela(loteriaAtual, ordenados);
 
+                alert(`✅ Concurso #${novo.concurso} atualizado!`);
             } catch (err) {
-                alert(`Erro na API Oficial da Caixa:\n${err.message}`);
+                alert(`Erro: ${err.message}`);
             } finally {
                 btn.innerHTML = originalHtml;
                 btn.disabled = false;
             }
         };
 
+        // ============================================================
+        // FORMATA um concurso da API para o formato do Firestore
+        // ============================================================
+        function formatarConcurso(data, fallbackNum) {
+            return {
+                concurso: String(data.numero || fallbackNum || ''),
+                data: data.dataApuracao || data.data || '',
+                dezenas: data.listaDezenas || data.dezenas || [],
+                acumulado: data.acumulado || false,
+                mesSorte: data.nomeTimeCoracaoMesSorte || data.mesSorte || '',
+                timeCoracao: data.nomeTimeCoracaoMesSorte || data.timeCoracao || '',
+                trevos: data.trevos || [],
+                dezenasSorteio2: data.listaDezenasSegundoSorteio || data.dezenasSorteio2 || []
+            };
+        }
+
+        // ============================================================
+        // BUSCA HISTÓRICO NOS ARQUIVOS LOCAIS (.js)
+        // ============================================================
         function obterHistoricoJSLocal(loteria) {
             const l = loteria.toLowerCase().replace(/[^a-z0-9]/g, '');
 
             if (l === 'maismilionaria') {
-                const tentarMilionaria = [
+                for (const v of [
                     window.HISTORICO_MAISMILIONARIA, window.HISTORICO_MAIS_MILIONARIA,
                     window.historicoMaisMilionaria, window.maismilionaria,
                     window.historico_maismilionaria, window.HISTORICO_MILIONARIA
-                ];
-                for (let v of tentarMilionaria) {
-                    if (v && Array.isArray(v) && v.length > 0) return v;
+                ]) {
+                    if (Array.isArray(v) && v.length > 0) return v;
                 }
             }
 
             const mapa = {
-                'megasena': window.HISTORICO_MEGASENA || window.HISTORICO_MEGA_SENA || window.historicoMegasena || window.megasena || window.historico_megasena,
-                'lotofacil': window.HISTORICO_LOTOFACIL || window.historicoLotofacil || window.lotofacil || window.historico_lotofacil,
-                'quina': window.HISTORICO_QUINA || window.historicoQuina || window.quina || window.historico_quina,
-                'lotomania': window.HISTORICO_LOTOMANIA || window.historicoLotomania || window.lotomania || window.historico_lotomania,
-                'timemania': window.HISTORICO_TIMEMANIA || window.historicoTimemania || window.timemania || window.historico_timemania,
-                'duplasena': window.HISTORICO_DUPLASENA || window.historicoDuplasena || window.duplasena || window.historico_duplasena,
-                'diadesorte': window.HISTORICO_DIADESORTE || window.historicoDiadesorte || window.diadesorte || window.historico_diadesorte,
-                'supersete': window.HISTORICO_SUPERSETE || window.historicoSupersete || window.supersete || window.historico_supersete
+                'megasena':       window.HISTORICO_MEGASENA || window.HISTORICO_MEGA_SENA || window.historicoMegasena || window.megasena || window.historico_megasena,
+                'lotofacil':      window.HISTORICO_LOTOFACIL || window.historicoLotofacil || window.lotofacil || window.historico_lotofacil,
+                'quina':          window.HISTORICO_QUINA || window.historicoQuina || window.quina || window.historico_quina,
+                'lotomania':      window.HISTORICO_LOTOMANIA || window.historicoLotomania || window.lotomania || window.historico_lotomania,
+                'timemania':      window.HISTORICO_TIMEMANIA || window.historicoTimemania || window.timemania || window.historico_timemania,
+                'duplasena':      window.HISTORICO_DUPLASENA || window.historicoDuplasena || window.duplasena || window.historico_duplasena,
+                'diadesorte':     window.HISTORICO_DIADESORTE || window.historicoDiadesorte || window.diadesorte || window.historico_diadesorte,
+                'supersete':      window.HISTORICO_SUPERSETE || window.historicoSupersete || window.supersete || window.historico_supersete
             };
+            if (Array.isArray(mapa[l])) return mapa[l];
 
-            if (mapa[l] && Array.isArray(mapa[l])) return mapa[l];
-
-            const chavesGerais = Object.keys(window);
-            for (let chave of chavesGerais) {
+            // Fallback: procura em qualquer window.X que contenha o nome
+            for (const chave of Object.keys(window)) {
                 const chaveLimpa = chave.toLowerCase().replace(/[^a-z0-9]/g, '');
-                let condicao = (l === 'maismilionaria') ? (chaveLimpa.includes('mili') || chaveLimpa.includes('mais')) : chaveLimpa.includes(l);
-
-                if (condicao && Array.isArray(window[chave]) && window[chave].length > 0) {
+                const match = (l === 'maismilionaria')
+                    ? (chaveLimpa.includes('mili') || chaveLimpa.includes('mais'))
+                    : chaveLimpa.includes(l);
+                if (match && Array.isArray(window[chave]) && window[chave].length > 0) {
                     return window[chave];
                 }
             }
             return null;
         }
 
+        // ============================================================
+        // CARREGAR LOTERIA (lê do Firestore)
+        // ============================================================
         window.carregarLoteria = async function(loteria) {
             loteriaAtual = loteria;
             destacarBotaoAtivo(loteria);
@@ -421,79 +503,60 @@
                     dadosAtuais = [];
                 }
 
-                salvarNoLocalStorage(loteria, dadosAtuais); // Garante que a memória fique sincronizada ao trocar de aba
+                // Garante ordem decrescente
+                dadosAtuais = ordenarDesc(dadosAtuais);
+
+                salvarNoLocalStorage(loteria, dadosAtuais);
                 exibirDadosNaTabela(loteria, dadosAtuais);
-                
+
                 if (dadosAtuais.length > 0) {
-                    syncEl.innerHTML = `<i class="fa-solid fa-circle-check"></i> Dados carregados (${dadosAtuais.length} concursos)`;
+                    syncEl.innerHTML = `<i class="fa-solid fa-circle-check"></i> ${dadosAtuais.length} concursos`;
                 } else {
-                    syncEl.innerHTML = `<i class="fa-solid fa-circle-info"></i> Sem dados no banco. Faça login para enviar.`;
+                    syncEl.innerHTML = `<i class="fa-solid fa-circle-info"></i> Sem dados`;
                 }
-
             } catch (err) {
-                console.error("Erro ao ler Firebase:", err);
-                syncEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Erro de conexão com Firebase`;
+                console.error("Erro:", err);
+                syncEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Erro`;
             }
         };
 
-        window.subirBaseJSFirebase = async function() {
-            const btn = document.getElementById('btn_upload');
-            const originalText = btn.innerHTML;
-
-            const listaLocal = obterHistoricoJSLocal(loteriaAtual);
-
-            if (!listaLocal || !Array.isArray(listaLocal) || listaLocal.length === 0) {
-                alert(`Erro: Variável de dados não encontrada para ${loteriaAtual.toUpperCase()}.`);
-                return;
-            }
-
-            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Enviando...`;
-            btn.disabled = true;
-
+        // ============================================================
+        // LOCALSTORAGE
+        // ============================================================
+        function salvarNoLocalStorage(loteria, dados) {
             try {
-                const docRef = doc(db, 'loterias', loteriaAtual);
-                await setDoc(docRef, { historico: listaLocal }, { merge: true });
-
-                dadosAtuais = listaLocal;
-                salvarNoLocalStorage(loteriaAtual, dadosAtuais); // Atualiza LocalStorage
-                exibirDadosNaTabela(loteriaAtual, dadosAtuais);
-
-                alert(`Sucesso! ${listaLocal.length} concursos salvos no Firebase e atualizados no navegador!`);
-
-            } catch (err) {
-                alert(`Erro ao salvar no Firebase: ${err.message}`);
-            } finally {
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-            }
-        };
-
-        function destacarBotaoAtivo(loteria) {
-            document.querySelectorAll('.btn-lottery').forEach(btn => btn.classList.remove('active'));
-            const btnAtivo = document.getElementById(`btn_${loteria}`);
-            if (btnAtivo) btnAtivo.classList.add('active');
+                localStorage.setItem(`${loteria}_dados`, JSON.stringify(dados));
+            } catch (e) { console.error("LocalStorage:", e); }
         }
 
+        function destacarBotaoAtivo(loteria) {
+            document.querySelectorAll('.btn-lottery').forEach(b => b.classList.remove('active'));
+            const b = document.getElementById(`btn_${loteria}`);
+            if (b) b.classList.add('active');
+        }
+
+        // ============================================================
+        // RENDERIZAR TABELA
+        // ============================================================
         function exibirDadosNaTabela(loteria, lista) {
             const container = document.getElementById('history_display');
             const tbody = document.getElementById('table_body');
             const title = document.getElementById('table_title');
 
-            lista.sort((a, b) => Number(b.concurso) - Number(a.concurso));
-
-            title.textContent = `Histórico / History / Historial: ${loteria.toUpperCase()} (${lista.length} concursos)`;
+            const ordenada = ordenarDesc(lista);
+            title.textContent = `📊 ${loteria.toUpperCase()} — ${ordenada.length} concursos`;
             tbody.innerHTML = '';
 
-            lista.forEach(item => {
+            ordenada.forEach(item => {
                 const tr = document.createElement('tr');
                 let dezenasHtml = '';
-                
+
                 if (Array.isArray(item.dezenas)) {
-                    if (loteria.toLowerCase() === 'supersete') {
-                        dezenasHtml = item.dezenas.map((d, colIdx) => `
-                            <span style="display: inline-flex; flex-direction: column; align-items: center; margin-right: 6px;">
-                                <span style="font-size: 10px; color: #7f8c8d; font-weight: bold;">C${colIdx + 1}</span>
-                                <span class="ball" style="background: #a8cf45; color: #222;">${d}</span>
+                    if (loteria === 'supersete') {
+                        dezenasHtml = item.dezenas.map((d, i) => `
+                            <span style="display:inline-flex;flex-direction:column;align-items:center;margin-right:5px;">
+                                <span style="font-size:9px;color:#64748b;font-weight:bold;">C${i+1}</span>
+                                <span class="ball ball-supersete">${d}</span>
                             </span>
                         `).join('');
                     } else {
@@ -502,37 +565,19 @@
                 }
 
                 let extrasHtml = '';
+
+                // MÊS DA SORTE (Dia de Sorte)
                 if (loteria === 'diadesorte' && (item.mesSorte || item.nomeTimeCoracaoMesSorte)) {
                     const mes = item.mesSorte || item.nomeTimeCoracaoMesSorte;
-                    extrasHtml = `<br><span class="badge-extra" style="background: #fff3cd; color: #856404; border: 1px solid #ffeeba;">🗓️ Mês da Sorte: <strong>${mes}</strong></span>`;
-                } else if (loteria === 'timemania' && (item.timeCoracao || item.nomeTimeCoracaoMesSorte)) {
-                    const time = item.timeCoracao || item.nomeTimeCoracaoMesSorte;
-                    extrasHtml = `<br><span class="badge-extra" style="background: #d4edda; color: #155724; border: 1px solid #c3e6cb;">⚽ Time do Coração: <strong>${time}</strong></span>`;
-                } else if (loteria === 'maismilionaria' && item.trevos && item.trevos.length > 0) {
-                    const trevosTxt = Array.isArray(item.trevos) ? item.trevos.join(', ') : item.trevos;
-                    extrasHtml = `<br><span class="badge-extra" style="background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb;">🍀 Trevos: <strong>${trevosTxt}</strong></span>`;
-                } else if (loteria === 'duplasena' && item.dezenasSorteio2 && item.dezenasSorteio2.length > 0) {
-                    const bolas2 = item.dezenasSorteio2.map(d => `<span class="ball" style="background: #8e44ad;">${d}</span>`).join('');
-                    extrasHtml = `<br><span class="badge-extra" style="background: #f3e5f5; color: #4a148c; border: 1px solid #e1bee7;">2º Sorteio: ${bolas2}</span>`;
+                    extrasHtml += `<br><span class="badge-extra" style="background:#fff3cd;color:#856404;">🗓️ Mês da Sorte: <strong>${mes}</strong></span>`;
                 }
 
-                const txtAcumulado = item.acumulado ? '<span style="color: #e74c3c; font-weight: bold;">Sim / Yes / Sí</span>' : 'Não / No / No';
+                // TIME DO CORAÇÃO (Timemania)
+                if (loteria === 'timemania' && (item.timeCoracao || item.nomeTimeCoracaoMesSorte)) {
+                    const time = item.timeCoracao || item.nomeTimeCoracaoMesSorte;
+                    extrasHtml += `<br><span class="badge-extra" style="background:#d4edda;color:#155724;">⚽ Time do Coração: <strong>${time}</strong></span>`;
+                }
 
-                tr.innerHTML = `
-                    <td><strong>#${item.concurso}</strong></td>
-                    <td>${item.dataApuracao || item.data || '-'}</td>
-                    <td><div>${dezenasHtml}</div>${extrasHtml}</td>
-                    <td>${txtAcumulado}</td>
-                `;
-                tbody.appendChild(tr);
-            });
-
-            container.style.display = 'block';
-        }
-
-        window.addEventListener('DOMContentLoaded', () => {
-            window.carregarLoteria('megasena');
-        });
-    </script>
-</body>
-</html>
+                // TREVOS (+Milionária)
+                if (loteria === 'maismilionaria' && item.trevos && item.trevos.length > 0) {
+                    const bolasTrevo = item.trevos.map(t => `<span class="ball ball-trevo">★${t
