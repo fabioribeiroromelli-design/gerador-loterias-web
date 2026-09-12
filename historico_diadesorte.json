@@ -19408,5 +19408,20 @@
     ],
     "acumulado": true,
     "mesSorte": "Fevereiro"
+  },
+  {
+    "concurso": "1295",
+    "data": "11/09/2026",
+    "dezenas": [
+      "10",
+      "12",
+      "14",
+      "15",
+      "24",
+      "27",
+      "31"
+    ],
+    "acumulado": true,
+    "mesSorte": "Outubro"
   }
 ]
