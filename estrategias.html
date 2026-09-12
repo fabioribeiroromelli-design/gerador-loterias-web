@@ -7,186 +7,42 @@
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* Estilos específicos para a página de estratégias */
-        .estrategias-container {
-            max-width: 1200px;
-            margin: 20px auto;
-            padding: 0 20px;
-        }
-        .estrategias-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin-bottom: 25px;
-            border-bottom: 2px solid #f0f0f0;
-            padding-bottom: 15px;
-        }
-        .estrategias-header h1 {
-            margin: 0;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            color: #7b1fa2;
-        }
-        .estrategias-header select {
-            padding: 8px 14px;
-            border-radius: 6px;
-            border: 1px solid #ccc;
-            font-weight: bold;
-        }
-        .strategies-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-            gap: 18px;
-            margin: 20px 0;
-        }
-        .strategy-card {
-            background: white;
-            border-radius: 12px;
-            padding: 16px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-            border-left: 6px solid #ccc;
-            cursor: pointer;
-            transition: 0.2s;
-            display: flex;
-            flex-direction: column;
-        }
-        .strategy-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 16px rgba(0,0,0,0.1);
-        }
-        .strategy-card.selected {
-            border-left-color: #FFD700;
-            background: #fefce8;
-        }
-        .strategy-card .emoji {
-            font-size: 2rem;
-            margin-right: 8px;
-        }
-        .strategy-card .name {
-            font-weight: 700;
-            font-size: 1.1rem;
-        }
-        .strategy-card .desc {
-            color: #555;
-            font-size: 0.9rem;
-            margin: 6px 0 10px 0;
-            flex: 1;
-        }
-        .strategy-card .example {
-            font-size: 0.8rem;
-            background: #f1f5f9;
-            padding: 4px 12px;
-            border-radius: 20px;
-            align-self: flex-start;
-            color: #333;
-        }
-        .params-panel {
-            background: white;
-            border-radius: 12px;
-            padding: 20px 24px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-            margin: 25px 0;
-            display: flex;
-            flex-wrap: wrap;
-            align-items: flex-end;
-            gap: 20px 30px;
-        }
-        .params-panel .field {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-        .params-panel .field label {
-            font-weight: 600;
-            font-size: 0.8rem;
-            color: #666;
-        }
-        .params-panel .field input {
-            padding: 6px 10px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 1rem;
-            background: #fafafa;
-            width: 80px;
-        }
-        .btn-generate {
-            background: #7b1fa2;
-            color: white;
-            border: none;
-            padding: 10px 28px;
-            border-radius: 40px;
-            font-weight: 700;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-left: auto;
-        }
-        .btn-generate:hover {
-            background: #6a1b8e;
-            transform: scale(1.02);
-        }
-        #resultsArea {
-            margin-top: 30px;
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-            display: none;
-        }
-        #resultsArea.visible {
-            display: block;
-        }
-        .game-row {
-            background: #f8fafc;
-            padding: 10px 16px;
-            border-radius: 6px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-            border-left: 4px solid #7b1fa2;
-        }
-        .game-numbers {
-            font-weight: 600;
-            letter-spacing: 1px;
-            color: #222;
-        }
-        .btn-save {
-            background: #28a745;
-            color: white;
-            border: none;
-            padding: 8px 20px;
-            border-radius: 40px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        .btn-save:hover {
-            background: #218838;
-        }
-        .back-home {
-            display: inline-block;
-            margin-top: 20px;
-            color: #7b1fa2;
-            text-decoration: none;
-            font-weight: 600;
-        }
+        .estrategias-container { max-width: 1200px; margin: 20px auto; padding: 0 20px; }
+        .estrategias-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 25px; border-bottom: 2px solid #f0f0f0; padding-bottom: 15px; }
+        .estrategias-header h1 { margin: 0; display: flex; align-items: center; gap: 12px; color: #7b1fa2; }
+        .estrategias-header select { padding: 8px 14px; border-radius: 6px; border: 1px solid #ccc; font-weight: bold; }
+        .strategies-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 18px; margin: 20px 0; }
+        .strategy-card { background: white; border-radius: 12px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border-left: 6px solid #ccc; cursor: pointer; transition: 0.2s; display: flex; flex-direction: column; }
+        .strategy-card:hover { transform: translateY(-3px); box-shadow: 0 6px 16px rgba(0,0,0,0.1); }
+        .strategy-card.selected { border-left-color: #FFD700; background: #fefce8; }
+        .strategy-card .emoji { font-size: 2rem; margin-right: 8px; }
+        .strategy-card .name { font-weight: 700; font-size: 1.1rem; }
+        .strategy-card .desc { color: #555; font-size: 0.9rem; margin: 6px 0 10px 0; flex: 1; }
+        .strategy-card .example { font-size: 0.8rem; background: #f1f5f9; padding: 4px 12px; border-radius: 20px; align-self: flex-start; color: #333; }
+        .params-panel { background: white; border-radius: 12px; padding: 20px 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin: 25px 0; display: flex; flex-wrap: wrap; align-items: flex-end; gap: 20px 30px; }
+        .params-panel .field { display: flex; flex-direction: column; gap: 4px; }
+        .params-panel .field label { font-weight: 600; font-size: 0.8rem; color: #666; }
+        .params-panel .field input { padding: 6px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; background: #fafafa; width: 80px; }
+        .btn-generate { background: #7b1fa2; color: white; border: none; padding: 10px 28px; border-radius: 40px; font-weight: 700; font-size: 1rem; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 8px; margin-left: auto; }
+        .btn-generate:hover { background: #6a1b8e; transform: scale(1.02); }
+        .btn-generate:disabled { background: #94a3b8; cursor: not-allowed; transform: none; }
+        #resultsArea { margin-top: 30px; background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); display: none; }
+        #resultsArea.visible { display: block; }
+        .game-row { background: #f8fafc; padding: 10px 16px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-left: 4px solid #7b1fa2; }
+        .game-numbers { font-weight: 600; letter-spacing: 1px; color: #222; }
+        .btn-save { background: #28a745; color: white; border: none; padding: 8px 20px; border-radius: 40px; font-weight: 700; cursor: pointer; transition: 0.2s; }
+        .btn-save:hover { background: #218838; }
+        .back-home { display: inline-block; margin-top: 20px; color: #7b1fa2; text-decoration: none; font-weight: 600; }
     </style>
 </head>
 <body>
-    <!-- Cabeçalho igual ao da home -->
+
     <header class="toolbar" style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: #800080; color: white;">
         <h1 style="margin: 0; font-size: 1.3rem;">
             <i class="fa-solid fa-wand-magic-sparkles" style="color: #FFD700;"></i> Estratégias Premium
         </h1>
         <div>
-            <button onclick="window.location.href='home.html'" style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: bold;">
+            <button onclick="window.location.href='index.html'" style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: bold;">
                 <i class="fa-solid fa-arrow-left"></i> Voltar
             </button>
         </div>
@@ -217,19 +73,19 @@
             </div>
             <div class="field">
                 <label>Números por jogo</label>
-                <input type="number" id="numbersPerGame" value="6" min="1" max="20">
+                <input type="number" id="numbersPerGame" value="15" min="1" max="20">
             </div>
             <div class="field">
                 <label>Pares (opcional)</label>
-                <input type="number" id="filterEven" placeholder="ex: 3" min="0">
+                <input type="number" id="filterEven" placeholder="ex: 7" min="0">
             </div>
             <div class="field">
                 <label>Ímpares (opcional)</label>
-                <input type="number" id="filterOdd" placeholder="ex: 3" min="0">
+                <input type="number" id="filterOdd" placeholder="ex: 8" min="0">
             </div>
             <div class="field">
                 <label>Primos (opcional)</label>
-                <input type="number" id="filterPrime" placeholder="ex: 2" min="0">
+                <input type="number" id="filterPrime" placeholder="ex: 5" min="0">
             </div>
             <button id="generateBtn" class="btn-generate">
                 <i class="fa-solid fa-bolt"></i> Gerar Jogos
@@ -239,13 +95,22 @@
         <div id="resultsArea">
             <h3><i class="fa-solid fa-list"></i> Jogos Gerados</h3>
             <div id="gamesList"></div>
-            <button id="saveAllBtn" class="btn-save"><i class="fa-solid fa-bookmark"></i> Salvar todos</button>
+            <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;">
+                <button id="saveAllBtn" class="btn-save">
+                    <i class="fa-solid fa-bookmark"></i> Salvar todos
+                </button>
+                <button onclick="compartilharTodosWhatsAppP()" style="background:#25D366;color:white;border:none;padding:8px 20px;border-radius:40px;font-weight:700;cursor:pointer;">
+                    <i class="fa-brands fa-whatsapp"></i> Compartilhar todos
+                </button>
+                <button onclick="imprimirTodosP()" style="background:#dc2626;color:white;border:none;padding:8px 20px;border-radius:40px;font-weight:700;cursor:pointer;">
+                    <i class="fa-solid fa-file-pdf"></i> Imprimir todos
+                </button>
+            </div>
         </div>
 
-        <a href="home.html" class="back-home"><i class="fa-solid fa-arrow-left"></i> Voltar para a Home</a>
+        <a href="index.html" class="back-home"><i class="fa-solid fa-arrow-left"></i> Voltar para a Home</a>
     </div>
 
-    <!-- Scripts -->
     <script src="estrategias-data.js"></script>
     <script src="estrategias.js"></script>
 </body>
