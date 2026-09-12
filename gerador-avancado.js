@@ -484,20 +484,30 @@ function gerarJogos() {
     area.classList.add('visible');
 
     lista.innerHTML = jogos.map((jogo, i) => {
-        const nums = cfg.name === 'Super Sete'
-            ? jogo.map((n, col) => `<span style="display:inline-flex;flex-direction:column;align-items:center;margin:0 3px;">
-                <span style="font-size:9px;color:#94a3b8;">C${col+1}</span>
-                <span style="font-weight:700;">${n}</span>
-              </span>`).join('')
-            : jogo.map(n => String(n).padStart(2, '0')).join(' - ');
+    const soma = jogo.reduce((a, b) => a + b, 0);
+    const pares = jogo.filter(n => n % 2 === 0).length;
+    const primos = jogo.filter(n => isPrime(n)).length;
+    const nums = cfg.name === 'Super Sete'
+        ? jogo.map((n, col) => `<span style="display:inline-flex;flex-direction:column;align-items:center;margin:0 3px;">
+            <span style="font-size:9px;color:#94a3b8;">C${col+1}</span>
+            <span style="font-weight:700;">${n}</span>
+          </span>`).join('')
+        : jogo.map(n => String(n).padStart(2, '0')).join(' - ');
 
-        return `<div class="game-row">
+    return `<div class="game-row">
+        <div>
             <span class="game-numbers">${cfg.name === 'Super Sete' ? nums : `Jogo ${i+1}: ${nums}`}</span>
-            <button class="btn-save" onclick="salvarJogo([${jogo.join(',')}], ${i+1})">
-                <i class="fa-solid fa-bookmark"></i> Salvar
-            </button>
-        </div>`;
-    }).join('');
+            ${cfg.name !== 'Super Sete' ? `
+                <div style="font-size:0.75rem;color:#64748b;margin-top:4px;">
+                    Soma: <strong>${soma}</strong> · Pares: <strong>${pares}</strong> · Ímpares: <strong>${jogo.length - pares}</strong> · Primos: <strong>${primos}</strong>
+                </div>
+            ` : ''}
+        </div>
+        <button class="btn-save" onclick="salvarJogo([${jogo.join(',')}], ${i+1})">
+            <i class="fa-solid fa-bookmark"></i> Salvar
+        </button>
+    </div>`;
+}).join('');
 
     // Guarda para salvar depois
     window._ultimosJogos = jogos;
