@@ -434,3 +434,276 @@ function gerarJogos() {
     window._ultimosJogos = jogos;
     window._ultimaConfig = cfg;
 }
+
+// ============================================================
+// PARTE 2 — WhatsApp + PDF + Salvar
+// ============================================================
+
+function compartilharWhatsApp(jogo, numero) {
+    const soma = jogo.reduce((a, b) => a + b, 0);
+    const pares = jogo.filter(n => n % 2 === 0).length;
+    const primos = jogo.filter(n => isPrime(n)).length;
+    const nums = jogo.map(n => String(n).padStart(2, '0')).join(' - ');
+    const estrategia = ESTRATEGIAS[_selectedStrategy]?.name || 'Estratégia';
+    const emoji = ESTRATEGIAS[_selectedStrategy]?.emoji || '🎲';
+
+    const mensagem =
+        `${emoji} *Meu jogo da ${_lotteryAtual}*\n\n` +
+        `📋 Estratégia: *${estrategia}*\n` +
+        `🎯 Jogo ${numero}: *${nums}*\n\n` +
+        `📊 Estatísticas:\n` +
+        `• Soma: ${soma}\n` +
+        `• Pares: ${pares} | Ímpares: ${jogo.length - pares}\n` +
+        `• Primos: ${primos}\n\n` +
+        `🍀 Gerado em: https://geradordejogosloterias.com.br`;
+
+    window.open(`https://wa.me/?text=${encodeURIComponent(mensagem)}`, '_blank');
+}
+
+function compartilharTodosWhatsApp() {
+    const jogos = window._ultimosJogos || [];
+    if (jogos.length === 0) {
+        alert('Nenhum jogo para compartilhar.');
+        return;
+    }
+
+    const estrategia = ESTRATEGIAS[_selectedStrategy]?.name || 'Estratégia';
+    const emoji = ESTRATEGIAS[_selectedStrategy]?.emoji || '🎲';
+
+    let mensagem = `${emoji} *Meus ${jogos.length} jogos da ${_lotteryAtual}*\n`;
+    mensagem += `📋 Estratégia: *${estrategia}*\n\n`;
+
+    jogos.forEach((jogo, i) => {
+        const nums = jogo.map(n => String(n).padStart(2, '0')).join(' - ');
+        mensagem += `🎯 *Jogo ${i+1}:* ${nums}\n`;
+    });
+
+    const somaTotal = jogos.reduce((acc, j) => acc + j.reduce((a, b) => a + b, 0), 0);
+    const somaMedia = (somaTotal / jogos.length).toFixed(1);
+
+    mensagem += `\n📊 *Soma média:* ${somaMedia}\n`;
+    mensagem += `\n🍀 Gerado em: https://geradordejogosloterias.com.br`;
+
+    window.open(`https://wa.me/?text=${encodeURIComponent(mensagem)}`, '_blank');
+}
+
+function imprimirJogo(jogo, numero) {
+    const soma = jogo.reduce((a, b) => a + b, 0);
+    const pares = jogo.filter(n => n % 2 === 0).length;
+    const primos = jogo.filter(n => isPrime(n)).length;
+    const nums = jogo.map(n => String(n).padStart(2, '0')).join(' - ');
+    const estrategia = ESTRATEGIAS[_selectedStrategy]?.name || 'Estratégia';
+    const emoji = ESTRATEGIAS[_selectedStrategy]?.emoji || '🎲';
+    const dataHora = new Date().toLocaleString('pt-BR');
+
+    const html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Jogo ' + numero + ' - ' + _lotteryAtual + '</title><style>' +
+        '* { box-sizing: border-box; margin: 0; padding: 0; }' +
+        'body { font-family: Arial, sans-serif; padding: 30px; color: #1e293b; background: #fff; }' +
+        '.header { text-align: center; border-bottom: 3px solid #2563eb; padding-bottom: 15px; margin-bottom: 25px; }' +
+        '.header h1 { color: #2563eb; font-size: 22px; margin-bottom: 6px; }' +
+        '.header .subtitle { color: #64748b; font-size: 14px; margin-bottom: 4px; }' +
+        '.header .meta { color: #94a3b8; font-size: 11px; }' +
+        '.jogo { border: 2px solid #2563eb; border-radius: 12px; padding: 20px; background: #f8fafc; }' +
+        '.jogo-titulo { color: #2563eb; font-size: 16px; font-weight: bold; margin-bottom: 12px; text-align: center; }' +
+        '.numeros { font-size: 20px; font-weight: bold; text-align: center; color: #1e293b; letter-spacing: 2px; margin: 15px 0; padding: 15px; background: white; border-radius: 8px; line-height: 1.6; }' +
+        '.estatisticas { display: flex; justify-content: space-around; gap: 10px; margin-top: 12px; }' +
+        '.estatistica { background: white; padding: 8px 15px; border-radius: 8px; text-align: center; flex: 1; border: 1px solid #e2e8f0; }' +
+        '.estatistica .label { font-size: 10px; color: #64748b; text-transform: uppercase; font-weight: 600; }' +
+        '.estatistica .valor { font-size: 18px; font-weight: bold; color: #2563eb; margin-top: 3px; }' +
+        '.footer { text-align: center; margin-top: 25px; padding-top: 15px; border-top: 2px dashed #e2e8f0; color: #94a3b8; font-size: 11px; }' +
+        '.footer strong { color: #2563eb; }' +
+        '</style></head><body>' +
+        '<div class="header">' +
+            '<h1>🎯 Gerador de Jogos - Loterias</h1>' +
+            '<div class="subtitle">' + emoji + ' ' + _lotteryAtual + ' — Estratégia: ' + estrategia + '</div>' +
+            '<div class="meta">Gerado em: ' + dataHora + '</div>' +
+        '</div>' +
+        '<div class="jogo">' +
+            '<div class="jogo-titulo">JOGO ' + numero + '</div>' +
+            '<div class="numeros">' + nums + '</div>' +
+            '<div class="estatisticas">' +
+                '<div class="estatistica"><div class="label">Soma</div><div class="valor">' + soma + '</div></div>' +
+                '<div class="estatistica"><div class="label">Pares</div><div class="valor">' + pares + '</div></div>' +
+                '<div class="estatistica"><div class="label">Ímpares</div><div class="valor">' + (jogo.length - pares) + '</div></div>' +
+                '<div class="estatistica"><div class="label">Primos</div><div class="valor">' + primos + '</div></div>' +
+            '</div>' +
+        '</div>' +
+        '<div class="footer"><strong>🍀 geradordejogosloterias.com.br</strong><br>Boa sorte! Os jogos são gerados a partir de análise estatística.</div>' +
+        '</body></html>';
+
+    const novaJanela = window.open('', '_blank');
+    novaJanela.document.write(html);
+    novaJanela.document.close();
+    setTimeout(function() { novaJanela.print(); }, 500);
+}
+
+function imprimirTodos() {
+    const jogos = window._ultimosJogos || [];
+    if (jogos.length === 0) {
+        alert('Nenhum jogo para imprimir.');
+        return;
+    }
+
+    const estrategia = ESTRATEGIAS[_selectedStrategy]?.name || 'Estratégia';
+    const emoji = ESTRATEGIAS[_selectedStrategy]?.emoji || '🎲';
+    const dataHora = new Date().toLocaleString('pt-BR');
+    const totalJogos = jogos.length;
+    const somaTotal = jogos.reduce(function(acc, j) { return acc + j.reduce(function(a, b) { return a + b; }, 0); }, 0);
+    const somaMedia = (somaTotal / totalJogos).toFixed(1);
+
+    let jogosHtml = '';
+    jogos.forEach(function(jogo, i) {
+        const soma = jogo.reduce(function(a, b) { return a + b; }, 0);
+        const pares = jogo.filter(function(n) { return n % 2 === 0; }).length;
+        const primos = jogo.filter(function(n) { return isPrime(n); }).length;
+        const nums = jogo.map(function(n) { return String(n).padStart(2, '0'); }).join(' - ');
+
+        jogosHtml += '<div class="jogo-card">' +
+            '<div class="jogo-header">' +
+                '<span class="jogo-num">JOGO ' + (i + 1) + '</span>' +
+                '<span class="jogo-meta">Soma: ' + soma + ' | P: ' + pares + ' | I: ' + (jogo.length - pares) + ' | Pr: ' + primos + '</span>' +
+            '</div>' +
+            '<div class="numeros">' + nums + '</div>' +
+        '</div>';
+    });
+
+    const html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Meus Jogos - ' + _lotteryAtual + '</title><style>' +
+        '* { box-sizing: border-box; margin: 0; padding: 0; }' +
+        '@page { margin: 10mm; }' +
+        'body { font-family: Arial, sans-serif; padding: 15px; color: #1e293b; background: #fff; }' +
+        '.header { text-align: center; border-bottom: 3px solid #2563eb; padding-bottom: 12px; margin-bottom: 18px; }' +
+        '.header h1 { color: #2563eb; font-size: 20px; margin-bottom: 5px; }' +
+        '.header .subtitle { color: #64748b; font-size: 13px; margin-bottom: 4px; }' +
+        '.header .meta { color: #94a3b8; font-size: 11px; }' +
+        '.stats-gerais { display: flex; justify-content: center; gap: 25px; margin: 12px 0 18px 0; padding: 10px; background: #f1f5f9; border-radius: 8px; font-size: 12px; color: #334155; }' +
+        '.stats-gerais strong { color: #2563eb; font-size: 14px; }' +
+        '.jogos-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }' +
+        '.jogo-card { border: 1.5px solid #2563eb; border-radius: 8px; padding: 10px 12px; background: #f8fafc; page-break-inside: avoid; }' +
+        '.jogo-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px dashed #cbd5e1; }' +
+        '.jogo-num { color: #2563eb; font-size: 12px; font-weight: bold; text-transform: uppercase; }' +
+        '.jogo-meta { font-size: 10px; color: #64748b; font-family: Courier New, monospace; }' +
+        '.numeros { font-size: 14px; font-weight: bold; text-align: center; color: #1e293b; letter-spacing: 1px; line-height: 1.8; }' +
+        '.footer { text-align: center; margin-top: 20px; padding-top: 12px; border-top: 2px dashed #e2e8f0; color: #94a3b8; font-size: 10px; }' +
+        '.footer strong { color: #2563eb; }' +
+        '</style></head><body>' +
+        '<div class="header">' +
+            '<h1>🎯 Gerador de Jogos - Loterias</h1>' +
+            '<div class="subtitle">' + emoji + ' ' + _lotteryAtual + ' — Estratégia: ' + estrategia + '</div>' +
+            '<div class="meta">Gerado em: ' + dataHora + '</div>' +
+        '</div>' +
+        '<div class="stats-gerais">' +
+            '<span><strong>' + totalJogos + '</strong> jogo(s)</span>' +
+            '<span>Soma média: <strong>' + somaMedia + '</strong></span>' +
+            '<span>Números por jogo: <strong>' + jogos[0].length + '</strong></span>' +
+        '</div>' +
+        '<div class="jogos-grid">' + jogosHtml + '</div>' +
+        '<div class="footer"><strong>🍀 geradordejogosloterias.com.br</strong><br>Boa sorte!</div>' +
+        '</body></html>';
+
+    const novaJanela = window.open('', '_blank');
+    novaJanela.document.write(html);
+    novaJanela.document.close();
+    setTimeout(function() { novaJanela.print(); }, 500);
+}
+
+function salvarJogoComAnalise(jogo, numero) {
+    const ultimoConcurso = _stats && _stats.ordenadoDesc ? _stats.ordenadoDesc[0] : null;
+    let acertos = 0;
+    let numerosSorteados = [];
+    let concursoNum = '--';
+    let dataConcurso = '--';
+
+    if (ultimoConcurso) {
+        numerosSorteados = (ultimoConcurso.dezenas || ultimoConcurso.listaDezenas || []).map(function(n) { return parseInt(n, 10); });
+        concursoNum = ultimoConcurso.concurso || ultimoConcurso.numero || '--';
+        dataConcurso = ultimoConcurso.data || ultimoConcurso.dataApuracao || '--';
+        acertos = jogo.filter(function(n) { return numerosSorteados.includes(n); }).length;
+    }
+
+    const soma = jogo.reduce(function(a, b) { return a + b; }, 0);
+    const pares = jogo.filter(function(n) { return n % 2 === 0; }).length;
+    const primos = jogo.filter(function(n) { return isPrime(n); }).length;
+
+    const jogos = JSON.parse(localStorage.getItem('jogos_salvos') || '[]');
+    jogos.push({
+        loteria: _lotteryAtual,
+        numeros: jogo,
+        soma: soma,
+        pares: pares,
+        primos: primos,
+        acertosUltimoConcurso: acertos,
+        ultimoConcurso: concursoNum,
+        ultimaData: dataConcurso,
+        data: new Date().toISOString(),
+        origem: 'Avancado: ' + (ESTRATEGIAS[_selectedStrategy] ? ESTRATEGIAS[_selectedStrategy].name : 'Estrategia')
+    });
+    localStorage.setItem('jogos_salvos', JSON.stringify(jogos));
+
+    alert(
+        '✅ Jogo salvo!\n\n' +
+        'Números: ' + jogo.join(' - ') + '\n' +
+        'Soma: ' + soma + '\n' +
+        'Pares: ' + pares + ' | Ímpares: ' + (jogo.length - pares) + ' | Primos: ' + primos + '\n\n' +
+        '📊 Comparação com último concurso (#' + concursoNum + ' - ' + dataConcurso + '):\n' +
+        'Números sorteados: ' + numerosSorteados.join(' - ') + '\n' +
+        '🎯 Você acertaria ' + acertos + ' número(s)!'
+    );
+}
+
+function salvarTodos() {
+    const jogos = window._ultimosJogos || [];
+    if (jogos.length === 0) {
+        alert('Nenhum jogo para salvar.');
+        return;
+    }
+
+    const ultimoConcurso = _stats && _stats.ordenadoDesc ? _stats.ordenadoDesc[0] : null;
+    const numerosSorteados = ultimoConcurso
+        ? (ultimoConcurso.dezenas || ultimoConcurso.listaDezenas || []).map(function(n) { return parseInt(n, 10); })
+        : [];
+    const concursoNum = ultimoConcurso ? (ultimoConcurso.concurso || ultimoConcurso.numero || '--') : '--';
+    const dataConcurso = ultimoConcurso ? (ultimoConcurso.data || ultimoConcurso.dataApuracao || '--') : '--';
+
+    let totalAcertos = 0;
+    let melhorAcertos = 0;
+
+    const salvos = JSON.parse(localStorage.getItem('jogos_salvos') || '[]');
+
+    jogos.forEach(function(jogo) {
+        const acertos = numerosSorteados.length > 0
+            ? jogo.filter(function(n) { return numerosSorteados.includes(n); }).length
+            : 0;
+        totalAcertos += acertos;
+        melhorAcertos = Math.max(melhorAcertos, acertos);
+
+        const soma = jogo.reduce(function(a, b) { return a + b; }, 0);
+        const pares = jogo.filter(function(n) { return n % 2 === 0; }).length;
+        const primos = jogo.filter(function(n) { return isPrime(n); }).length;
+
+        salvos.push({
+            loteria: _lotteryAtual,
+            numeros: jogo,
+            soma: soma,
+            pares: pares,
+            primos: primos,
+            acertosUltimoConcurso: acertos,
+            ultimoConcurso: concursoNum,
+            ultimaData: dataConcurso,
+            data: new Date().toISOString(),
+            origem: 'Avancado: ' + (ESTRATEGIAS[_selectedStrategy] ? ESTRATEGIAS[_selectedStrategy].name : 'Estrategia')
+        });
+    });
+
+    localStorage.setItem('jogos_salvos', JSON.stringify(salvos));
+
+    const media = (totalAcertos / jogos.length).toFixed(1);
+
+    alert(
+        '✅ ' + jogos.length + ' jogo(s) salvo(s)!\n\n' +
+        '📊 Análise geral vs. último concurso (#' + concursoNum + '):\n' +
+        'Números sorteados: ' + numerosSorteados.join(' - ') + '\n' +
+        '🎯 Média de acertos: ' + media + '\n' +
+        '🏆 Melhor jogo: ' + melhorAcertos + ' acerto(s)\n\n' +
+        'Estratégia: ' + (ESTRATEGIAS[_selectedStrategy] ? ESTRATEGIAS[_selectedStrategy].name : 'Estrategia')
+    );
+}
