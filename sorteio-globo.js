@@ -1,6 +1,6 @@
 /**
  * Sorteio Globo - Versão Web
- * Exclusões funcionando (padrão + Super Sete)
+ * Exclusões aplicadas automaticamente antes de cada sorteio
  */
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -125,7 +125,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const superSeteContainer = document.getElementById('superSeteContainer');
     const lotterySelector = document.getElementById('lotterySelector');
 
-    // ===== ANIMAÇÃO DO GLOBO =====
+    // ===== ANIMAÇÃO =====
     let animationInterval = null;
 
     function startGlobeAnimation(finalNumber, callback) {
@@ -282,13 +282,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // ============================================================
-    // ⚠️ CORREÇÃO PRINCIPAL: agora LÊ o input antes de sortear
+    // ⚠️ FUNÇÃO NOVA: LÊ O INPUT E APLICA AS EXCLUSÕES
+    // Chamada automaticamente dentro de drawOne() e drawAll()
     // ============================================================
-    function applyExclusionsSilent() {
-        if (isSuperSete) {
-            // Super Sete: exclusões já estão em memória (checkboxes)
-            return;
-        }
+    function lerE AplicarExclusoes() {  // ATENÇÃO: nome sem espaço aqui
+        if (isSuperSete) return; // Super Sete usa checkboxes (já em memória)
 
         const text = excludedInput ? excludedInput.value.trim() : '';
 
@@ -324,13 +322,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // ===== SORTEAR =====
+    // ===== SORTEAR 1 =====
     function drawOne() {
         if (isDrawing) return;
         if (isGameFinished) { resetGame(); return; }
 
-        // ⚠️ CHAMA A VERSÃO CORRIGIDA (agora lê o input)
-        applyExclusionsSilent();
+        // ✅ LÊ O INPUT AUTOMATICAMENTE
+        lerEAplicarExclusoes();
 
         if (isSuperSete) drawSuperSeteOne();
         else drawStandardOne();
@@ -393,12 +391,13 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // ===== SORTEAR TODOS =====
     function drawAll() {
         if (isDrawing) return;
         if (isGameFinished) { resetGame(); return; }
 
-        // ⚠️ CHAMA A VERSÃO CORRIGIDA
-        applyExclusionsSilent();
+        // ✅ LÊ O INPUT AUTOMATICAMENTE
+        lerEAplicarExclusoes();
 
         isDrawing = true;
         if (btnDrawOne) btnDrawOne.disabled = true;
@@ -569,7 +568,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // ===== BOTÃO "APLICAR EXCLUSÕES" =====
+    // ===== BOTÃO "APLICAR EXCLUSÕES" (manual) =====
     function applyExclusions(showToastMessage = false) {
         if (isSuperSete) {
             superSeteExclusions = {};
