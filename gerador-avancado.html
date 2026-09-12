@@ -131,6 +131,11 @@
             background: #1d4ed8;
             transform: scale(1.02);
         }
+        .btn-generate:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+            transform: none;
+        }
         #resultsArea {
             margin-top: 30px;
             background: white;
@@ -185,7 +190,7 @@
             <i class="fa-solid fa-microchip"></i> Gerador Avançado
         </h1>
         <div>
-            <button onclick="window.location.href='home.html'" style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: bold;">
+            <button onclick="window.location.href='index.html'" style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: bold;">
                 <i class="fa-solid fa-arrow-left"></i> Voltar
             </button>
         </div>
@@ -216,19 +221,19 @@
             </div>
             <div class="field">
                 <label>Números por jogo</label>
-                <input type="number" id="numbersPerGame" value="6" min="1" max="20">
+                <input type="number" id="numbersPerGame" value="15" min="1" max="20">
             </div>
             <div class="field">
                 <label>Pares (opcional)</label>
-                <input type="number" id="filterEven" placeholder="ex: 3" min="0">
+                <input type="number" id="filterEven" placeholder="ex: 7" min="0">
             </div>
             <div class="field">
                 <label>Ímpares (opcional)</label>
-                <input type="number" id="filterOdd" placeholder="ex: 3" min="0">
+                <input type="number" id="filterOdd" placeholder="ex: 8" min="0">
             </div>
             <div class="field">
                 <label>Primos (opcional)</label>
-                <input type="number" id="filterPrime" placeholder="ex: 2" min="0">
+                <input type="number" id="filterPrime" placeholder="ex: 5" min="0">
             </div>
             <button id="generateBtn" class="btn-generate">
                 <i class="fa-solid fa-bolt"></i> Gerar Jogos
@@ -241,10 +246,11 @@
             <button id="saveAllBtn" class="btn-save"><i class="fa-solid fa-bookmark"></i> Salvar todos</button>
         </div>
 
-        <a href="home.html" class="back-home"><i class="fa-solid fa-arrow-left"></i> Voltar para a Home</a>
+        <a href="index.html" class="back-home"><i class="fa-solid fa-arrow-left"></i> Voltar para a Home</a>
     </div>
 
-    <script src="gerador-avancado-data.js"></script>
+    <!-- ⚠️ CORRIGIDO: dados (plural) é o nome real do arquivo -->
+    <script src="gerador-avancado-dados.js"></script>
     <script src="gerador-avancado.js"></script>
 </body>
 </html>
