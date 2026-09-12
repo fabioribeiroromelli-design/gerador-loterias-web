@@ -1,5 +1,5 @@
 /* ============================================================
-   gerador-avancado.js — 12 estratégias + WhatsApp
+   gerador-avancado.js — 12 estratégias + WhatsApp + PDF
    ============================================================ */
 
 // Estado global
@@ -488,9 +488,12 @@ function gerarJogos() {
                     Soma: <strong>${soma}</strong> · Pares: <strong>${pares}</strong> · Ímpares: <strong>${jogo.length - pares}</strong> · Primos: <strong>${primos}</strong>
                 </div>
             </div>
-            <div style="display:flex;gap:6px;align-items:center;">
+            <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
                 <button onclick="compartilharWhatsApp([${jogo.join(',')}], ${i+1})" style="background:#25D366;color:white;border:none;padding:8px 14px;border-radius:40px;font-weight:700;cursor:pointer;font-size:0.8rem;">
                     <i class="fa-brands fa-whatsapp"></i> Enviar
+                </button>
+                <button onclick="imprimirJogo([${jogo.join(',')}], ${i+1})" style="background:#dc2626;color:white;border:none;padding:8px 14px;border-radius:40px;font-weight:700;cursor:pointer;font-size:0.8rem;">
+                    <i class="fa-solid fa-file-pdf"></i> PDF
                 </button>
                 <button class="btn-save" onclick="salvarJogoComAnalise([${jogo.join(',')}], ${i+1})">
                     <i class="fa-solid fa-bookmark"></i> Salvar
@@ -556,6 +559,151 @@ function compartilharTodosWhatsApp() {
     mensagem += `\n🍀 Gerado em: https://geradordejogosloterias.com.br`;
 
     window.open(`https://wa.me/?text=${encodeURIComponent(mensagem)}`, '_blank');
+}
+
+// ============================================================
+// IMPRIMIR 1 JOGO EM PDF
+// ============================================================
+function imprimirJogo(jogo, numero) {
+    const soma = jogo.reduce((a, b) => a + b, 0);
+    const pares = jogo.filter(n => n % 2 === 0).length;
+    const primos = jogo.filter(n => isPrime(n)).length;
+    const nums = jogo.map(n => String(n).padStart(2, '0')).join(' - ');
+    const estrategia = ESTRATEGIAS[_selectedStrategy]?.name || 'Estratégia';
+    const emoji = ESTRATEGIAS[_selectedStrategy]?.emoji || '🎲';
+    const dataHora = new Date().toLocaleString('pt-BR');
+
+    const html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>Jogo ${numero} - ${_lotteryAtual}</title>
+            <style>
+                * { box-sizing: border-box; margin: 0; padding: 0; }
+                body { font-family: 'Segoe UI', Arial, sans-serif; padding: 30px; color: #1e293b; background: #fff; }
+                .header { text-align: center; border-bottom: 3px solid #2563eb; padding-bottom: 15px; margin-bottom: 25px; }
+                .header h1 { color: #2563eb; font-size: 22px; margin-bottom: 6px; }
+                .header .subtitle { color: #64748b; font-size: 14px; margin-bottom: 4px; }
+                .header .meta { color: #94a3b8; font-size: 11px; }
+                .jogo { border: 2px solid #2563eb; border-radius: 12px; padding: 20px; margin-bottom: 20px; background: #f8fafc; }
+                .jogo-titulo { color: #2563eb; font-size: 16px; font-weight: bold; margin-bottom: 12px; text-align: center; }
+                .numeros { font-size: 20px; font-weight: bold; text-align: center; color: #1e293b; letter-spacing: 2px; margin: 15px 0; padding: 15px; background: white; border-radius: 8px; line-height: 1.6; }
+                .estatisticas { display: flex; justify-content: space-around; gap: 10px; margin-top: 12px; }
+                .estatistica { background: white; padding: 8px 15px; border-radius: 8px; text-align: center; flex: 1; border: 1px solid #e2e8f0; }
+                .estatistica .label { font-size: 10px; color: #64748b; text-transform: uppercase; font-weight: 600; }
+                .estatistica .valor { font-size: 18px; font-weight: bold; color: #2563eb; margin-top: 3px; }
+                .footer { text-align: center; margin-top: 25px; padding-top: 15px; border-top: 2px dashed #e2e8f0; color: #94a3b8; font-size: 11px; }
+                .footer strong { color: #2563eb; }
+                @media print { body { padding: 15px; } .jogo { page-break-inside: avoid; } }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h1>🎯 Gerador de Jogos - Loterias</h1>
+                <div class="subtitle">${emoji} ${_lotteryAtual} — Estratégia: ${estrategia}</div>
+                <div class="meta">Gerado em: ${dataHora}</div>
+            </div>
+            <div class="jogo">
+                <div class="jogo-titulo">JOGO ${numero}</div>
+                <div class="numeros">${nums}</div>
+                <div class="estatisticas">
+                    <div class="estatistica"><div class="label">Soma</div><div class="valor">${soma}</div></div>
+                    <div class="estatistica"><div class="label">Pares</div><div class="valor">${pares}</div></div>
+                    <div class="estatistica"><div class="label">Ímpares</div><div class="valor">${jogo.length - pares}</div></div>
+                    <div class="estatistica"><div class="label">Primos</div><div class="valor">${primos}</div></div>
+                </div>
+            </div>
+            <div class="footer">
+                <strong>🍀 geradordejogosloterias.com.br</strong><br>
+                Boa sorte! Os jogos são gerados a partir de análise estatística.
+            </div>
+        </body>
+        </html>`;
+
+    const novaJanela = window.open('', '_blank');
+    novaJanela.document.write(html);
+    novaJanela.document.close();
+    setTimeout(() => novaJanela.print(), 500);
+}
+
+// ============================================================
+// IMPRIMIR TODOS OS JOGOS EM PDF
+// ============================================================
+function imprimirTodos() {
+    const jogos = window._ultimosJogos || [];
+    if (jogos.length === 0) {
+        alert('Nenhum jogo para imprimir.');
+        return;
+    }
+
+    const estrategia = ESTRATEGIAS[_selectedStrategy]?.name || 'Estratégia';
+    const emoji = ESTRATEGIAS[_selectedStrategy]?.emoji || '🎲';
+    const dataHora = new Date().toLocaleString('pt-BR');
+
+    let jogosHtml = '';
+    jogos.forEach((jogo, i) => {
+        const soma = jogo.reduce((a, b) => a + b, 0);
+        const pares = jogo.filter(n => n % 2 === 0).length;
+        const primos = jogo.filter(n => isPrime(n)).length;
+        const nums = jogo.map(n => String(n).padStart(2, '0')).join(' - ');
+
+        jogosHtml += `
+            <div class="jogo">
+                <div class="jogo-titulo">JOGO ${i + 1}</div>
+                <div class="numeros">${nums}</div>
+                <div class="estatisticas">
+                    <div class="estatistica"><div class="label">Soma</div><div class="valor">${soma}</div></div>
+                    <div class="estatistica"><div class="label">Pares</div><div class="valor">${pares}</div></div>
+                    <div class="estatistica"><div class="label">Ímpares</div><div class="valor">${jogo.length - pares}</div></div>
+                    <div class="estatistica"><div class="label">Primos</div><div class="valor">${primos}</div></div>
+                </div>
+            </div>`;
+    });
+
+    const html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>Meus Jogos - ${_lotteryAtual}</title>
+            <style>
+                * { box-sizing: border-box; margin: 0; padding: 0; }
+                body { font-family: 'Segoe UI', Arial, sans-serif; padding: 30px; color: #1e293b; background: #fff; }
+                .header { text-align: center; border-bottom: 3px solid #2563eb; padding-bottom: 15px; margin-bottom: 25px; }
+                .header h1 { color: #2563eb; font-size: 22px; margin-bottom: 6px; }
+                .header .subtitle { color: #64748b; font-size: 14px; margin-bottom: 4px; }
+                .header .meta { color: #94a3b8; font-size: 11px; }
+                .jogo { border: 2px solid #2563eb; border-radius: 12px; padding: 20px; margin-bottom: 20px; background: #f8fafc; page-break-inside: avoid; }
+                .jogo-titulo { color: #2563eb; font-size: 16px; font-weight: bold; margin-bottom: 12px; text-align: center; }
+                .numeros { font-size: 20px; font-weight: bold; text-align: center; color: #1e293b; letter-spacing: 2px; margin: 15px 0; padding: 15px; background: white; border-radius: 8px; line-height: 1.6; }
+                .estatisticas { display: flex; justify-content: space-around; gap: 10px; margin-top: 12px; }
+                .estatistica { background: white; padding: 8px 15px; border-radius: 8px; text-align: center; flex: 1; border: 1px solid #e2e8f0; }
+                .estatistica .label { font-size: 10px; color: #64748b; text-transform: uppercase; font-weight: 600; }
+                .estatistica .valor { font-size: 18px; font-weight: bold; color: #2563eb; margin-top: 3px; }
+                .footer { text-align: center; margin-top: 25px; padding-top: 15px; border-top: 2px dashed #e2e8f0; color: #94a3b8; font-size: 11px; }
+                .footer strong { color: #2563eb; }
+                @media print { body { padding: 15px; } }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h1>🎯 Gerador de Jogos - Loterias</h1>
+                <div class="subtitle">${emoji} ${_lotteryAtual} — Estratégia: ${estrategia}</div>
+                <div class="meta">${jogos.length} jogo(s) • Gerado em: ${dataHora}</div>
+            </div>
+            ${jogosHtml}
+            <div class="footer">
+                <strong>🍀 geradordejogosloterias.com.br</strong><br>
+                Boa sorte! Os jogos são gerados a partir de análise estatística.
+            </div>
+        </body>
+        </html>`;
+
+    const novaJanela = window.open('', '_blank');
+    novaJanela.document.write(html);
+    novaJanela.document.close();
+    setTimeout(() => novaJanela.print(), 500);
 }
 
 // ============================================================
