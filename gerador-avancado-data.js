@@ -1,8 +1,13 @@
 /* ============================================================
-   gerador-avancado-data.js
+   gerador-avancado-dados.js
    Configurações das loterias + cálculo de estatísticas
    ============================================================ */
 
+console.log("[gerador-avancado-dados.js] Carregado");
+
+// ============================================================
+// CONFIGURAÇÕES DAS LOTERIAS
+// ============================================================
 const LOTTERY_CONFIGS = {
     'Mega-Sena':       { maxNumber: 60, numbersToSelect: 6,  minSum: 21, maxSum: 324, avgSum: 183.0, startNumber: 1, minSel: 6,  maxSel: 20 },
     'Lotofácil':       { maxNumber: 25, numbersToSelect: 15, minSum: 120, maxSum: 310, avgSum: 195.0, startNumber: 1, minSel: 15, maxSel: 20 },
@@ -15,6 +20,9 @@ const LOTTERY_CONFIGS = {
     'Mais Milionária': { maxNumber: 50, numbersToSelect: 6,  minSum: 21, maxSum: 285, avgSum: 153.0, startNumber: 1, minSel: 6,  maxSel: 12 }
 };
 
+// ============================================================
+// MAPA DOS ARQUIVOS JSON
+// ============================================================
 const ARQUIVO_JSON_MAP = {
     'Mega-Sena':       'historico_megasena.json',
     'Lotofácil':       'historico_lotofacil.json',
@@ -27,12 +35,14 @@ const ARQUIVO_JSON_MAP = {
     'Mais Milionária': 'historico_maismilionaria.json'
 };
 
-// Primos até 100
+// ============================================================
+// PRIMOS
+// ============================================================
 const PRIMOS_SET = new Set([2,3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59,61,67,71,73,79,83,89,97]);
 function isPrime(n) { return PRIMOS_SET.has(n); }
 
 // ============================================================
-// CACHE E CARREGAMENTO DO HISTÓRICO
+// CARREGAMENTO DO HISTÓRICO
 // ============================================================
 const _historicoCache = {};
 
@@ -40,30 +50,37 @@ async function carregarHistorico(lotteryName) {
     if (_historicoCache[lotteryName]) return _historicoCache[lotteryName];
 
     const arquivo = ARQUIVO_JSON_MAP[lotteryName];
-    if (!arquivo) return [];
+    if (!arquivo) {
+        console.warn(`[dados] Nenhum arquivo mapeado para: ${lotteryName}`);
+        return [];
+    }
 
     try {
-        const resp = await fetch(`./${arquivo}?v=${Date.now()}`);
+        const url = `./${arquivo}?v=${Date.now()}`;
+        console.log(`[dados] Carregando: ${url}`);
+        const resp = await fetch(url);
+        console.log(`[dados] HTTP ${resp.status} para ${arquivo}`);
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+
         const data = await resp.json();
         const historico = Array.isArray(data) ? data : [];
         _historicoCache[lotteryName] = historico;
+        console.log(`[dados] ✅ ${lotteryName}: ${historico.length} concursos carregados`);
         return historico;
     } catch (e) {
-        console.error(`Erro ao carregar ${arquivo}:`, e);
+        console.error(`[dados] ❌ Erro ao carregar ${arquivo}:`, e);
         return [];
     }
 }
 
 // ============================================================
-// CÁLCULO DE ESTATÍSTICAS COMPLETAS (para o gerador)
+// CÁLCULO DE ESTATÍSTICAS
 // ============================================================
 function calcularEstatisticas(historico) {
     if (!historico || historico.length === 0) {
-        return { freq: {}, delay: {}, avgSum: 0, total: 0, hotNumbers: [], delayNumbers: [] };
+        return { freq: {}, delay: {}, avgSum: 0, total: 0, hotNumbers: [], delayNumbers: [], ordenadoDesc: [] };
     }
 
-    // Ordena mais recente primeiro
     const ordenadoDesc = [...historico].sort((a, b) =>
         Number(b.concurso || b.numero || 0) - Number(a.concurso || a.numero || 0)
     );
@@ -72,7 +89,6 @@ function calcularEstatisticas(historico) {
     const delay = {};
     const todasDezenas = new Set();
 
-    // Coleta de todos os números que apareceram
     ordenadoDesc.forEach(draw => {
         const nums = (draw.dezenas || draw.listaDezenas || []).map(n => parseInt(n, 10));
         nums.forEach(n => {
@@ -83,7 +99,6 @@ function calcularEstatisticas(historico) {
         });
     });
 
-    // Calcula atraso (quantos concursos desde a última aparição)
     [...todasDezenas].forEach(n => {
         for (let i = 0; i < ordenadoDesc.length; i++) {
             const nums = (ordenadoDesc[i].dezenas || ordenadoDesc[i].listaDezenas || []).map(n => parseInt(n, 10));
@@ -92,14 +107,12 @@ function calcularEstatisticas(historico) {
         if (delay[n] === undefined) delay[n] = ordenadoDesc.length;
     });
 
-    // Soma média
     const sumTotal = ordenadoDesc.reduce((acc, draw) => {
         const nums = (draw.dezenas || draw.listaDezenas || []).map(n => parseInt(n, 10)).filter(n => !isNaN(n));
         return acc + nums.reduce((a, b) => a + b, 0);
     }, 0);
     const avgSum = sumTotal / ordenadoDesc.length;
 
-    // Números quentes e atrasados (top 40%)
     const hotNumbers = Object.entries(freq)
         .sort((a, b) => b[1] - a[1])
         .slice(0, Math.max(10, Math.floor(Object.keys(freq).length * 0.4)))
@@ -115,3 +128,5 @@ function calcularEstatisticas(historico) {
         hotNumbers, delayNumbers, ordenadoDesc
     };
 }
+
+console.log("[gerador-avancado-dados.js] Funções definidas: carregarHistorico, calcularEstatisticas, isPrime");
