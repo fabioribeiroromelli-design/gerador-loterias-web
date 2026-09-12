@@ -541,3 +541,53 @@ function salvarTodos() {
     localStorage.setItem('jogos_salvos', JSON.stringify(salvos));
     alert(`${jogos.length} jogo(s) salvos!`);
 }
+
+// ============================================================
+// COMPARA COM O ÚLTIMO CONCURSO E SALVA COM ESTATÍSTICAS
+// ============================================================
+async function salvarJogoComAnalise(jogo, numero) {
+    const cfg = window._ultimaConfig;
+
+    // Pega o último concurso do histórico em memória
+    const ultimoConcurso = _stats?.ordenadoDesc?.[0];
+    let acertos = 0;
+    let numerosSorteados = [];
+    let concursoNum = '--';
+    let dataConcurso = '--';
+
+    if (ultimoConcurso) {
+        numerosSorteados = (ultimoConcurso.dezenas || ultimoConcurso.listaDezenas || []).map(n => parseInt(n, 10));
+        concursoNum = ultimoConcurso.concurso || ultimoConcurso.numero || '--';
+        dataConcurso = ultimoConcurso.data || ultimoConcurso.dataApuracao || '--';
+        acertos = jogo.filter(n => numerosSorteados.includes(n)).length;
+    }
+
+    const soma = jogo.reduce((a, b) => a + b, 0);
+    const pares = jogo.filter(n => n % 2 === 0).length;
+    const primos = jogo.filter(n => isPrime(n)).length;
+
+    // Salva no localStorage
+    const jogos = JSON.parse(localStorage.getItem('jogos_salvos') || '[]');
+    jogos.push({
+        loteria: _lotteryAtual,
+        numeros: jogo,
+        soma, pares, primos,
+        acertosUltimoConcurso: acertos,
+        ultimoConcurso: concursoNum,
+        ultimaData: dataConcurso,
+        data: new Date().toISOString(),
+        origem: `Avancado: ${ESTRATEGIAS[_selectedStrategy].name}`
+    });
+    localStorage.setItem('jogos_salvos', JSON.stringify(jogos));
+
+    // Mostra um alerta com as estatísticas
+    alert(
+        `✅ Jogo salvo!\n\n` +
+        `Números: ${jogo.join(' - ')}\n` +
+        `Soma: ${soma}\n` +
+        `Pares: ${pares} | Ímpares: ${jogo.length - pares} | Primos: ${primos}\n\n` +
+        `📊 Comparação com último concurso (#${concursoNum} - ${dataConcurso}):\n` +
+        `Números sorteados: ${numerosSorteados.join(' - ')}\n` +
+        `🎯 Você acertaria ${acertos} número(s)!`
+    );
+}
