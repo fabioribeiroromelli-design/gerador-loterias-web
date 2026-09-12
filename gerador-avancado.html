@@ -185,6 +185,7 @@
     </style>
 </head>
 <body>
+
     <header class="toolbar" style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: #2563eb; color: white;">
         <h1 style="margin: 0; font-size: 1.3rem;">
             <i class="fa-solid fa-microchip"></i> Gerador Avançado
@@ -243,17 +244,19 @@
         <div id="resultsArea">
             <h3><i class="fa-solid fa-list"></i> Jogos Gerados</h3>
             <div id="gamesList"></div>
-            <div style="display:flex;gap:10px;margin-top:10px;">
-    <button id="saveAllBtn" class="btn-save"><i class="fa-solid fa-bookmark"></i> Salvar todos</button>
-    <button onclick="compartilharTodosWhatsApp()" style="background:#25D366;color:white;border:none;padding:8px 20px;border-radius:40px;font-weight:700;cursor:pointer;">
-        <i class="fa-brands fa-whatsapp"></i> Compartilhar todos
-    </button>
-</div>
+            <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;">
+                <button id="saveAllBtn" class="btn-save">
+                    <i class="fa-solid fa-bookmark"></i> Salvar todos
+                </button>
+                <button onclick="compartilharTodosWhatsApp()" style="background:#25D366;color:white;border:none;padding:8px 20px;border-radius:40px;font-weight:700;cursor:pointer;">
+                    <i class="fa-brands fa-whatsapp"></i> Compartilhar todos
+                </button>
+            </div>
+        </div>
 
         <a href="index.html" class="back-home"><i class="fa-solid fa-arrow-left"></i> Voltar para a Home</a>
     </div>
 
-    <!-- ⚠️ CORRIGIDO: dados (plural) é o nome real do arquivo -->
     <script src="gerador-avancado-dados.js"></script>
     <script src="gerador-avancado.js"></script>
 </body>
