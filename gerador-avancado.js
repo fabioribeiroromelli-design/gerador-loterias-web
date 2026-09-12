@@ -55,8 +55,8 @@ function renderStrategiesGrid() {
 // ============================================================
 function getValidRange(cfg) {
     return cfg.startNumber === 0
-        ? Array.from({ length: cfg.maxNumber + 1 }, (_, i) => i)          // 0..99 para Lotomania
-        : Array.from({ length: cfg.maxNumber }, (_, i) => i + 1);         // 1..60 para Mega
+        ? Array.from({ length: cfg.maxNumber + 1 }, (_, i) => i)
+        : Array.from({ length: cfg.maxNumber }, (_, i) => i + 1);
 }
 
 function randomInt(min, max) {
@@ -155,7 +155,6 @@ function gerarCicloFrequencia(cfg, stats) {
     const needed = cfg.numbersToSelect;
     const hotSet = new Set(stats.hotNumbers || []);
 
-    // Cria pool ponderado
     const pool = [];
     range.forEach(n => {
         const peso = hotSet.has(n) ? 4 : 1;
@@ -168,7 +167,6 @@ function gerarCicloFrequencia(cfg, stats) {
         if (selected.size >= needed) break;
         selected.add(n);
     }
-    // Completa se necessário
     const restantes = range.filter(n => !selected.has(n)).sort(() => Math.random() - 0.5);
     let i = 0;
     while (selected.size < needed && i < restantes.length) selected.add(restantes[i++]);
@@ -180,7 +178,6 @@ function gerarAtrasoPonderado(cfg, stats) {
     const needed = cfg.numbersToSelect;
     const delayData = stats.delay || {};
 
-    // Ordena por atraso
     const sorted = Object.entries(delayData)
         .sort((a, b) => b[1] - a[1])
         .map(([n]) => parseInt(n));
@@ -320,18 +317,15 @@ function gerarFourier(cfg, stats) {
     const pool = scored.slice(0, Math.max(needed * 4, Math.floor(total * 0.8))).map(s => s.n);
 
     const selected = new Set();
-    // 30% dos melhores
     pool.slice(0, needed).sort(() => Math.random() - 0.5)
         .slice(0, Math.max(1, Math.floor(needed * 0.3)))
         .forEach(n => selected.add(n));
 
-    // 40% dos seguintes
     const alvoMeio = Math.floor(needed * 0.7);
     const meio = pool.slice(needed, needed * 2).sort(() => Math.random() - 0.5);
     let i = 0;
     while (selected.size < alvoMeio && i < meio.length) selected.add(meio[i++]);
 
-    // Resto
     const restantes = [...pool.slice(needed * 2), ...range.filter(n => !pool.includes(n))].sort(() => Math.random() - 0.5);
     i = 0;
     while (selected.size < needed && i < restantes.length) selected.add(restantes[i++]);
@@ -421,7 +415,6 @@ async function trocarLoteria() {
 
     console.log(`[${_lotteryAtual}] ${_historico.length} concursos carregados. Soma média: ${_stats.avgSum.toFixed(1)}`);
 
-    // Ajusta "números por jogo" ao trocar de loteria
     const cfg = LOTTERY_CONFIGS[_lotteryAtual];
     const numInput = document.getElementById('numbersPerGame');
     if (numInput) {
@@ -444,21 +437,17 @@ function gerarJogos() {
     const gameCount = parseInt(document.getElementById('gameCount').value) || 1;
     const numbersPerGame = parseInt(document.getElementById('numbersPerGame').value) || cfg.numbersToSelect;
 
-    // Sobrescreve a quantidade de números
     cfg.numbersToSelect = Math.max(cfg.minSel, Math.min(cfg.maxSel, numbersPerGame));
 
-    // Filtros
     const even  = parseInt(document.getElementById('filterEven').value) || null;
     const odd   = parseInt(document.getElementById('filterOdd').value) || null;
     const prime = parseInt(document.getElementById('filterPrime').value) || null;
 
-    // Validação
     if (even != null && odd != null && (even + odd) !== cfg.numbersToSelect) {
         alert(`A soma de Pares (${even}) + Ímpares (${odd}) deve ser exatamente ${cfg.numbersToSelect}.`);
         return;
     }
 
-    // Gera
     const jogos = [];
     const maxTentativas = 800;
 
@@ -471,7 +460,6 @@ function gerarJogos() {
                 break;
             }
         }
-        // Fallback
         if (!jogo) {
             jogo = cfg.name === 'Super Sete' ? gerarSuperSete() : gerarAleatorio(cfg);
         }
@@ -484,71 +472,39 @@ function gerarJogos() {
     area.classList.add('visible');
 
     lista.innerHTML = jogos.map((jogo, i) => {
-    const soma = jogo.reduce((a, b) => a + b, 0);
-    const pares = jogo.filter(n => n % 2 === 0).length;
-    const primos = jogo.filter(n => isPrime(n)).length;
-    const nums = cfg.name === 'Super Sete'
-        ? jogo.map((n, col) => `<span style="display:inline-flex;flex-direction:column;align-items:center;margin:0 3px;">
-            <span style="font-size:9px;color:#94a3b8;">C${col+1}</span>
-            <span style="font-weight:700;">${n}</span>
-          </span>`).join('')
-        : jogo.map(n => String(n).padStart(2, '0')).join(' - ');
+        const soma = jogo.reduce((a, b) => a + b, 0);
+        const pares = jogo.filter(n => n % 2 === 0).length;
+        const primos = jogo.filter(n => isPrime(n)).length;
+        const nums = cfg.name === 'Super Sete'
+            ? jogo.map((n, col) => `<span style="display:inline-flex;flex-direction:column;align-items:center;margin:0 3px;">
+                <span style="font-size:9px;color:#94a3b8;">C${col+1}</span>
+                <span style="font-weight:700;">${n}</span>
+              </span>`).join('')
+            : jogo.map(n => String(n).padStart(2, '0')).join(' - ');
 
-    return `<div class="game-row">
-        <div>
-            <span class="game-numbers">${cfg.name === 'Super Sete' ? nums : `Jogo ${i+1}: ${nums}`}</span>
-            ${cfg.name !== 'Super Sete' ? `
-                <div style="font-size:0.75rem;color:#64748b;margin-top:4px;">
-                    Soma: <strong>${soma}</strong> · Pares: <strong>${pares}</strong> · Ímpares: <strong>${jogo.length - pares}</strong> · Primos: <strong>${primos}</strong>
-                </div>
-            ` : ''}
-        </div>
-        <button class="btn-save" onclick="salvarJogo([${jogo.join(',')}], ${i+1})">
-            <i class="fa-solid fa-bookmark"></i> Salvar
-        </button>
-    </div>`;
-}).join('');
+        return `<div class="game-row">
+            <div>
+                <span class="game-numbers">${cfg.name === 'Super Sete' ? nums : `Jogo ${i+1}: ${nums}`}</span>
+                ${cfg.name !== 'Super Sete' ? `
+                    <div style="font-size:0.75rem;color:#64748b;margin-top:4px;">
+                        Soma: <strong>${soma}</strong> · Pares: <strong>${pares}</strong> · Ímpares: <strong>${jogo.length - pares}</strong> · Primos: <strong>${primos}</strong>
+                    </div>
+                ` : ''}
+            </div>
+            <button class="btn-save" onclick="salvarJogoComAnalise([${jogo.join(',')}], ${i+1})">
+                <i class="fa-solid fa-bookmark"></i> Salvar
+            </button>
+        </div>`;
+    }).join('');
 
-    // Guarda para salvar depois
     window._ultimosJogos = jogos;
     window._ultimaConfig = cfg;
 }
 
-function salvarJogo(jogo, numero) {
-    const cfg = window._ultimaConfig;
-    const jogos = JSON.parse(localStorage.getItem('jogos_salvos') || '[]');
-    jogos.push({
-        loteria: _lotteryAtual,
-        numeros: jogo,
-        data: new Date().toISOString(),
-        origem: `Avancado: ${ESTRATEGIAS[_selectedStrategy].name}`
-    });
-    localStorage.setItem('jogos_salvos', JSON.stringify(jogos));
-    alert('Jogo salvo!');
-}
-
-function salvarTodos() {
-    const jogos = window._ultimosJogos || [];
-    const salvos = JSON.parse(localStorage.getItem('jogos_salvos') || '[]');
-    jogos.forEach(jogo => {
-        salvos.push({
-            loteria: _lotteryAtual,
-            numeros: jogo,
-            data: new Date().toISOString(),
-            origem: `Avancado: ${ESTRATEGIAS[_selectedStrategy].name}`
-        });
-    });
-    localStorage.setItem('jogos_salvos', JSON.stringify(salvos));
-    alert(`${jogos.length} jogo(s) salvos!`);
-}
-
 // ============================================================
-// COMPARA COM O ÚLTIMO CONCURSO E SALVA COM ESTATÍSTICAS
+// SALVAR 1 JOGO COM ANÁLISE
 // ============================================================
-async function salvarJogoComAnalise(jogo, numero) {
-    const cfg = window._ultimaConfig;
-
-    // Pega o último concurso do histórico em memória
+function salvarJogoComAnalise(jogo, numero) {
     const ultimoConcurso = _stats?.ordenadoDesc?.[0];
     let acertos = 0;
     let numerosSorteados = [];
@@ -566,7 +522,6 @@ async function salvarJogoComAnalise(jogo, numero) {
     const pares = jogo.filter(n => n % 2 === 0).length;
     const primos = jogo.filter(n => isPrime(n)).length;
 
-    // Salva no localStorage
     const jogos = JSON.parse(localStorage.getItem('jogos_salvos') || '[]');
     jogos.push({
         loteria: _lotteryAtual,
@@ -580,7 +535,6 @@ async function salvarJogoComAnalise(jogo, numero) {
     });
     localStorage.setItem('jogos_salvos', JSON.stringify(jogos));
 
-    // Mostra um alerta com as estatísticas
     alert(
         `✅ Jogo salvo!\n\n` +
         `Números: ${jogo.join(' - ')}\n` +
@@ -589,5 +543,64 @@ async function salvarJogoComAnalise(jogo, numero) {
         `📊 Comparação com último concurso (#${concursoNum} - ${dataConcurso}):\n` +
         `Números sorteados: ${numerosSorteados.join(' - ')}\n` +
         `🎯 Você acertaria ${acertos} número(s)!`
+    );
+}
+
+// ============================================================
+// SALVAR TODOS COM ANÁLISE
+// ============================================================
+function salvarTodos() {
+    const jogos = window._ultimosJogos || [];
+    if (jogos.length === 0) {
+        alert('Nenhum jogo para salvar.');
+        return;
+    }
+
+    const ultimoConcurso = _stats?.ordenadoDesc?.[0];
+    const numerosSorteados = ultimoConcurso
+        ? (ultimoConcurso.dezenas || ultimoConcurso.listaDezenas || []).map(n => parseInt(n, 10))
+        : [];
+    const concursoNum = ultimoConcurso?.concurso || ultimoConcurso?.numero || '--';
+    const dataConcurso = ultimoConcurso?.data || ultimoConcurso?.dataApuracao || '--';
+
+    let totalAcertos = 0;
+    let melhorAcertos = 0;
+
+    const salvos = JSON.parse(localStorage.getItem('jogos_salvos') || '[]');
+
+    jogos.forEach(jogo => {
+        const acertos = numerosSorteados.length > 0
+            ? jogo.filter(n => numerosSorteados.includes(n)).length
+            : 0;
+        totalAcertos += acertos;
+        melhorAcertos = Math.max(melhorAcertos, acertos);
+
+        const soma = jogo.reduce((a, b) => a + b, 0);
+        const pares = jogo.filter(n => n % 2 === 0).length;
+        const primos = jogo.filter(n => isPrime(n)).length;
+
+        salvos.push({
+            loteria: _lotteryAtual,
+            numeros: jogo,
+            soma, pares, primos,
+            acertosUltimoConcurso: acertos,
+            ultimoConcurso: concursoNum,
+            ultimaData: dataConcurso,
+            data: new Date().toISOString(),
+            origem: `Avancado: ${ESTRATEGIAS[_selectedStrategy].name}`
+        });
+    });
+
+    localStorage.setItem('jogos_salvos', JSON.stringify(salvos));
+
+    const media = (totalAcertos / jogos.length).toFixed(1);
+
+    alert(
+        `✅ ${jogos.length} jogo(s) salvo(s)!\n\n` +
+        `📊 Análise geral vs. último concurso (#${concursoNum}):\n` +
+        `Números sorteados: ${numerosSorteados.join(' - ')}\n` +
+        `🎯 Média de acertos: ${media}\n` +
+        `🏆 Melhor jogo: ${melhorAcertos} acerto(s)\n\n` +
+        `Estratégia: ${ESTRATEGIAS[_selectedStrategy].name}`
     );
 }
