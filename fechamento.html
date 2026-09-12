@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fechamento Matemático</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .fechamento-container { max-width: 1100px; margin: 20px auto; padding: 0 20px; }
+        .fechamento-header {
+            display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 15px; margin-bottom: 25px;
+            border-bottom: 2px solid #f0f0f0; padding-bottom: 15px;
+        }
+        .fechamento-header h1 { margin: 0; display: flex; align-items: center; gap: 12px; color: #7b1fa2; }
+
+        .passo-titulo {
+            font-size: 0.95rem; font-weight: 700; color: #555;
+            text-transform: uppercase; letter-spacing: 0.5px;
+            margin: 20px 0 10px 0;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .passo-titulo .num {
+            background: #7b1fa2; color: white; width: 24px; height: 24px;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-size: 0.8rem; font-weight: bold;
+        }
+
+        .loteria-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
+        .loteria-btn {
+            padding: 10px 8px; border-radius: 8px; border: 2px solid transparent;
+            color: white; font-weight: 700; cursor: pointer; font-size: 0.82rem;
+            text-align: center; transition: all 0.15s;
+        }
+        .loteria-btn:hover { transform: translateY(-2px); filter: brightness(1.1); }
+        .loteria-btn.selected { border-color: #222; box-shadow: 0 0 0 3px #FFD700; }
+
+        .objetivo-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+        .objetivo-btn {
+            padding: 10px 18px; border-radius: 30px; border: 2px solid #e2e8f0;
+            background: white; color: #333; font-weight: 700; cursor: pointer;
+            font-size: 0.85rem; transition: all 0.15s;
+        }
+        .objetivo-btn:hover { border-color: #7b1fa2; color: #7b1fa2; }
+        .objetivo-btn.selected { background: #7b1fa2; color: white; border-color: #7b1fa2; }
+
+        .volante-info {
+            display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 10px; margin-bottom: 10px;
+            background: #f8fafc; padding: 10px 14px; border-radius: 8px;
+            font-size: 0.85rem;
+        }
+        .volante-info strong { color: #7b1fa2; font-size: 1rem; }
+        .volante-info .combinacoes { font-weight: bold; }
+        .volante-info .combinacoes.ok { color: #059669; }
+        .volante-info .combinacoes.warning { color: #d97706; }
+        .volante-info .combinacoes.danger { color: #dc2626; }
+
+        .volante-grid {
+            display: grid; gap: 6px; justify-items: center;
+            padding: 15px; background: #f8fafc; border-radius: 10px;
+        }
+        .numero-cell {
+            aspect-ratio: 1 / 1; width: 100%; min-width: 32px; max-width: 50px;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 0.85rem;
+            background: #e2e8f0; color: #475569;
+            border: 2px solid transparent;
+            cursor: pointer; transition: all 0.15s;
+        }
+        .numero-cell:hover { transform: scale(1.1); }
+        .numero-cell.selected { background: #7b1fa2; color: white; border-color: #FFD700; }
+
+        .supersete-grid {
+            display: grid; grid-template-columns: 30px repeat(7, 1fr);
+            gap: 4px; justify-items: center; align-items: center;
+            padding: 15px; background: #f8fafc; border-radius: 10px;
+        }
+        .supersete-grid .col-label { font-size: 0.7rem; font-weight: 700; color: #7b1fa2; }
+        .supersete-grid .row-label { font-size: 0.75rem; font-weight: 700; color: #475569; }
+        .supersete-grid .cell {
+            aspect-ratio: 1 / 1; width: 100%; max-width: 42px;
+            border-radius: 8px; display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 0.85rem;
+            background: #e2e8f0; color: #475569;
+            border: 2px solid transparent; cursor: pointer;
+            transition: all 0.15s;
+        }
+        .supersete-grid .cell:hover { transform: scale(1.1); }
+        .supersete-grid .cell.selected { background: #7b1fa2; color: white; border-color: #FFD700; }
+
+        .aviso-limite {
+            display: none; padding: 12px 16px; border-radius: 8px;
+            background: #fee2e2; color: #991b1b; font-weight: 600;
+            font-size: 0.85rem; margin: 10px 0;
+            border-left: 4px solid #dc2626;
+        }
+        .aviso-limite.visible { display: block; }
+
+        .btn-gerar {
+            background: #7b1fa2; color: white; border: none;
+            padding: 14px 32px; border-radius: 40px; font-weight: 700;
+            font-size: 1rem; cursor: pointer; transition: all 0.2s;
+            display: flex; align-items: center; justify-content: center;
+            gap: 10px; width: 100%; margin-top: 15px;
+        }
+        .btn-gerar:hover { background: #6a1b8e; transform: translateY(-2px); }
+        .btn-gerar:disabled { background: #94a3b8; cursor: not-allowed; transform: none; }
+
+        #resultsArea {
+            margin-top: 30px; background: white; border-radius: 12px;
+            padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            display: none;
+        }
+        #resultsArea.visible { display: block; }
+        .game-row {
+            background: #f8fafc; padding: 10px 16px; border-radius: 6px;
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 8px; border-left: 4px solid #7b1fa2;
+        }
+        .game-numbers { font-weight: 600; letter-spacing: 1px; color: #222; }
+        .btn-save {
+            background: #28a745; color: white; border: none;
+            padding: 8px 20px; border-radius: 40px; font-weight: 700;
+            cursor: pointer; transition: 0.2s;
+        }
+        .btn-save:hover { background: #218838; }
+        .back-home {
+            display: inline-block; margin-top: 20px; color: #7b1fa2;
+            text-decoration: none; font-weight: 600;
+        }
+
+        /* Tela de bloqueio VIP */
+        #vipBlockScreen {
+            display: none;
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(5px);
+            align-items: center; justify-content: center;
+            z-index: 99999;
+        }
+        #vipBlockScreen.visible { display: flex; }
+    </style>
+</head>
+<body>
+
+    <header class="toolbar" style="display:flex; justify-content:space-between; align-items:center; padding:15px 20px; background:#7b1fa2; color:white;">
+        <h1 style="margin:0; font-size:1.3rem;">
+            <i class="fa-solid fa-sitemap" style="color:#FFD700;"></i> Fechamento Matemático
+        </h1>
+        <div>
+            <button onclick="window.location.href='index.html'" style="background:rgba(255,255,255,0.2); border:none; color:white; padding:8px 14px; border-radius:6px; cursor:pointer; font-weight:bold;">
+                <i class="fa-solid fa-arrow-left"></i> Voltar
+            </button>
+        </div>
+    </header>
+
+    <div class="fechamento-container">
+
+        <!-- PASSO 1 — Loteria -->
+        <div class="passo-titulo"><span class="num">1</span> Escolha a loteria</div>
+        <div class="loteria-grid" id="loteriaGrid"></div>
+
+        <!-- PASSO 2 — Objetivo -->
+        <div class="passo-titulo"><span class="num">2</span> Escolha o objetivo (o que quer garantir)</div>
+        <div class="objetivo-grid" id="objetivoGrid"></div>
+
+        <!-- PASSO 3 — Volante -->
+        <div class="passo-titulo"><span class="num">3</span> Marque os números</div>
+        <div class="volante-info">
+            <div>Selecionados: <strong id="tvSelecionados">0</strong></div>
+            <div class="combinacoes" id="tvCombinacoes">Aguardando...</div>
+        </div>
+        <div id="volanteContainer"></div>
+
+        <div class="aviso-limite" id="avisoLimite">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span id="avisoLimiteTexto"></span>
+        </div>
+
+        <button class="btn-gerar" id="btnGerar" disabled>
+            <i class="fa-solid fa-bolt"></i> Gerar Fechamento
+        </button>
+
+        <div id="resultsArea">
+            <h3 style="margin-top:0;"><i class="fa-solid fa-list"></i> Jogos Gerados (<span id="tvQtdJogos">0</span>)</h3>
+            <div id="gamesList"></div>
+            <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;">
+                <button id="saveAllBtn" class="btn-save">
+                    <i class="fa-solid fa-bookmark"></i> Salvar todos
+                </button>
+                <button onclick="compartilharTodosWhatsAppF()" style="background:#25D366;color:white;border:none;padding:8px 20px;border-radius:40px;font-weight:700;cursor:pointer;">
+                    <i class="fa-brands fa-whatsapp"></i> Compartilhar todos
+                </button>
+                <button onclick="imprimirTodosF()" style="background:#dc2626;color:white;border:none;padding:8px 20px;border-radius:40px;font-weight:700;cursor:pointer;">
+                    <i class="fa-solid fa-file-pdf"></i> Imprimir todos
+                </button>
+                <button onclick="conferirHistoricoF()" style="background:#0891b2;color:white;border:none;padding:8px 20px;border-radius:40px;font-weight:700;cursor:pointer;">
+                    <i class="fa-solid fa-magnifying-glass-chart"></i> Conferir Histórico
+                </button>
+            </div>
+        </div>
+
+        <a href="index.html" class="back-home"><i class="fa-solid fa-arrow-left"></i> Voltar para a Home</a>
+    </div>
+
+    <!-- TELA DE BLOQUEIO VIP (aparece se não for assinante) -->
+    <div id="vipBlockScreen">
+        <div style="background:#fff;border-radius:16px;padding:30px 24px;max-width:440px;width:90%;text-align:center;box-shadow:0 15px 35px rgba(0,0,0,0.3);border-top:6px solid #7b1fa2;font-family:inherit;">
+            <div style="width:65px;height:65px;background:#f3e8ff;color:#7b1fa2;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 20px auto;">
+                <i class="fa-solid fa-lock"></i>
+            </div>
+            <h3 style="color:#1a1a1a;margin:0 0 10px 0;font-size:1.3rem;">Função Exclusiva VIP 🔒</h3>
+            <p style="color:#555;font-size:0.9rem;line-height:1.5;margin-bottom:20px;">
+                O Fechamento Matemático é exclusivo para assinantes.<br>
+                Baixe nosso app no Google Play e assine para desbloquear.
+            </p>
+            <a href="https://play.google.com/store/apps/details?id=com.fabioribeiroromelli.geradordejogos" target="_blank"
+               style="display:block;background:#209869;color:#fff;text-decoration:none;padding:13px 20px;border-radius:30px;font-weight:bold;font-size:0.95rem;margin-bottom:12px;">
+                <i class="fa-brands fa-google-play"></i> Baixar App e Assinar
+            </a>
+            <a href="index.html" style="display:block;background:transparent;color:#888;font-size:0.85rem;text-decoration:underline;padding:8px;font-weight:600;">
+                Voltar para a Home
+            </a>
+        </div>
+    </div>
+
+    <!-- ============================================
+         TRAVA VIP — roda antes de qualquer outra coisa
+         ============================================ -->
+    <script>
+    (function() {
+        // Verifica se o usuário está logado
+        let email = localStorage.getItem('user_email');
+        if (!email) {
+            try {
+                const u = JSON.parse(localStorage.getItem('currentUser') || 'null');
+                if (u && u.email) email = u.email;
+            } catch (e) {}
+        }
+
+        const isSub = localStorage.getItem('isSubscriber') === 'true';
+
+        // Se não tem email OU não é assinante → bloqueia
+        if (!email || !isSub) {
+            console.log('[VIP] Bloqueado. Email:', email, '| Assinante:', isSub);
+            // Mostra a tela de bloqueio
+            document.addEventListener('DOMContentLoaded', function() {
+                const screen = document.getElementById('vipBlockScreen');
+                if (screen) screen.classList.add('visible');
+                // Esconde o container principal
+                const container = document.querySelector('.fechamento-container');
+                if (container) container.style.display = 'none';
+            });
+        } else {
+            console.log('[VIP] Liberado. Email:', email);
+        }
+    })();
+    </script>
+
+    <script src="fechamento-dados.js"></script>
+    <script src="fechamento.js"></script>
+</body>
+</html>

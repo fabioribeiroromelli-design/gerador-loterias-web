@@ -1,6 +1,7 @@
 /* ============================================================
-   script_home.js — Grid de 6 colunas, Lotofácil e Lotomania (5/linha),
-   detalhes independentes por card e efeito hover de destaque.
+   script_home.js — Grid de 6 colunas, Lotofácil e Lotomania (5/linha)
+   + Card Fechamento Matemático (grátis)
+   + Sorteio Globo (grátis)
    ============================================================ */
 console.log("[script_home.js] Carregado.");
 
@@ -28,7 +29,7 @@ styleGrid.innerHTML = `
 `;
 document.head.appendChild(styleGrid);
 
-// Função global para expandir/recolher individualmente cada card (sanfona isolada)
+// Função global para expandir/recolher individualmente cada card
 window.toggleLotteryDetails = function(cardId) {
     const div = document.getElementById(`detalhes-${cardId}`);
     const btn = document.getElementById(`btn-detalhes-${cardId}`);
@@ -81,11 +82,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
     const limpar = (s) => (s || '').replace(/\u0000/g, '').trim();
 
-    // Normalização universal corrigida para o NOVO Firestore
     function pegarDados(docData) {
         if (!docData) return null;
-
-        // Se houver sub-objeto, desestrutura, mas mantendo a prioridade nos atributos diretos do novo banco
         let base = { ...docData };
         if (docData.ultimoCompleto && typeof docData.ultimoCompleto === 'object') {
             base = { ...docData.ultimoCompleto, ...base };
@@ -97,10 +95,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             ...base,
             concurso: base.concurso || base.numero || base.concursoAtual || '--',
             dataApuracao: base.dataApuracao || base.data || base.dataSorteio || '',
-            dataProximoConcurso: base.dataProximoConcurso || base.dataProximo || base.dataProximoConcurso || '',
+            dataProximoConcurso: base.dataProximoConcurso || base.dataProximo || '',
             numeroConcursoProximo: base.numeroConcursoProximo || base.proximoConcurso || '',
             acumulado: base.acumulado === true || base.acumulou === true || String(base.acumulado).toLowerCase() === 'sim' || String(base.acumulou).toLowerCase() === 'true',
-            valorEstimadoProximoConcurso: base.valorEstimadoProximoConcurso || base.valorEstimadoProximo || base.estimativaProximo || 0,
+            valorEstimadoProximoConcurso: base.valorEstimadoProximoConcurso || base.valorEstimadoProximo || 0,
             valorArrecadado: base.valorArrecadado || base.arrecadacaoTotal || 0,
             localSorteio: base.nomeMunicipioUFSorteio || base.localSorteio || base.local || '',
             listaDezenas: base.dezenas || base.listaDezenas || base.numeros || base.dezenasSorteio1 || [],
@@ -116,12 +114,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         const out = {};
         await Promise.all(LOTTERIES.map(async (l) => {
             try {
-                // 1. Busca padrão: coleção 'loterias' e ID do documento igual a DOC_IDS[l.name] (ex: diadesorte)
                 let doc = await db.collection('loterias').doc(DOC_IDS[l.name]).get();
                 if (doc.exists) {
                     out[l.name] = pegarDados(doc.data());
                 } else {
-                    // 2. Fallback para coleção independente
                     doc = await db.collection(DOC_IDS[l.name]).doc('latest').get();
                     if (doc.exists) {
                         out[l.name] = pegarDados(doc.data());
@@ -133,7 +129,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // ============================================================
-    // RENDER CARD
+    // RENDER CARD DE LOTERIA (normal)
     // ============================================================
     function renderCard(nome, data) {
         const color = COLORS[nome] || '#6c757d';
@@ -161,23 +157,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         const listaDezenas = data.listaDezenas;
         const rateio = data.listaRateioPremio;
 
-        // ================= NÚMEROS =================
         let numbersHtml = '';
 
         if (nome === 'Loteca') {
             const jogos = data.listaResultadoEquipeEsportiva;
             if (jogos && jogos.length > 0) {
                 numbersHtml = `
-                    <div style="max-height:260px;overflow-y:auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:6px;padding:4px;margin:6px 0;box-shadow:inset 0 1px 3px rgba(0,0,0,0.03);">
+                    <div style="max-height:260px;overflow-y:auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:6px;padding:4px;margin:6px 0;">
                         ${jogos.map((j, idx) => {
                             const g1 = j.golEquipeUm ?? j.nuGolEquipeUm ?? j.gols1 ?? 0;
                             const g2 = j.golEquipeDois ?? j.nuGolEquipeDois ?? j.gols2 ?? 0;
                             let corE1 = '#475569'; let corE2 = '#475569';
                             let pesoE1 = '500'; let pesoE2 = '500';
-
                             if (g1 > g2) { corE1 = '#15803d'; pesoE1 = 'bold'; corE2 = '#dc2626'; } 
                             else if (g1 < g2) { corE1 = '#dc2626'; corE2 = '#15803d'; pesoE2 = 'bold'; }
-
                             const e1 = j.nomeEquipeUm || j.time1 || '?'; 
                             const e2 = j.nomeEquipeDois || j.time2 || '?';
                             return `
@@ -190,11 +183,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                                         <span style="color:${corE2};font-weight:bold;font-size:0.75rem;">${g2}</span>
                                     </div>
                                     <span style="color:${corE2};font-weight:${pesoE2};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${e2}</span>
-                                </div>
-                            `;
+                                </div>`;
                         }).join('')}
-                    </div>
-                `;
+                    </div>`;
             }
         }
         else if (nome === 'Federal') {
@@ -243,14 +234,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
 
-        // ================= RATEIO =================
         let rateioHtml = '';
         if (Array.isArray(rateio) && rateio.length > 0) {
             rateioHtml = rateio.map(r => {
                 const g = r.numeroDeGanhadores ?? r.ganhadores ?? 0;
                 const desc = r.descricaoFaixa || r.faixa || r.descricao || 'Faixa';
                 const val = r.valorPremio ?? r.premio ?? 0;
-
                 const gTxt = g === 0
                     ? '<span style="color:#dc2626;font-weight:bold;">Não houve</span>'
                     : `<span style="color:#059669;font-weight:bold;">${g.toLocaleString('pt-BR')} ${g===1?'ganhador':'ganhadores'}</span>`;
@@ -286,14 +275,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                         ${badgeExtra}
                     </div>
                     
-                    <!-- BOTÃO INDIVIDUAL DA SANFONA -->
                     <div style="text-align:center; margin-top: 8px; border-top: 1px dashed #e2e8f0; padding-top: 6px;">
                         <button id="btn-detalhes-${cardId}" onclick="toggleLotteryDetails('${cardId}')" style="background:transparent; border:none; color:${color}; font-size:0.72rem; font-weight:bold; cursor:pointer; width:100%; display:flex; align-items:center; justify-content:center; gap:5px;">
                             <i class="fa-solid fa-chevron-down"></i> Ver Detalhes
                         </button>
                     </div>
 
-                    <!-- CONTAINER DOS DETALHES (ISOLADO POR CARD) -->
                     <div id="detalhes-${cardId}" style="display:none; margin-top: 8px; animation: fadeIn 0.3s ease;">
                         ${localSorteio ? `<div style="font-size:0.65rem;color:#94a3b8;margin:3px 0;"><i class="fa-solid fa-location-dot"></i> ${localSorteio}</div>` : ''}
 
@@ -332,13 +319,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // ============================================================
-    // CARDS VIP
+    // CARD ESPECIAL (VIP ou GRÁTIS)
     // ============================================================
-    const vipCard = (titulo, desc, cor, icone, url, dados = null) => {
+    const renderCardEspecial = (titulo, desc, cor, icone, url, dados, isProtected) => {
         const isVip = window.isSubscriber === true;
-        const lockedClass = isVip ? '' : 'vip-card-locked';
-        const badgeHtml = isVip ? '' :
-            '<span class="vip-badge" style="position:absolute;top:8px;right:8px;background:#dc2626;color:#fff;font-size:0.62rem;font-weight:bold;padding:2px 6px;border-radius:10px;z-index:10;"><i class="fa-solid fa-lock"></i> VIP</span>';
+        const lockedClass = isProtected && !isVip ? 'vip-card-locked' : '';
+        const protectedClass = isProtected ? 'vip-protected' : '';
+        const badgeHtml = (isProtected && !isVip)
+            ? '<span class="vip-badge" style="position:absolute;top:8px;right:8px;background:#dc2626;color:#fff;font-size:0.62rem;font-weight:bold;padding:2px 6px;border-radius:10px;z-index:10;"><i class="fa-solid fa-lock"></i> VIP</span>'
+            : '';
 
         let miniInfo = '';
         if (dados && dados.listaRateioPremio && dados.listaRateioPremio.length > 0) {
@@ -358,8 +347,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
 
+        const onclick = isProtected ? `navegarProtegido('${url}')` : `window.location.href='${url}'`;
+
         return `
-            <div class="lottery-card vip-protected ${lockedClass}" onclick="navegarProtegido('${url}')" style="border-top-color:${cor};cursor:pointer;position:relative; display:flex; flex-direction:column; height:100%;">
+            <div class="lottery-card ${protectedClass} ${lockedClass}" onclick="${onclick}" style="border-top-color:${cor};cursor:pointer;position:relative; display:flex; flex-direction:column; height:100%;">
                 ${badgeHtml}
                 <div style="flex-grow:1; display:flex; flex-direction:column; justify-content:center;">
                     <div style="text-align:center;padding:4px 0;">
@@ -378,19 +369,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     // ============================================================
-    // RENDER
+    // RENDER PRINCIPAL
     // ============================================================
     try {
         const dados = await fetchTodas();
         let html = '';
 
-        html += vipCard('Estratégias Premium', '12 algoritmos avançados', '#d97706', 'fa-crown', 'estrategias.html', dados['Mega-Sena']);
-        html += vipCard('Gerador Avançado', '12 estratégias estatísticas', '#2563eb', 'fa-microchip', 'gerador-avancado.html', dados['Quina']);
-        html += vipCard('Lotofácil - Repetição', 'Estratégia de repetição', '#930089', 'fa-rotate', 'lotofacil-repeticao.html', dados['Lotofácil']);
-        html += vipCard('Lotomania - Estratégia', 'Distribuição por linhas', '#F78100', 'fa-chart-simple', 'lotomania-estrategia.html', dados['Lotomania']);
-        html += vipCard('Dia de Sorte - Repetição', 'Estratégia de repetição', '#cb8322', 'fa-calendar-day', 'diadesorte-repeticao.html', dados['Dia de Sorte']);
-        html += vipCard('Sorteio Globo', 'Sorteio animado e interativo', '#2563eb', 'fa-globe', 'sorteio-globo.html', dados['Timemania']);
+        // Cards VIP (protegidos)
+        html += renderCardEspecial('Estratégias Premium', '12 algoritmos avançados', '#d97706', 'fa-crown', 'estrategias.html', dados['Mega-Sena'], true);
+        html += renderCardEspecial('Gerador Avançado', '12 estratégias estatísticas', '#2563eb', 'fa-microchip', 'gerador-avancado.html', dados['Quina'], true);
+        html += renderCardEspecial('Lotofácil - Repetição', 'Estratégia de repetição', '#930089', 'fa-rotate', 'lotofacil-repeticao.html', dados['Lotofácil'], true);
+        html += renderCardEspecial('Lotomania - Estratégia', 'Distribuição por linhas', '#F78100', 'fa-chart-simple', 'lotomania-estrategia.html', dados['Lotomania'], true);
+        html += renderCardEspecial('Dia de Sorte - Repetição', 'Estratégia de repetição', '#cb8322', 'fa-calendar-day', 'diadesorte-repeticao.html', dados['Dia de Sorte'], true);
 
+        // 🔥 NOVO — Fechamento Matemático (GRÁTIS)
+        html += renderCardEspecial('Fechamento Matemático', 'Garantia 100% de acertos', '#7b1fa2', 'fa-sitemap', 'fechamento.html', dados['Mega-Sena'], true);
+
+        // Sorteio Globo (GRÁTIS)
+        html += renderCardEspecial('Sorteio Globo', 'Sorteio animado e interativo', '#2563eb', 'fa-globe', 'sorteio-globo.html', dados['Timemania'], false);
+
+        // Cards das loterias
         LOTTERIES.forEach(l => { html += renderCard(l.name, dados[l.name]); });
 
         grid.innerHTML = html;
