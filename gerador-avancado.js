@@ -628,7 +628,7 @@ function imprimirJogo(jogo, numero) {
 }
 
 // ============================================================
-// IMPRIMIR TODOS OS JOGOS EM PDF
+// IMPRIMIR TODOS OS JOGOS EM PDF (LAYOUT COMPACTO)
 // ============================================================
 function imprimirTodos() {
     const jogos = window._ultimosJogos || [];
@@ -640,7 +640,13 @@ function imprimirTodos() {
     const estrategia = ESTRATEGIAS[_selectedStrategy]?.name || 'Estratégia';
     const emoji = ESTRATEGIAS[_selectedStrategy]?.emoji || '🎲';
     const dataHora = new Date().toLocaleString('pt-BR');
+    const totalJogos = jogos.length;
 
+    // Estatísticas gerais
+    const somaTotal = jogos.reduce((acc, j) => acc + j.reduce((a, b) => a + b, 0), 0);
+    const somaMedia = (somaTotal / totalJogos).toFixed(1);
+
+    // Monta cards compactos
     let jogosHtml = '';
     jogos.forEach((jogo, i) => {
         const soma = jogo.reduce((a, b) => a + b, 0);
@@ -649,16 +655,14 @@ function imprimirTodos() {
         const nums = jogo.map(n => String(n).padStart(2, '0')).join(' - ');
 
         jogosHtml += `
-            <div class="jogo">
-                <div class="jogo-titulo">JOGO ${i + 1}</div>
-                <div class="numeros">${nums}</div>
-                <div class="estatisticas">
-                    <div class="estatistica"><div class="label">Soma</div><div class="valor">${soma}</div></div>
-                    <div class="estatistica"><div class="label">Pares</div><div class="valor">${pares}</div></div>
-                    <div class="estatistica"><div class="label">Ímpares</div><div class="valor">${jogo.length - pares}</div></div>
-                    <div class="estatistica"><div class="label">Primos</div><div class="valor">${primos}</div></div>
+            <div class="jogo-card">
+                <div class="jogo-header">
+                    <span class="jogo-num">JOGO ${i + 1}</span>
+                    <span class="jogo-meta">Soma: ${soma} | P: ${pares} | I: ${jogo.length - pares} | Pr: ${primos}</span>
                 </div>
-            </div>`;
+                <div class="numeros">${nums}</div>
+            </div>
+        `;
     });
 
     const html = `
@@ -669,30 +673,126 @@ function imprimirTodos() {
             <title>Meus Jogos - ${_lotteryAtual}</title>
             <style>
                 * { box-sizing: border-box; margin: 0; padding: 0; }
-                body { font-family: 'Segoe UI', Arial, sans-serif; padding: 30px; color: #1e293b; background: #fff; }
-                .header { text-align: center; border-bottom: 3px solid #2563eb; padding-bottom: 15px; margin-bottom: 25px; }
-                .header h1 { color: #2563eb; font-size: 22px; margin-bottom: 6px; }
-                .header .subtitle { color: #64748b; font-size: 14px; margin-bottom: 4px; }
-                .header .meta { color: #94a3b8; font-size: 11px; }
-                .jogo { border: 2px solid #2563eb; border-radius: 12px; padding: 20px; margin-bottom: 20px; background: #f8fafc; page-break-inside: avoid; }
-                .jogo-titulo { color: #2563eb; font-size: 16px; font-weight: bold; margin-bottom: 12px; text-align: center; }
-                .numeros { font-size: 20px; font-weight: bold; text-align: center; color: #1e293b; letter-spacing: 2px; margin: 15px 0; padding: 15px; background: white; border-radius: 8px; line-height: 1.6; }
-                .estatisticas { display: flex; justify-content: space-around; gap: 10px; margin-top: 12px; }
-                .estatistica { background: white; padding: 8px 15px; border-radius: 8px; text-align: center; flex: 1; border: 1px solid #e2e8f0; }
-                .estatistica .label { font-size: 10px; color: #64748b; text-transform: uppercase; font-weight: 600; }
-                .estatistica .valor { font-size: 18px; font-weight: bold; color: #2563eb; margin-top: 3px; }
-                .footer { text-align: center; margin-top: 25px; padding-top: 15px; border-top: 2px dashed #e2e8f0; color: #94a3b8; font-size: 11px; }
-                .footer strong { color: #2563eb; }
-                @media print { body { padding: 15px; } }
+                @page { margin: 10mm; }
+                body {
+                    font-family: 'Segoe UI', Arial, sans-serif;
+                    padding: 15px;
+                    color: #1e293b;
+                    background: #fff;
+                }
+                .header {
+                    text-align: center;
+                    border-bottom: 3px solid #2563eb;
+                    padding-bottom: 12px;
+                    margin-bottom: 18px;
+                }
+                .header h1 {
+                    color: #2563eb;
+                    font-size: 20px;
+                    margin-bottom: 5px;
+                }
+                .header .subtitle {
+                    color: #64748b;
+                    font-size: 13px;
+                    margin-bottom: 4px;
+                }
+                .header .meta {
+                    color: #94a3b8;
+                    font-size: 11px;
+                }
+                .stats-gerais {
+                    display: flex;
+                    justify-content: center;
+                    gap: 25px;
+                    margin: 12px 0 18px 0;
+                    padding: 10px;
+                    background: #f1f5f9;
+                    border-radius: 8px;
+                    font-size: 12px;
+                    color: #334155;
+                }
+                .stats-gerais strong {
+                    color: #2563eb;
+                    font-size: 14px;
+                }
+                .jogos-grid {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 10px;
+                }
+                .jogo-card {
+                    border: 1.5px solid #2563eb;
+                    border-radius: 8px;
+                    padding: 10px 12px;
+                    background: #f8fafc;
+                    page-break-inside: avoid;
+                }
+                .jogo-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 8px;
+                    padding-bottom: 6px;
+                    border-bottom: 1px dashed #cbd5e1;
+                }
+                .jogo-num {
+                    color: #2563eb;
+                    font-size: 12px;
+                    font-weight: bold;
+                    text-transform: uppercase;
+                }
+                .jogo-meta {
+                    font-size: 10px;
+                    color: #64748b;
+                    font-family: 'Courier New', monospace;
+                }
+                .numeros {
+                    font-size: 14px;
+                    font-weight: bold;
+                    text-align: center;
+                    color: #1e293b;
+                    letter-spacing: 1px;
+                    line-height: 1.8;
+                    word-spacing: 4px;
+                }
+                .footer {
+                    text-align: center;
+                    margin-top: 20px;
+                    padding-top: 12px;
+                    border-top: 2px dashed #e2e8f0;
+                    color: #94a3b8;
+                    font-size: 10px;
+                }
+                .footer strong {
+                    color: #2563eb;
+                }
+                @media print {
+                    body { padding: 0; }
+                    .header { page-break-after: avoid; }
+                }
+                /* Quando tiver poucos jogos (1-2), mostra 1 por linha */
+                .jogos-grid.poucos {
+                    grid-template-columns: 1fr;
+                }
             </style>
         </head>
         <body>
             <div class="header">
                 <h1>🎯 Gerador de Jogos - Loterias</h1>
                 <div class="subtitle">${emoji} ${_lotteryAtual} — Estratégia: ${estrategia}</div>
-                <div class="meta">${jogos.length} jogo(s) • Gerado em: ${dataHora}</div>
+                <div class="meta">Gerado em: ${dataHora}</div>
             </div>
-            ${jogosHtml}
+
+            <div class="stats-gerais">
+                <span><strong>${totalJogos}</strong> jogo(s)</span>
+                <span>Soma média: <strong>${somaMedia}</strong></span>
+                <span>Números por jogo: <strong>${jogos[0].length}</strong></span>
+            </div>
+
+            <div class="jogos-grid ${totalJogos <= 2 ? 'poucos' : ''}">
+                ${jogosHtml}
+            </div>
+
             <div class="footer">
                 <strong>🍀 geradordejogosloterias.com.br</strong><br>
                 Boa sorte! Os jogos são gerados a partir de análise estatística.
@@ -705,7 +805,6 @@ function imprimirTodos() {
     novaJanela.document.close();
     setTimeout(() => novaJanela.print(), 500);
 }
-
 // ============================================================
 // SALVAR 1 JOGO COM ANÁLISE
 // ============================================================
