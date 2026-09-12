@@ -320,8 +320,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // ============================================================
     // CARD ESPECIAL (VIP ou GRÁTIS)
+    // ✅ CORRIGIDO: adicionado parâmetro mostrarFaixa = true
     // ============================================================
-    const renderCardEspecial = (titulo, desc, cor, icone, url, dados, isProtected) => {
+    const renderCardEspecial = (titulo, desc, cor, icone, url, dados, isProtected, mostrarFaixa = true) => {
         const isVip = window.isSubscriber === true;
         const lockedClass = isProtected && !isVip ? 'vip-card-locked' : '';
         const protectedClass = isProtected ? 'vip-protected' : '';
@@ -329,8 +330,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             ? '<span class="vip-badge" style="position:absolute;top:8px;right:8px;background:#dc2626;color:#fff;font-size:0.62rem;font-weight:bold;padding:2px 6px;border-radius:10px;z-index:10;"><i class="fa-solid fa-lock"></i> VIP</span>'
             : '';
 
+        // ✅ Só mostra "Última faixa" se mostrarFaixa === true
         let miniInfo = '';
-        if (dados && dados.listaRateioPremio && dados.listaRateioPremio.length > 0) {
+        if (mostrarFaixa && dados && dados.listaRateioPremio && dados.listaRateioPremio.length > 0) {
             const faixa1 = dados.listaRateioPremio[0];
             const valPremio = faixa1.valorPremio ?? faixa1.premio ?? 0;
             const numGanhadores = faixa1.numeroDeGanhadores ?? faixa1.ganhadores ?? 0;
@@ -370,25 +372,29 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // ============================================================
     // RENDER PRINCIPAL
+    // ✅ CORRIGIDO: todos os 7 cards especiais restaurados
     // ============================================================
     try {
         const dados = await fetchTodas();
         let html = '';
 
-        // Cards VIP (protegidos)
+        // --- Cards VIP (protegidos) ---
         html += renderCardEspecial('Estratégias Premium', '12 algoritmos avançados', '#d97706', 'fa-crown', 'estrategias.html', dados['Mega-Sena'], true);
         html += renderCardEspecial('Gerador Avançado', '12 estratégias estatísticas', '#2563eb', 'fa-microchip', 'gerador-avancado.html', dados['Quina'], true);
-        html += renderCardEspecial('Lotofácil - Repetição', 'Estratégia de repetição', '#930089', 'fa-rotate', 'lotofacil-repeticao.html', dados['Lotofácil'], true);
+
+        // ✅ Lotofácil - Repetição: SEM faixa (último parâmetro = false)
+        html += renderCardEspecial('Lotofácil - Repetição', 'Estratégia de repetição', '#930089', 'fa-rotate', 'lotofacil-repeticao.html', null, true, false);
+
         html += renderCardEspecial('Lotomania - Estratégia', 'Distribuição por linhas', '#F78100', 'fa-chart-simple', 'lotomania-estrategia.html', dados['Lotomania'], true);
         html += renderCardEspecial('Dia de Sorte - Repetição', 'Estratégia de repetição', '#cb8322', 'fa-calendar-day', 'diadesorte-repeticao.html', dados['Dia de Sorte'], true);
 
-        // 🔥 NOVO — Fechamento Matemático (GRÁTIS)
+        // --- Fechamento Matemático ---
         html += renderCardEspecial('Fechamento Matemático', 'Garantia 100% de acertos', '#7b1fa2', 'fa-sitemap', 'fechamento.html', dados['Mega-Sena'], true);
 
-        // Sorteio Globo (GRÁTIS)
+        // --- Sorteio Globo (GRÁTIS) ---
         html += renderCardEspecial('Sorteio Globo', 'Sorteio animado e interativo', '#2563eb', 'fa-globe', 'sorteio-globo.html', dados['Timemania'], false);
 
-        // Cards das loterias
+        // --- Cards das loterias ---
         LOTTERIES.forEach(l => { html += renderCard(l.name, dados[l.name]); });
 
         grid.innerHTML = html;
