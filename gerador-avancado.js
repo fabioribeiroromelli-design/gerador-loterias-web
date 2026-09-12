@@ -1,5 +1,5 @@
 /* ============================================================
-   gerador-avancado.js — 12 estratégias portadas do app
+   gerador-avancado.js — 12 estratégias + WhatsApp
    ============================================================ */
 
 // Estado global
@@ -466,7 +466,6 @@ function gerarJogos() {
         jogos.push(jogo);
     }
 
-    // Renderiza
     const area = document.getElementById('resultsArea');
     const lista = document.getElementById('gamesList');
     area.classList.add('visible');
@@ -484,21 +483,79 @@ function gerarJogos() {
 
         return `<div class="game-row">
             <div>
-                <span class="game-numbers">${cfg.name === 'Super Sete' ? nums : `Jogo ${i+1}: ${nums}`}</span>
-                ${cfg.name !== 'Super Sete' ? `
-                    <div style="font-size:0.75rem;color:#64748b;margin-top:4px;">
-                        Soma: <strong>${soma}</strong> · Pares: <strong>${pares}</strong> · Ímpares: <strong>${jogo.length - pares}</strong> · Primos: <strong>${primos}</strong>
-                    </div>
-                ` : ''}
+                <span class="game-numbers">Jogo ${i+1}: ${nums}</span>
+                <div style="font-size:0.75rem;color:#64748b;margin-top:4px;">
+                    Soma: <strong>${soma}</strong> · Pares: <strong>${pares}</strong> · Ímpares: <strong>${jogo.length - pares}</strong> · Primos: <strong>${primos}</strong>
+                </div>
             </div>
-            <button class="btn-save" onclick="salvarJogoComAnalise([${jogo.join(',')}], ${i+1})">
-                <i class="fa-solid fa-bookmark"></i> Salvar
-            </button>
+            <div style="display:flex;gap:6px;align-items:center;">
+                <button onclick="compartilharWhatsApp([${jogo.join(',')}], ${i+1})" style="background:#25D366;color:white;border:none;padding:8px 14px;border-radius:40px;font-weight:700;cursor:pointer;font-size:0.8rem;">
+                    <i class="fa-brands fa-whatsapp"></i> Enviar
+                </button>
+                <button class="btn-save" onclick="salvarJogoComAnalise([${jogo.join(',')}], ${i+1})">
+                    <i class="fa-solid fa-bookmark"></i> Salvar
+                </button>
+            </div>
         </div>`;
     }).join('');
 
     window._ultimosJogos = jogos;
     window._ultimaConfig = cfg;
+}
+
+// ============================================================
+// COMPARTILHAR 1 JOGO NO WHATSAPP
+// ============================================================
+function compartilharWhatsApp(jogo, numero) {
+    const soma = jogo.reduce((a, b) => a + b, 0);
+    const pares = jogo.filter(n => n % 2 === 0).length;
+    const primos = jogo.filter(n => isPrime(n)).length;
+    const nums = jogo.map(n => String(n).padStart(2, '0')).join(' - ');
+
+    const estrategia = ESTRATEGIAS[_selectedStrategy]?.name || 'Estratégia';
+    const emoji = ESTRATEGIAS[_selectedStrategy]?.emoji || '🎲';
+
+    const mensagem =
+        `${emoji} *Meu jogo da ${_lotteryAtual}*\n\n` +
+        `📋 Estratégia: *${estrategia}*\n` +
+        `🎯 Jogo ${numero}: *${nums}*\n\n` +
+        `📊 Estatísticas:\n` +
+        `• Soma: ${soma}\n` +
+        `• Pares: ${pares} | Ímpares: ${jogo.length - pares}\n` +
+        `• Primos: ${primos}\n\n` +
+        `🍀 Gerado em: https://geradordejogosloterias.com.br`;
+
+    window.open(`https://wa.me/?text=${encodeURIComponent(mensagem)}`, '_blank');
+}
+
+// ============================================================
+// COMPARTILHAR TODOS NO WHATSAPP
+// ============================================================
+function compartilharTodosWhatsApp() {
+    const jogos = window._ultimosJogos || [];
+    if (jogos.length === 0) {
+        alert('Nenhum jogo para compartilhar.');
+        return;
+    }
+
+    const estrategia = ESTRATEGIAS[_selectedStrategy]?.name || 'Estratégia';
+    const emoji = ESTRATEGIAS[_selectedStrategy]?.emoji || '🎲';
+
+    let mensagem = `${emoji} *Meus ${jogos.length} jogos da ${_lotteryAtual}*\n`;
+    mensagem += `📋 Estratégia: *${estrategia}*\n\n`;
+
+    jogos.forEach((jogo, i) => {
+        const nums = jogo.map(n => String(n).padStart(2, '0')).join(' - ');
+        mensagem += `🎯 *Jogo ${i+1}:* ${nums}\n`;
+    });
+
+    const somaTotal = jogos.reduce((acc, j) => acc + j.reduce((a, b) => a + b, 0), 0);
+    const somaMedia = (somaTotal / jogos.length).toFixed(1);
+
+    mensagem += `\n📊 *Soma média:* ${somaMedia}\n`;
+    mensagem += `\n🍀 Gerado em: https://geradordejogosloterias.com.br`;
+
+    window.open(`https://wa.me/?text=${encodeURIComponent(mensagem)}`, '_blank');
 }
 
 // ============================================================
