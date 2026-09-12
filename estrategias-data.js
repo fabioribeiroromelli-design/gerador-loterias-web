@@ -1,125 +1,128 @@
+/* ============================================================
+   estrategias-data.js
+   Configuracoes + estatisticas + carregamento de historico
+   ============================================================ */
+
+console.log("[estrategias-data.js] Carregado");
+
 // ============================================================
-// 12 ESTRATÉGIAS PREMIUM (baseado no código Kotlin)
+// CONFIGURACOES DAS LOTERIAS
 // ============================================================
-const PREMIUM_STRATEGIES = [
-    {
-        id: 'boltzmann',
-        name: 'Boltzmann Premium',
-        emoji: '🌡️',
-        shortDesc: 'Probabilidade exponencial baseada em temperatura estatística',
-        longDesc: 'Inspirado na distribuição de Boltzmann da física estatística. Cada número recebe uma probabilidade proporcional a e^(freq_norm/T), onde T é a "temperatura" (diversidade) e freq_norm é a frequência histórica normalizada (0 a 1).',
-        formula: 'P(n) ∝ exp(freq_norm(n) / T) · penalidadeUso(n)',
-        example: 'Mega-Sena → 10 - 23 - 34 - 41 - 52 - 58',
-        color: '#3b82f6'
-    },
-    {
-        id: 'regressao',
-        name: 'Regressão de Tendência',
-        emoji: '📈',
-        shortDesc: 'Reta de mínimos quadrados identifica números acima da tendência',
-        longDesc: 'Ajusta uma reta de regressão linear (mínimos quadrados) entre o número e sua frequência histórica. Números cuja frequência real supera a prevista são priorizados.',
-        formula: 'resíduo(n) = freq_obs(n) − (a + b·n)',
-        example: 'Mega-Sena → 05 - 13 - 21 - 34 - 42 - 55',
-        color: '#8b5cf6'
-    },
-    {
-        id: 'montecarlo',
-        name: 'Monte Carlo Ponderado',
-        emoji: '🎲',
-        shortDesc: 'Simula 50 mil sorteios com pesos reais do histórico',
-        longDesc: 'Executa 50.000 sorteios virtuais usando a distribuição de probabilidade derivada do histórico real. Os números mais frequentes formam o jogo.',
-        formula: 'P(n) = (freq(n) + 1) / (Σfreq + N)',
-        example: 'Dupla Sena → 07 - 19 - 26 - 33 - 41 - 48',
-        color: '#ec4899'
-    },
-    {
-        id: 'clusters',
-        name: 'Clusters de Frequência',
-        emoji: '🔮',
-        shortDesc: 'Divide o volante em zonas: quente (40%), médio (30%), frio (30%)',
-        longDesc: 'Classifica todos os números em três grupos baseados na frequência histórica. Seleciona proporcionalmente de cada grupo.',
-        formula: 'Score = α·freq_norm + (1−α)·(1/atraso_norm)',
-        example: 'Lotomania → 12, 25, 38, 44, 51, 67, 73, 82, 90, 99...',
-        color: '#f59e0b'
-    },
-    {
-        id: 'golden',
-        name: 'Sequência Dourada',
-        emoji: '✨',
-        shortDesc: 'Van der Corput × φ = cobertura quasi-aleatória de baixa discrepância',
-        longDesc: 'Combina a sequência de Van der Corput (base 2) com a razão áurea φ=1.618. Gera números com distribuição uniforme sem padrões visíveis.',
-        formula: 'x_n = VdC(n) · φ mod 1',
-        example: 'Mega-Sena → 04 - 12 - 22 - 35 - 47 - 56',
-        color: '#14b8a6'
-    },
-    {
-        id: 'softmax',
-        name: 'Softmax Adaptativo',
-        emoji: '🧠',
-        shortDesc: 'Normalização exponencial com temperatura variável por rodada',
-        longDesc: 'Aplica a função Softmax sobre as frequências históricas normalizadas. A temperatura T varia a cada jogo, alternando entre concentração e exploração.',
-        formula: 'P(n) = exp(freq_norm(n)/T) / Σexp(freq_norm(k)/T)',
-        example: 'Quina → 08 - 17 - 29 - 45 - 71',
-        color: '#06b6d4'
-    },
-    {
-        id: 'variancia',
-        name: 'Eixos de Variância',
-        emoji: '📐',
-        shortDesc: 'Seleciona números com maior desvio da frequência esperada por quadrante',
-        longDesc: 'Divide o volante em 4 quadrantes. Dentro de cada quadrante, prioriza números que mais fogem do comportamento neutro.',
-        formula: 'score(n) = |freq_obs(n) − freq_esperada|',
-        example: 'Dia de Sorte → 03 - 11 - 18 - 22 - 27 - 30',
-        color: '#8b5cf6'
-    },
-    {
-        id: 'markov',
-        name: 'Markov Ponderado',
-        emoji: '⛓️',
-        shortDesc: 'Passeio com saltos ponderados pela frequência do destino',
-        longDesc: 'Inicia em um número aleatório e realiza saltos cujo tamanho é amostrado da distribuição histórica, modelando dependências entre números próximos.',
-        formula: 'P(j | i) ∝ freq(j) · exp(−|j−i|/λ)',
-        example: 'Mega-Sena → 05 - 12 - 18 - 23 - 31 - 42',
-        color: '#6b7280'
-    },
-    {
-        id: 'pso',
-        name: 'Enxame Inteligente (PSO)',
-        emoji: '🐝',
-        shortDesc: '20 partículas convergem para o conjunto de máxima frequência',
-        longDesc: 'Implementa o algoritmo PSO: 20 partículas representam conjuntos de números. Cada partícula se move em direção ao melhor global.',
-        formula: 'fitness(S) = Σ freq(n)·penalidadeUso(n)',
-        example: 'Mega-Sena → 09 - 17 - 26 - 34 - 44 - 53',
-        color: '#f472b6'
-    },
-    {
-        id: 'lorenz',
-        name: 'Atrator de Lorenz',
-        emoji: '🌌',
-        shortDesc: 'Sistema caótico determinístico com warm-up de 200 iterações',
-        longDesc: 'Integra numericamente o sistema de Lorenz (σ=10, ρ=28, β=8/3). Os pontos são mapeados para o range da loteria.',
-        formula: 'ẋ=σ(y−x), ẏ=x(ρ−z)−y, ż=xy−βz',
-        example: 'Lotofácil → 02 - 06 - 10 - 14 - 18 - 21 - 24...',
-        color: '#8b5cf6'
-    },
-    {
-        id: 'hot',
-        name: 'Números Quentes',
-        emoji: '🔥',
-        shortDesc: 'Top frequentes do histórico com variação probabilística entre jogos',
-        longDesc: 'Seleciona números mais frequentes com sorteio proporcional à frequência, garantindo variação entre os jogos.',
-        formula: 'P(n) ∝ freq(n)²·penalidadeUso(n)',
-        example: 'Mega-Sena → 10 - 23 - 34 - 41 - 52 - 58',
-        color: '#ef4444'
-    },
-    {
-        id: 'harmonic',
-        name: 'Harmônico Freq+Atraso',
-        emoji: '⚡',
-        shortDesc: 'Pontuação combinada: 60% frequência + 40% tempo de ausência',
-        longDesc: 'Calcula score composto: 60% frequência histórica + 40% atraso (tempo sem aparecer). Prioriza números quentes com atraso acima da média.',
-        formula: 'score(n) = 0.6·freq_norm(n) + 0.4·atraso_norm(n)',
-        example: 'Mega-Sena → 07 - 19 - 28 - 36 - 47 - 55',
-        color: '#eab308'
+const PREMIUM_LOTTERY_CONFIGS = {
+    'Mega-Sena':       { maxNumber: 60, defaultNumbersToSelect: 6,  minNumbers: 6,  maxNumbers: 20, startNumber: 1 },
+    'Lotofácil':       { maxNumber: 25, defaultNumbersToSelect: 15, minNumbers: 15, maxNumbers: 20, startNumber: 1 },
+    'Quina':           { maxNumber: 80, defaultNumbersToSelect: 5,  minNumbers: 5,  maxNumbers: 15, startNumber: 1 },
+    'Lotomania':       { maxNumber: 99, defaultNumbersToSelect: 50, minNumbers: 50, maxNumbers: 50, startNumber: 0 },
+    'Timemania':       { maxNumber: 80, defaultNumbersToSelect: 10, minNumbers: 10, maxNumbers: 10, startNumber: 1 },
+    'Dupla Sena':      { maxNumber: 50, defaultNumbersToSelect: 6,  minNumbers: 6,  maxNumbers: 15, startNumber: 1 },
+    'Dia de Sorte':    { maxNumber: 31, defaultNumbersToSelect: 7,  minNumbers: 7,  maxNumbers: 15, startNumber: 1 },
+    'Super Sete':      { maxNumber: 9,  defaultNumbersToSelect: 7,  minNumbers: 7,  maxNumbers: 7,  startNumber: 0 },
+    'Mais Milionária': { maxNumber: 50, defaultNumbersToSelect: 6,  minNumbers: 6,  maxNumbers: 12, startNumber: 1 }
+};
+
+// ============================================================
+// MAPA DOS ARQUIVOS JSON
+// ============================================================
+const PREMIUM_ARQUIVO_JSON_MAP = {
+    'Mega-Sena':       'historico_megasena.json',
+    'Lotofácil':       'historico_lotofacil.json',
+    'Quina':           'historico_quina.json',
+    'Lotomania':       'historico_lotomania.json',
+    'Timemania':       'historico_timemania.json',
+    'Dupla Sena':      'historico_duplasena.json',
+    'Dia de Sorte':    'historico_diadesorte.json',
+    'Super Sete':      'historico_supersete.json',
+    'Mais Milionária': 'historico_maismilionaria.json'
+};
+
+// ============================================================
+// PRIMOS
+// ============================================================
+const PREMIUM_PRIMOS = new Set([2,3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59,61,67,71,73,79,83,89,97]);
+function isPremiumPrime(n) { return PREMIUM_PRIMOS.has(n); }
+
+// ============================================================
+// CARREGAMENTO DO HISTORICO
+// ============================================================
+const _premiumHistoricoCache = {};
+
+async function carregarHistoricoPremium(lotteryName) {
+    if (_premiumHistoricoCache[lotteryName]) return _premiumHistoricoCache[lotteryName];
+
+    const arquivo = PREMIUM_ARQUIVO_JSON_MAP[lotteryName];
+    if (!arquivo) return [];
+
+    try {
+        const url = "./" + arquivo + "?v=" + Date.now();
+        console.log("[premium] Carregando: " + url);
+        const resp = await fetch(url);
+        if (!resp.ok) throw new Error("HTTP " + resp.status);
+
+        const data = await resp.json();
+        const historico = Array.isArray(data) ? data : [];
+        _premiumHistoricoCache[lotteryName] = historico;
+        console.log("[premium] " + lotteryName + ": " + historico.length + " concursos");
+        return historico;
+    } catch (e) {
+        console.error("[premium] Erro: ", e);
+        return [];
     }
-];
+}
+
+// ============================================================
+// CALCULO DE ESTATISTICAS
+// ============================================================
+function calcularEstatisticasPremium(historico) {
+    if (!historico || historico.length === 0) {
+        return { freq: {}, delay: {}, avgSum: 0, total: 0, hotNumbers: [], delayNumbers: [], ordenadoDesc: [] };
+    }
+
+    const ordenadoDesc = [...historico].sort((a, b) =>
+        Number(b.concurso || b.numero || 0) - Number(a.concurso || a.numero || 0)
+    );
+
+    const freq = {};
+    const delay = {};
+    const todasDezenas = new Set();
+
+    ordenadoDesc.forEach(draw => {
+        const nums = (draw.dezenas || draw.listaDezenas || []).map(n => parseInt(n, 10));
+        nums.forEach(n => {
+            if (!isNaN(n)) {
+                todasDezenas.add(n);
+                freq[n] = (freq[n] || 0) + 1;
+            }
+        });
+    });
+
+    [...todasDezenas].forEach(n => {
+        for (let i = 0; i < ordenadoDesc.length; i++) {
+            const nums = (ordenadoDesc[i].dezenas || ordenadoDesc[i].listaDezenas || []).map(x => parseInt(x, 10));
+            if (nums.includes(n)) { delay[n] = i; break; }
+        }
+        if (delay[n] === undefined) delay[n] = ordenadoDesc.length;
+    });
+
+    const sumTotal = ordenadoDesc.reduce((acc, draw) => {
+        const nums = (draw.dezenas || draw.listaDezenas || []).map(n => parseInt(n, 10)).filter(n => !isNaN(n));
+        return acc + nums.reduce((a, b) => a + b, 0);
+    }, 0);
+    const avgSum = sumTotal / ordenadoDesc.length;
+
+    const hotNumbers = Object.entries(freq)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, Math.max(10, Math.floor(Object.keys(freq).length * 0.4)))
+        .map(([n]) => parseInt(n));
+
+    const delayNumbers = Object.entries(delay)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, Math.max(10, Math.floor(Object.keys(delay).length * 0.4)))
+        .map(([n]) => parseInt(n));
+
+    return {
+        freq, delay, avgSum, total: ordenadoDesc.length,
+        hotNumbers, delayNumbers, ordenadoDesc
+    };
+}
+
+console.log("[estrategias-data.js] Funcoes prontas");
