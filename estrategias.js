@@ -1,5 +1,9 @@
 /* ============================================================
-   estrategias.js — 12 PREMIUM + WhatsApp + PDF (VERSÃO SIMPLIFICADA)
+   estrategias.js — 12 PREMIUM + WhatsApp + PDF (VERSÃO CORRIGIDA)
+   ✅ Filtros respeitados de verdade (ajuste por swap)
+   ✅ Auto-sync pares ↔ ímpares
+   ✅ Validação de filtros impossíveis
+   ✅ Mensagens claras de erro
    ============================================================ */
 
 console.log("[estrategias.js] Carregado");
@@ -8,6 +12,7 @@ let _historicoP = null;
 let _statsP = null;
 let _lotteryAtualP = 'Lotofácil';
 let _selectedStrategyP = 0;
+let _avisosUltimaGeracao = []; // avisos sobre filtros não atendidos
 
 const PREMIUM_STRATEGIES = [
     { emoji: '🌡️', name: 'Boltzmann Premium',      desc: 'Probabilidade exponencial baseada em temperatura', shortName: 'Boltzmann' },
@@ -45,6 +50,12 @@ function premiumRange(cfg) {
 function premiumUniqueSorted(arr) { return [...new Set(arr)].sort((a, b) => a - b); }
 function premiumRandomInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
 
+function contarPares(jogo) { return jogo.filter(n => n % 2 === 0).length; }
+function contarPrimos(jogo) { return jogo.filter(isPremiumPrime).length; }
+
+// ============================================================
+// RENDER ESTRATÉGIAS
+// ============================================================
 function renderPremiumStrategiesGrid() {
     const grid = document.getElementById('strategiesGrid');
     if (!grid) return;
@@ -68,7 +79,7 @@ function renderPremiumStrategiesGrid() {
 }
 
 // ============================================================
-// 12 ESTRATÉGIAS PREMIUM
+// 12 ESTRATÉGIAS PREMIUM (inalteradas)
 // ============================================================
 function gerarBoltzmann(cfg, stats) {
     const range = premiumRange(cfg);
@@ -353,11 +364,185 @@ function gerarJogoPremium(cfg, stats, idx) {
     }
 }
 
+// ============================================================
+// ✅ NOVO — CÁLCULO DE ERRO DE FILTROS
+// ============================================================
+function _calcFilterError(jogo, alvoPares, alvoImpares, alvoPrimos) {
+    const total = jogo.length;
+    let pares = 0, primos = 0;
+    for (const n of jogo) {
+        if (n % 2 === 0) pares++;
+        if (isPremiumPrime(n)) primos++;
+    }
+    const impares = total - pares;
+    let err = 0;
+    if (alvoPares != null) err += Math.abs(pares - alvoPares);
+    if (alvoImpares != null) err += Math.abs(impares - alvoImpares);
+    if (alvoPrimos != null) err += Math.abs(primos - alvoPrimos);
+    return err;
+}
+
+// ============================================================
+// ✅ NOVO — AJUSTE POR SWAP (garante respeitar os filtros)
+// ============================================================
+function ajustarParaFiltros(jogo, cfg, alvoPares, alvoImpares, alvoPrimos) {
+    if (alvoPares == null && alvoImpares == null && alvoPrimos == null) {
+        return [...jogo].sort((a, b) => a - b);
+    }
+
+    const range = premiumRange(cfg);
+    let atual = [...jogo];
+    let errAtual = _calcFilterError(atual, alvoPares, alvoImpares, alvoPrimos);
+    if (errAtual === 0) return atual.sort((a, b) => a - b);
+
+    const inGame = new Set(atual);
+    const fora = range.filter(n => !inGame.has(n));
+
+    const MAX_ITER = 500;
+    for (let iter = 0; iter < MAX_ITER && errAtual > 0; iter++) {
+        let melhorErr = errAtual;
+        let melhorIdx = -1;
+        let melhorVal = null;
+
+        for (let i = 0; i < atual.length; i++) {
+            const valorAtual = atual[i];
+            for (let j = 0; j < fora.length; j++) {
+                const v = fora[j];
+                if (v === valorAtual) continue;
+                const teste = [...atual];
+                teste[i] = v;
+                const err = _calcFilterError(teste, alvoPares, alvoImpares, alvoPrimos);
+                if (err < melhorErr) {
+                    melhorErr = err;
+                    melhorIdx = i;
+                    melhorVal = v;
+                    if (err === 0) break;
+                }
+            }
+            if (melhorErr === 0) break;
+        }
+
+        if (melhorIdx === -1) break; // não dá mais pra melhorar
+
+        const valorAntigo = atual[melhorIdx];
+        atual[melhorIdx] = melhorVal;
+        const pos = fora.indexOf(melhorVal);
+        if (pos !== -1) fora.splice(pos, 1);
+        fora.push(valorAntigo);
+        errAtual = melhorErr;
+    }
+
+    return atual.sort((a, b) => a - b);
+}
+
+// ============================================================
+// ✅ NOVO — VALIDAÇÃO DE FILTROS IMPOSSÍVEIS
+// ============================================================
+function validarFiltrosPossiveis(cfg, alvoPares, alvoImpares, alvoPrimos) {
+    const range = premiumRange(cfg);
+    const total = cfg.defaultNumbersToSelect;
+
+    const paresRange = range.filter(n => n % 2 === 0);
+    const imparesRange = range.filter(n => n % 2 !== 0);
+    const primosRange = range.filter(isPremiumPrime);
+    const primosParesRange = primosRange.filter(n => n % 2 === 0);
+    const primosImparesRange = primosRange.filter(n => n % 2 !== 0);
+
+    if (alvoPares != null && alvoPares > paresRange.length) {
+        return `Você pediu ${alvoPares} pares, mas só existem ${paresRange.length} pares no universo da ${_lotteryAtualP} (${range.length} números).`;
+    }
+    if (alvoImpares != null && alvoImpares > imparesRange.length) {
+        return `Você pediu ${alvoImpares} ímpares, mas só existem ${imparesRange.length} ímpares no universo da ${_lotteryAtualP} (${range.length} números).`;
+    }
+    if (alvoPrimos != null && alvoPrimos > primosRange.length) {
+        return `Você pediu ${alvoPrimos} primos, mas só existem ${primosRange.length} primos no universo da ${_lotteryAtualP} (${range.length} números).`;
+    }
+
+    if (alvoPares != null && alvoImpares != null && (alvoPares + alvoImpares) !== total) {
+        return `Pares (${alvoPares}) + Ímpares (${alvoImpares}) = ${alvoPares + alvoImpares}. Deve ser exatamente ${total} (total de dezenas).`;
+    }
+
+    // Verifica compatibilidade primos × pares/ímpares
+    if (alvoPrimos != null) {
+        const targetPares = alvoPares != null ? alvoPares : (alvoImpares != null ? total - alvoImpares : null);
+        const targetImpares = alvoImpares != null ? alvoImpares : (alvoPares != null ? total - alvoPares : null);
+
+        if (targetImpares != null) {
+            const minPrimosImpares = Math.max(0, alvoPrimos - primosParesRange.length);
+            if (minPrimosImpares > targetImpares) {
+                return `Combinação impossível: você pediu ${alvoPrimos} primos e ${targetImpares} ímpares, mas no máximo ${primosParesRange.length} primo(s) podem ser par(es) (o 2). Seriam necessários ${minPrimosImpares} primos ímpares, mas só há ${targetImpares} vagas ímpares.`;
+            }
+        }
+        if (targetPares != null) {
+            const minPrimosPares = Math.max(0, alvoPrimos - primosImparesRange.length);
+            if (minPrimosPares > targetPares) {
+                return `Combinação impossível: você pediu ${alvoPrimos} primos e ${targetPares} pares, mas no máximo ${primosImparesRange.length} primo(s) podem ser ímpar(es). Seriam necessários ${minPrimosPares} primos pares, mas só há ${targetPares} vagas pares.`;
+            }
+        }
+    }
+
+    return null; // OK
+}
+
+// ============================================================
+// VALIDAÇÃO LEGADA (mantida para compatibilidade)
+// ============================================================
 function validaFiltrosP(game, even, odd, prime) {
-    if (even != null && game.filter(function(n) { return n % 2 === 0; }).length !== even) return false;
-    if (odd != null && game.filter(function(n) { return n % 2 !== 0; }).length !== odd) return false;
-    if (prime != null && game.filter(function(n) { return isPremiumPrime(n); }).length !== prime) return false;
+    if (even != null && contarPares(game) !== even) return false;
+    if (odd != null && (game.length - contarPares(game)) !== odd) return false;
+    if (prime != null && contarPrimos(game) !== prime) return false;
     return true;
+}
+
+// ============================================================
+// ✅ NOVO — AUTO-SYNC PARES ↔ ÍMPARES
+// ============================================================
+function setupFilterAutoSync() {
+    const evenInput = document.getElementById('filterEven');
+    const oddInput = document.getElementById('filterOdd');
+    const totalInput = document.getElementById('numbersPerGame');
+    if (!evenInput || !oddInput) return;
+
+    let lastEdited = 'even';
+
+    evenInput.addEventListener('input', () => {
+        lastEdited = 'even';
+        const total = parseInt(totalInput?.value, 10) || 15;
+        const even = parseInt(evenInput.value, 10);
+        if (!isNaN(even) && even >= 0 && even <= total) {
+            oddInput.value = total - even;
+        }
+    });
+
+    oddInput.addEventListener('input', () => {
+        lastEdited = 'odd';
+        const total = parseInt(totalInput?.value, 10) || 15;
+        const odd = parseInt(oddInput.value, 10);
+        if (!isNaN(odd) && odd >= 0 && odd <= total) {
+            evenInput.value = total - odd;
+        }
+    });
+
+    totalInput?.addEventListener('input', () => {
+        const total = parseInt(totalInput.value, 10) || 15;
+        if (lastEdited === 'odd') {
+            const odd = parseInt(oddInput.value, 10);
+            if (!isNaN(odd) && odd >= 0 && odd <= total) {
+                evenInput.value = total - odd;
+            } else {
+                oddInput.value = '';
+                evenInput.value = '';
+            }
+        } else {
+            const even = parseInt(evenInput.value, 10);
+            if (!isNaN(even) && even >= 0 && even <= total) {
+                oddInput.value = total - even;
+            } else {
+                evenInput.value = '';
+                oddInput.value = '';
+            }
+        }
+    });
 }
 
 // ============================================================
@@ -365,6 +550,8 @@ function validaFiltrosP(game, even, odd, prime) {
 // ============================================================
 document.addEventListener('DOMContentLoaded', async function() {
     renderPremiumStrategiesGrid();
+    setupFilterAutoSync();
+
     const select = document.getElementById('lotterySelect');
     if (select) {
         select.addEventListener('change', async function() {
@@ -374,6 +561,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         _lotteryAtualP = select.value;
     }
     await trocarLoteriaPremium();
+
     const btn = document.getElementById('generateBtn');
     if (btn) btn.addEventListener('click', gerarJogosPremium);
     const saveAll = document.getElementById('saveAllBtn');
@@ -389,6 +577,7 @@ async function trocarLoteriaPremium() {
     _historicoP = await carregarHistoricoPremium(_lotteryAtualP);
     _statsP = calcularEstatisticasPremium(_historicoP);
     console.log('[' + _lotteryAtualP + '] ' + _historicoP.length + ' concursos. Soma média: ' + _statsP.avgSum.toFixed(1));
+
     const cfg = PREMIUM_LOTTERY_CONFIGS[_lotteryAtualP];
     const numInput = document.getElementById('numbersPerGame');
     if (numInput) {
@@ -396,56 +585,132 @@ async function trocarLoteriaPremium() {
         numInput.min = cfg.minNumbers;
         numInput.max = cfg.maxNumbers;
     }
+
+    // Limpa filtros ao trocar de loteria
+    const evenInput = document.getElementById('filterEven');
+    const oddInput = document.getElementById('filterOdd');
+    const primeInput = document.getElementById('filterPrime');
+    if (evenInput) evenInput.value = '';
+    if (oddInput) oddInput.value = '';
+    if (primeInput) primeInput.value = '';
+
     if (btn) {
         btn.disabled = false;
         btn.innerHTML = '<i class="fa-solid fa-bolt"></i> Gerar Jogos';
     }
 }
 
+// ============================================================
+// ✅ GERAR JOGOS — FILTROS RESPEITADOS DE VERDADE
+// ============================================================
 function gerarJogosPremium() {
     const cfg = Object.assign({}, PREMIUM_LOTTERY_CONFIGS[_lotteryAtualP]);
     cfg.name = _lotteryAtualP;
+
     const gameCount = parseInt(document.getElementById('gameCount').value) || 1;
     const numbersPerGame = parseInt(document.getElementById('numbersPerGame').value) || cfg.defaultNumbersToSelect;
     cfg.defaultNumbersToSelect = Math.max(cfg.minNumbers, Math.min(cfg.maxNumbers, numbersPerGame));
 
-    const even = parseInt(document.getElementById('filterEven').value) || null;
-    const odd = parseInt(document.getElementById('filterOdd').value) || null;
-    const prime = parseInt(document.getElementById('filterPrime').value) || null;
+    // ✅ Leitura correta dos filtros (0 também é válido)
+    const evenInput = document.getElementById('filterEven');
+    const oddInput = document.getElementById('filterOdd');
+    const primeInput = document.getElementById('filterPrime');
 
-    if (even != null && odd != null && (even + odd) !== cfg.defaultNumbersToSelect) {
-        alert('A soma de Pares (' + even + ') + Ímpares (' + odd + ') deve ser exatamente ' + cfg.defaultNumbersToSelect + '.');
+    const evenVal = evenInput ? evenInput.value.trim() : '';
+    const oddVal = oddInput ? oddInput.value.trim() : '';
+    const primeVal = primeInput ? primeInput.value.trim() : '';
+
+    const even = evenVal === '' ? null : parseInt(evenVal, 10);
+    const odd = oddVal === '' ? null : parseInt(oddVal, 10);
+    const prime = primeVal === '' ? null : parseInt(primeVal, 10);
+
+    // ✅ Valida se os filtros são possíveis
+    const erroFiltros = validarFiltrosPossiveis(cfg, even, odd, prime);
+    if (erroFiltros) {
+        alert('⚠️ Filtros impossíveis\n\n' + erroFiltros);
         return;
     }
 
+    _avisosUltimaGeracao = [];
+
     const jogos = [];
+    const MAX_RETRIES_ESTRATEGIA = 300;
+
     for (let i = 0; i < gameCount; i++) {
         let jogo = null;
-        for (let t = 0; t < 500; t++) {
+        let tentativas = 0;
+
+        // Etapa 1: tentar gerar direto da estratégia
+        while (tentativas < MAX_RETRIES_ESTRATEGIA) {
+            tentativas++;
             const candidato = gerarJogoPremium(cfg, _statsP, _selectedStrategyP);
-            if (!jogos.some(function(j) { return JSON.stringify(j) === JSON.stringify(candidato); }) && validaFiltrosP(candidato, even, odd, prime)) {
-                jogo = candidato; break;
+            if (validaFiltrosP(candidato, even, odd, prime) &&
+                !jogos.some(j => JSON.stringify(j) === JSON.stringify(candidato))) {
+                jogo = candidato;
+                break;
             }
         }
-        if (!jogo) jogo = gerarJogoPremium(cfg, _statsP, _selectedStrategyP);
+
+        // Etapa 2: se falhou, ajusta por swap
+        if (!jogo) {
+            const base = gerarJogoPremium(cfg, _statsP, _selectedStrategyP);
+            const ajustado = ajustarParaFiltros(base, cfg, even, odd, prime);
+            const valido = validaFiltrosP(ajustado, even, odd, prime);
+
+            if (!valido) {
+                // Registra aviso
+                const p = contarPares(ajustado);
+                const pr = contarPrimos(ajustado);
+                _avisosUltimaGeracao.push(
+                    `Jogo ${i + 1}: pedido (P:${even ?? '-'} I:${odd ?? '-'} Pr:${prime ?? '-'}) — obtido (P:${p} I:${ajustado.length - p} Pr:${pr})`
+                );
+            }
+
+            // Evita duplicados
+            if (!jogos.some(j => JSON.stringify(j) === JSON.stringify(ajustado))) {
+                jogo = ajustado;
+            } else {
+                // Força variação mínima
+                const variacao = [...ajustado];
+                const fora = premiumRange(cfg).filter(n => !variacao.includes(n));
+                if (fora.length > 0) {
+                    variacao[0] = fora[premiumRandomInt(0, fora.length - 1)];
+                    jogo = variacao.sort((a, b) => a - b);
+                } else {
+                    jogo = ajustado;
+                }
+            }
+        }
+
         jogos.push(jogo);
     }
 
+    // Renderiza
     const area = document.getElementById('resultsArea');
     const lista = document.getElementById('gamesList');
     area.classList.add('visible');
 
     lista.innerHTML = jogos.map(function(jogo, i) {
         const soma = jogo.reduce(function(a, b) { return a + b; }, 0);
-        const pares = jogo.filter(function(n) { return n % 2 === 0; }).length;
-        const primos = jogo.filter(function(n) { return isPremiumPrime(n); }).length;
+        const pares = contarPares(jogo);
+        const primos = contarPrimos(jogo);
         const nums = jogo.map(function(n) { return String(n).padStart(2, '0'); }).join(' - ');
+
+        // Destaca se o jogo bate com os filtros
+        const bateuPares = even == null || pares === even;
+        const bateuImpares = odd == null || (jogo.length - pares) === odd;
+        const bateuPrimos = prime == null || primos === prime;
+        const bateuTudo = bateuPares && bateuImpares && bateuPrimos;
+
+        const corAviso = bateuTudo ? '#059669' : '#dc2626';
+        const iconeAviso = bateuTudo ? '✅' : '⚠️';
 
         return '<div class="game-row">' +
             '<div>' +
                 '<span class="game-numbers">Jogo ' + (i + 1) + ': ' + nums + '</span>' +
                 '<div style="font-size:0.75rem;color:#64748b;margin-top:4px;">' +
-                    'Soma: <strong>' + soma + '</strong> · Pares: <strong>' + pares + '</strong> · Ímpares: <strong>' + (jogo.length - pares) + '</strong> · Primos: <strong>' + primos + '</strong>' +
+                    'Soma: <strong>' + soma + '</strong> · Pares: <strong>' + pares + '</strong> · Ímpares: <strong>' + (jogo.length - pares) + '</strong> · Primos: <strong>' + primos + '</strong> ' +
+                    '<span style="color:' + corAviso + ';font-weight:700;">' + iconeAviso + '</span>' +
                 '</div>' +
             '</div>' +
             '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">' +
@@ -456,17 +721,25 @@ function gerarJogosPremium() {
         '</div>';
     }).join('');
 
+    // Aviso final se algum jogo não bateu 100%
+    if (_avisosUltimaGeracao.length > 0) {
+        console.warn('[Filtros] Avisos:\n' + _avisosUltimaGeracao.join('\n'));
+        setTimeout(() => {
+            alert('⚠️ Atenção\n\nAlguns jogos não conseguiram atender 100% dos filtros pedidos (limitação matemática da ' + _lotteryAtualP + '):\n\n' + _avisosUltimaGeracao.slice(0, 5).join('\n') + (_avisosUltimaGeracao.length > 5 ? '\n...' : ''));
+        }, 100);
+    }
+
     window._ultimosJogosP = jogos;
     window._ultimaConfigP = cfg;
 }
 
 // ============================================================
-// WHATSAPP
+// WHATSAPP (inalterado)
 // ============================================================
 function compartilharWhatsAppP(jogo, numero) {
     const soma = jogo.reduce(function(a, b) { return a + b; }, 0);
-    const pares = jogo.filter(function(n) { return n % 2 === 0; }).length;
-    const primos = jogo.filter(function(n) { return isPremiumPrime(n); }).length;
+    const pares = contarPares(jogo);
+    const primos = contarPrimos(jogo);
     const nums = jogo.map(function(n) { return String(n).padStart(2, '0'); }).join(' - ');
     const est = PREMIUM_STRATEGIES[_selectedStrategyP] ? PREMIUM_STRATEGIES[_selectedStrategyP].name : 'Premium';
     const emoji = PREMIUM_STRATEGIES[_selectedStrategyP] ? PREMIUM_STRATEGIES[_selectedStrategyP].emoji : '👑';
@@ -488,12 +761,12 @@ function compartilharTodosWhatsAppP() {
 }
 
 // ============================================================
-// PDF
+// PDF (inalterado)
 // ============================================================
 function imprimirJogoP(jogo, numero) {
     const soma = jogo.reduce(function(a, b) { return a + b; }, 0);
-    const pares = jogo.filter(function(n) { return n % 2 === 0; }).length;
-    const primos = jogo.filter(function(n) { return isPremiumPrime(n); }).length;
+    const pares = contarPares(jogo);
+    const primos = contarPrimos(jogo);
     const nums = jogo.map(function(n) { return String(n).padStart(2, '0'); }).join(' - ');
     const est = PREMIUM_STRATEGIES[_selectedStrategyP] ? PREMIUM_STRATEGIES[_selectedStrategyP].name : 'Premium';
     const emoji = PREMIUM_STRATEGIES[_selectedStrategyP] ? PREMIUM_STRATEGIES[_selectedStrategyP].emoji : '👑';
@@ -541,8 +814,8 @@ function imprimirTodosP() {
     let jogosHtml = '';
     jogos.forEach(function(jogo, i) {
         const soma = jogo.reduce(function(a, b) { return a + b; }, 0);
-        const pares = jogo.filter(function(n) { return n % 2 === 0; }).length;
-        const primos = jogo.filter(function(n) { return isPremiumPrime(n); }).length;
+        const pares = contarPares(jogo);
+        const primos = contarPrimos(jogo);
         const nums = jogo.map(function(n) { return String(n).padStart(2, '0'); }).join(' - ');
         jogosHtml += '<div class="jogo-card"><div class="jogo-header"><span class="jogo-num">JOGO ' + (i + 1) + '</span><span class="jogo-meta">Soma: ' + soma + ' | P: ' + pares + ' | I: ' + (jogo.length - pares) + ' | Pr: ' + primos + '</span></div><div class="numeros">' + nums + '</div></div>';
     });
@@ -575,7 +848,7 @@ function imprimirTodosP() {
 }
 
 // ============================================================
-// SALVAR
+// SALVAR (inalterado)
 // ============================================================
 function salvarJogoPremium(jogo, numero) {
     const ultimo = _statsP && _statsP.ordenadoDesc ? _statsP.ordenadoDesc[0] : null;
@@ -587,8 +860,8 @@ function salvarJogoPremium(jogo, numero) {
         acertos = jogo.filter(function(n) { return numerosSorteados.includes(n); }).length;
     }
     const soma = jogo.reduce(function(a, b) { return a + b; }, 0);
-    const pares = jogo.filter(function(n) { return n % 2 === 0; }).length;
-    const primos = jogo.filter(function(n) { return isPremiumPrime(n); }).length;
+    const pares = contarPares(jogo);
+    const primos = contarPrimos(jogo);
 
     const salvos = JSON.parse(localStorage.getItem('jogos_salvos') || '[]');
     salvos.push({
@@ -618,8 +891,8 @@ function salvarTodosPremium() {
         totalAcertos += acertos;
         melhor = Math.max(melhor, acertos);
         const soma = jogo.reduce(function(a, b) { return a + b; }, 0);
-        const pares = jogo.filter(function(n) { return n % 2 === 0; }).length;
-        const primos = jogo.filter(function(n) { return isPremiumPrime(n); }).length;
+        const pares = contarPares(jogo);
+        const primos = contarPrimos(jogo);
         salvos.push({
             loteria: _lotteryAtualP, numeros: jogo, soma: soma, pares: pares, primos: primos,
             acertosUltimoConcurso: acertos, ultimoConcurso: concursoNum,
@@ -633,4 +906,4 @@ function salvarTodosPremium() {
     alert('✅ ' + jogos.length + ' jogo(s) salvo(s)!\n\n📊 Vs. #' + concursoNum + ':\nSorteados: ' + numerosSorteados.join(' - ') + '\n🎯 Média: ' + media + '\n🏆 Melhor: ' + melhor);
 }
 
-console.log("[estrategias.js] TUDO carregado");
+console.log("[estrategias.js] TUDO carregado — versão corrigida");
