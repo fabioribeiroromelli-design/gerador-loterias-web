@@ -1,113 +1,824 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lotomania - Estratégia</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        .lotomania-container { max-width: 900px; margin: 20px auto; padding: 0 16px; }
-        .toolbar-lotomania { background: #F78100; }
-        .card-analise { background: #1e1e2e; border-radius: 12px; padding: 16px; color: #e0e0e0; margin-bottom: 20px; border-left: 4px solid #F78100; }
-        .card-analise h3 { color: #F78100; margin: 0 0 8px 0; }
-        
-        /* SEÇÃO DO COMPARATIVO COM QUADRADINHOS */
-        .section-title { font-size: 1.1rem; color: #F78100; margin: 16px 0 8px 0; font-weight: bold; }
-        .comparativo-grid { display: flex; gap: 16px; margin-bottom: 12px; flex-wrap: wrap; }
-        .concurso-box { flex: 1; min-width: 280px; background: #1e1e2e; border-radius: 12px; padding: 14px; border-top: 3px solid #F78100; }
-        .concurso-box h4 { margin: 0 0 10px 0; font-size: 0.9rem; color: #fff; }
-        
-        /* GRID DE QUADRADINHOS DA LOTOMANIA (10 COLUNAS) */
-        .balls-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; }
-        .ball { background: #2a2a3e; color: #aaa; border-radius: 6px; padding: 6px 0; text-align: center; font-weight: bold; font-size: 0.75rem; }
-        .ball.sorteada { background: #555; color: #fff; }
-        .ball.repetida { background: #F78100; color: #fff; box-shadow: 0 0 8px rgba(247, 129, 0, 0.7); }
-        .stats-text { font-size: 0.8rem; color: #aaa; text-align: center; margin: 6px 0 16px 0; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="dark">
+<title>Lotomania — Estratégia</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Manrope:wght@400;500;600;700;800&family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#07080C;--surface:#12141D;--surface-2:#181B26;--surface-3:#1F2430;--surface-4:#262A38;
+  --border:#2A3040;--border-2:#363C4E;
+  --text:#F5F1E7;--muted:#9DA0AE;--faint:#5E6175;
+  --orange:#F78100;--orange-light:#FFA53D;--orange-dim:rgba(247,129,0,.16);--orange-glow:rgba(247,129,0,.45);
+  --good:#3FBE7C;--warn:#E0AC5C;--danger:#E0553F;
+  --radius:12px;--radius-lg:18px;
+  --font-display:'Fraunces',serif;--font-body:'Manrope',sans-serif;--font-ball:'Fredoka',sans-serif;
+  --shadow:0 8px 28px -12px rgba(0,0,0,.6);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{min-height:100vh;background:var(--bg);color:var(--text);font-family:var(--font-body);position:relative;
+  background-image:radial-gradient(circle at 15% 0%,rgba(247,129,0,.14),transparent 42%),
+                   radial-gradient(circle at 85% 10%,rgba(59,130,246,.08),transparent 45%);
+  background-attachment:fixed;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{margin:0}
+p{margin:0}
+a{color:inherit;text-decoration:none}
 
-        .controls { display: flex; flex-wrap: wrap; gap: 16px; background: white; padding: 16px; border-radius: 12px; margin: 16px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-        .controls .group { display: flex; align-items: center; gap: 8px; }
-        .controls .group label { font-weight: 600; font-size: 0.85rem; color: #333; }
-        .controls .group input[type="number"] { width: 50px; padding: 4px 6px; border: 1px solid #ccc; border-radius: 4px; text-align: center; background: #f8f8f8; }
-        .controls .group button { background: #F78100; color: white; border: none; border-radius: 4px; padding: 4px 10px; font-weight: bold; cursor: pointer; }
-        .controls .group button:hover { opacity: 0.8; }
-        .btn-gerar { background: #F78100; color: white; border: none; padding: 12px 24px; border-radius: 40px; font-weight: bold; font-size: 1rem; cursor: pointer; margin: 8px 0; width: 100%; }
-        .btn-gerar:hover { opacity: 0.85; }
-        .game-card { background: #1e1e2e; border-radius: 12px; padding: 12px; margin-bottom: 12px; border-left: 4px solid #F78100; }
-        .game-card .header { display: flex; justify-content: space-between; align-items: center; }
-        .game-card .header .title { color: #F78100; font-weight: bold; }
-        .game-card .dezenas { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; margin: 8px 0; }
-        .game-card .dezenas span { background: #F78100; color: white; border-radius: 6px; padding: 4px 0; text-align: center; font-weight: bold; font-size: 0.75rem; }
-        .game-card .info { font-size: 0.75rem; color: #aaa; }
-        .game-card .actions { display: flex; gap: 8px; margin-top: 6px; }
-        .game-card .actions button { background: #3DD68C; border: none; color: white; padding: 4px 12px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 0.75rem; }
-        .game-card .actions button:hover { opacity: 0.8; }
-        .btn-salvar-todos { background: #3DD68C; color: white; border: none; padding: 10px; border-radius: 40px; font-weight: bold; width: 100%; margin: 12px 0; cursor: pointer; }
-        .btn-salvar-todos:hover { opacity: 0.85; }
-        #progress { display: none; text-align: center; padding: 20px; }
-        
-        @media (max-width: 600px) {
-            .game-card .dezenas, .balls-grid { grid-template-columns: repeat(5, 1fr); }
-        }
-    </style>
+/* HEADER */
+.toolbar{background:linear-gradient(180deg,#1f1204,var(--surface));border-bottom:1px solid var(--border);
+  padding:16px 22px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;
+  box-shadow:var(--shadow);position:relative;z-index:5}
+.toolbar .title-wrap{display:flex;align-items:center;gap:12px;min-width:0}
+.toolbar .brand-mark{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--orange-light),var(--orange));
+  display:flex;align-items:center;justify-content:center;color:#fff;font-size:1rem;flex-shrink:0;
+  box-shadow:0 6px 16px -6px var(--orange-glow)}
+.toolbar h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.1rem,3.5vw,1.45rem);color:var(--text)}
+.toolbar .sub{font-size:.74rem;color:var(--muted);margin-top:2px}
+.btn-back{background:var(--surface-3);border:1px solid var(--border);color:var(--text);padding:9px 16px;border-radius:999px;
+  cursor:pointer;font-weight:600;font-size:.82rem;display:inline-flex;align-items:center;gap:.4rem;white-space:nowrap;
+  transition:all .15s ease}
+.btn-back:hover{border-color:var(--orange-light);color:var(--orange-light);transform:translateX(-2px)}
+
+.container{max-width:1100px;margin:0 auto;padding:24px 18px 60px}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px 20px;
+  margin-bottom:16px;box-shadow:var(--shadow)}
+.card h3{font-family:var(--font-display);font-weight:700;font-size:1.1rem;color:var(--text);
+  display:flex;align-items:center;gap:.5rem;margin-bottom:.6rem}
+.card h3 i{color:var(--orange-light);font-size:.95rem}
+.card .desc{color:var(--muted);font-size:.8rem;line-height:1.5;margin-bottom:12px;
+  padding-bottom:10px;border-bottom:1px solid var(--border)}
+
+/* STATS GRID */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:10px 0}
+.stat-card{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:12px 14px}
+.stat-card .lbl{font-size:.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:700;
+  display:flex;align-items:center;gap:.35rem}
+.stat-card .lbl i{color:var(--orange-light);font-size:.7rem}
+.stat-card .val{font-family:var(--font-display);font-size:1.55rem;font-weight:700;color:var(--orange-light);
+  margin-top:5px;line-height:1}
+
+/* DISTRIBUIÇÃO */
+.dist-list{display:flex;flex-direction:column;gap:7px;margin-top:8px}
+.dist-row{display:grid;grid-template-columns:44px 1fr 56px;gap:10px;align-items:center;font-size:.78rem}
+.dist-row .qtd{font-family:var(--font-ball);font-weight:700;color:var(--orange-light);text-align:center;
+  background:var(--surface-2);border-radius:6px;padding:3px 0}
+.dist-row .bar{height:9px;background:rgba(0,0,0,.4);border-radius:5px;overflow:hidden}
+.dist-row .fill{height:100%;background:linear-gradient(90deg,var(--orange),var(--orange-light));
+  border-radius:5px;transition:width .4s ease}
+.dist-row .pct{font-family:monospace;color:var(--muted);font-size:.72rem;text-align:right}
+
+/* COMPARATIVO */
+.compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:12px}
+@media(max-width:820px){.compare-grid{grid-template-columns:1fr}}
+.compare-box{background:var(--surface-2);border-radius:12px;padding:14px;border:1px solid var(--border)}
+.compare-box .head{font-weight:700;font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;
+  margin-bottom:10px;display:flex;align-items:center;gap:.4rem}
+.compare-box .head.orange{color:var(--orange-light)}
+.dez-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:3px}
+@media(max-width:820px){.dez-grid{grid-template-columns:repeat(10,1fr)}}
+.dez-cell{aspect-ratio:1;border-radius:6px;display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-ball);font-weight:700;font-size:.65rem;background:var(--surface-3);color:var(--faint);
+  transition:all .15s ease;border:1px solid transparent}
+.dez-cell.sorteada{background:#4a4a5e;color:#fff}
+.dez-cell.repetida{background:linear-gradient(135deg,var(--orange),var(--orange-light));color:#fff;
+  box-shadow:0 0 8px var(--orange-glow);border-color:var(--orange-light)}
+
+.rep-info{margin-top:12px;padding:10px 14px;background:var(--surface-3);border-radius:10px;
+  border-left:3px solid var(--orange-light);font-size:.82rem;color:var(--text);
+  display:flex;align-items:center;gap:.6rem;flex-wrap:wrap}
+.rep-info strong{color:var(--orange-light);font-family:var(--font-display);font-size:1.1rem}
+
+/* CONTROLS */
+.controls-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px 20px;
+  margin-bottom:16px;box-shadow:var(--shadow)}
+.controls-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+.ctrl-group{display:flex;flex-direction:column;gap:.35rem}
+.ctrl-group label{font-size:.7rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+.ctrl-stepper{display:flex;align-items:center;background:var(--surface-2);border:1px solid var(--border);
+  border-radius:9px;overflow:hidden;height:40px}
+.ctrl-stepper button{background:transparent;border:none;color:var(--orange-light);font-size:1rem;font-weight:700;
+  width:36px;height:100%;cursor:pointer;transition:background .12s ease}
+.ctrl-stepper button:hover{background:var(--orange-dim)}
+.ctrl-stepper input{flex:1;background:transparent;border:none;color:var(--text);text-align:center;
+  font-family:var(--font-ball);font-size:1rem;font-weight:700;outline:none;width:100%;height:100%;
+  -moz-appearance:textfield}
+.ctrl-stepper input::-webkit-outer-spin-button,
+.ctrl-stepper input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+
+.ctrl-input{background:var(--surface-2);border:1px solid var(--border);border-radius:9px;padding:0 12px;height:40px;
+  color:var(--text);font-family:var(--font-body);font-size:.9rem;outline:none;transition:border-color .15s ease}
+.ctrl-input:focus{border-color:var(--orange-light)}
+.ctrl-input::placeholder{color:var(--faint);font-style:italic}
+
+.hint-auto{font-size:.68rem;color:var(--orange-light);font-weight:600;margin-top:.2rem;
+  display:flex;align-items:center;gap:.3rem;min-height:1rem}
+
+.btn-generate{background:linear-gradient(135deg,var(--orange-light),var(--orange));color:#fff;border:none;
+  padding:14px 24px;border-radius:999px;font-family:var(--font-body);font-weight:800;font-size:1rem;
+  cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:.5rem;width:100%;
+  margin:14px 0 0;transition:transform .15s ease,filter .15s ease;box-shadow:0 8px 22px -10px var(--orange-glow);
+  letter-spacing:.02em}
+.btn-generate:hover{transform:translateY(-1px);filter:brightness(1.1)}
+.btn-generate:active{transform:scale(.98)}
+.btn-generate:disabled{opacity:.5;cursor:not-allowed;transform:none}
+
+.btn-save-all{background:var(--good);color:#06281a;border:none;padding:12px 24px;border-radius:999px;
+  font-weight:800;font-size:.9rem;cursor:pointer;width:100%;margin:0 0 14px;display:inline-flex;
+  align-items:center;justify-content:center;gap:.5rem;transition:filter .15s ease}
+.btn-save-all:hover{filter:brightness(1.08)}
+
+/* RESULTS */
+.results-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;
+  margin:20px 0 12px}
+.results-header h3{font-family:var(--font-display);font-weight:700;font-size:1.05rem;
+  display:flex;align-items:center;gap:.5rem}
+.results-header h3 i{color:var(--orange-light)}
+.results-header .count{color:var(--muted);font-size:.78rem}
+
+.game-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:14px 16px;margin-bottom:12px;border-left:3px solid var(--orange);transition:border-color .15s ease}
+.game-card:hover{border-color:var(--orange-light)}
+.game-card .gc-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;
+  padding-bottom:10px;border-bottom:1px solid var(--border);margin-bottom:10px}
+.game-card .gc-title{font-weight:700;color:var(--orange-light);font-size:.9rem;display:flex;align-items:center;gap:.4rem}
+.game-card .gc-meta{font-size:.7rem;color:var(--muted);font-weight:600;
+  background:var(--surface-2);padding:3px 9px;border-radius:999px;border:1px solid var(--border)}
+.gc-numbers{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;margin-bottom:10px}
+@media(max-width:600px){.gc-numbers{grid-template-columns:repeat(10,1fr)}}
+.gc-num{background:linear-gradient(135deg,var(--orange),var(--orange-light));color:#fff;border-radius:6px;
+  padding:6px 0;text-align:center;font-family:var(--font-ball);font-weight:700;font-size:.72rem;
+  box-shadow:0 2px 5px -2px var(--orange-glow)}
+.gc-num.is-repeat{box-shadow:0 0 0 2px var(--warn),0 2px 5px -2px var(--orange-glow)}
+.gc-actions{display:flex;gap:8px;flex-wrap:wrap}
+.gc-actions button{background:var(--surface-3);border:1px solid var(--border);color:var(--text);
+  padding:6px 14px;border-radius:999px;font-weight:600;cursor:pointer;font-size:.72rem;
+  display:inline-flex;align-items:center;gap:.35rem;transition:all .12s ease}
+.gc-actions button:hover{border-color:var(--orange-light);color:var(--orange-light)}
+.gc-actions button.primary{background:var(--good);border-color:var(--good);color:#06281a}
+.gc-actions button.primary:hover{filter:brightness(1.1);color:#06281a}
+
+/* ESTADOS */
+.loading-state,.empty-state,.error-state{text-align:center;padding:38px 20px;color:var(--muted);
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius)}
+.spinner{width:34px;height:34px;border-radius:50%;border:3px solid var(--border);border-top-color:var(--orange-light);
+  margin:0 auto 12px;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty-state i,.error-state i{font-size:1.5rem;display:block;margin-bottom:12px}
+.empty-state i{color:var(--warn)}
+.error-state i{color:var(--danger)}
+
+/* TOAST */
+.toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:var(--surface-3);
+  color:var(--text);padding:12px 22px;border-radius:10px;border:1px solid var(--border-2);
+  box-shadow:0 8px 24px rgba(0,0,0,.5);z-index:9999;font-weight:600;font-size:.85rem;
+  max-width:90%;text-align:center;animation:toastIn .3s ease-out}
+.toast.out{opacity:0;transition:opacity .3s}
+@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(16px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+</style>
 </head>
 <body>
-    <header class="toolbar toolbar-lotomania">
-        <h1><i class="fa-solid fa-chart-simple" style="color: #FFD700;"></i> Lotomania - Estratégia</h1>
-        <button onclick="window.location.href='home.html'" style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: bold;">
-            <i class="fa-solid fa-arrow-left"></i> Voltar
-        </button>
-    </header>
 
-    <div class="lotomania-container">
-        <div id="analise" class="card-analise">
-            <h3><i class="fa-solid fa-chart-line"></i> Análise</h3>
-            <div id="analise-texto">Carregando...</div>
-        </div>
-
-        <div id="comparativo" style="display: none;">
-            <div class="section-title">Comparativo Últimos Concursos</div>
-            <div class="comparativo-grid">
-                <div class="concurso-box">
-                    <h4 id="titulo-anterior">Anterior</h4>
-                    <div id="grid-anterior" class="balls-grid"></div>
-                </div>
-                <div class="concurso-box">
-                    <h4 id="titulo-ultimo">Último • Repetidas em destaque</h4>
-                    <div id="grid-ultimo" class="balls-grid"></div>
-                </div>
-            </div>
-            <div id="stats-ultimo" class="stats-text"></div>
-        </div>
-
-        <div class="controls">
-            <div class="group">
-                <label>Repetidas:</label>
-                <button id="rep-men">-</button>
-                <input type="number" id="qtd-repetidas" value="10" min="0" max="20">
-                <button id="rep-mais">+</button>
-            </div>
-            <div class="group">
-                <label>Jogos:</label>
-                <button id="jog-men">-</button>
-                <input type="number" id="qtd-jogos" value="10" min="1" max="50">
-                <button id="jog-mais">+</button>
-            </div>
-        </div>
-
-        <button id="btn-gerar" class="btn-gerar"><i class="fa-solid fa-bolt"></i> Gerar Jogos</button>
-        <div id="progress"><i class="fa-solid fa-spinner fa-spin"></i> Gerando...</div>
-
-        <div id="resultados">
-            <button id="btn-salvar-todos" class="btn-salvar-todos" style="display:none;"><i class="fa-solid fa-save"></i> Salvar Todos</button>
-            <div id="container-jogos"></div>
-        </div>
+<header class="toolbar">
+  <div class="title-wrap">
+    <div class="brand-mark"><i class="fa-solid fa-chart-simple"></i></div>
+    <div>
+      <h1>Lotomania — Estratégia</h1>
+      <p class="sub">Distribuição por linhas + repetição do último concurso</p>
     </div>
+  </div>
+  <a href="home.html" class="btn-back"><i class="fa-solid fa-arrow-left"></i> Voltar</a>
+</header>
 
-    <!-- 1. Carrega o banco de dados dos concursos da Lotomania -->
-    <script src="historico_lotomania.js"></script>
+<main class="container">
 
-    <!-- 2. Carrega a lógica da tela da Lotomania -->
-    <script src="lotomania-estrategia.js"></script>
+  <!-- ANÁLISE -->
+  <section class="card">
+    <h3><i class="fa-solid fa-chart-line"></i> Análise histórica</h3>
+    <p class="desc">Comportamento de repetição das dezenas do concurso anterior para o atual, em toda a base oficial da Lotomania.</p>
+    <div id="analise-content">
+      <div class="loading-state"><div class="spinner"></div><p>Lendo histórico oficial…</p></div>
+    </div>
+  </section>
+
+  <!-- COMPARATIVO -->
+  <section class="card" id="comparativo" style="display:none">
+    <h3><i class="fa-solid fa-code-compare"></i> Último × Anterior</h3>
+    <p class="desc">Dezenas <span style="color:var(--orange-light);font-weight:700">destacadas em laranja</span> repetiram do concurso anterior para o último.</p>
+    <div class="compare-grid">
+      <div class="compare-box">
+        <div class="head"><i class="fa-solid fa-clock-rotate-left"></i> <span id="lbl-anterior">Concurso anterior</span></div>
+        <div class="dez-grid" id="grid-anterior"></div>
+      </div>
+      <div class="compare-box">
+        <div class="head orange"><i class="fa-solid fa-bullseye"></i> <span id="lbl-ultimo">Último concurso</span></div>
+        <div class="dez-grid" id="grid-ultimo"></div>
+      </div>
+    </div>
+    <div class="rep-info" id="rep-info"></div>
+  </section>
+
+  <!-- CONTROLES -->
+  <section class="controls-panel">
+    <div class="controls-grid">
+      <div class="ctrl-group">
+        <label>Dezenas por jogo</label>
+        <div class="ctrl-stepper">
+          <button type="button" onclick="stepper('dezenas',-1)">−</button>
+          <input type="number" id="dezenas" value="50" min="50" max="50">
+          <button type="button" onclick="stepper('dezenas',1)">+</button>
+        </div>
+      </div>
+      <div class="ctrl-group">
+        <label>Repetidas do último</label>
+        <div class="ctrl-stepper">
+          <button type="button" onclick="stepper('repetidas',-1)">−</button>
+          <input type="number" id="repetidas" value="10" min="0" max="20">
+          <button type="button" onclick="stepper('repetidas',1)">+</button>
+        </div>
+      </div>
+      <div class="ctrl-group">
+        <label>Quantidade de jogos</label>
+        <div class="ctrl-stepper">
+          <button type="button" onclick="stepper('jogos',-1)">−</button>
+          <input type="number" id="jogos" value="10" min="1" max="50">
+          <button type="button" onclick="stepper('jogos',1)">+</button>
+        </div>
+      </div>
+      <div class="ctrl-group">
+        <label>Pares</label>
+        <input type="number" id="filtro-pares" class="ctrl-input" placeholder="ex: 25" min="0" max="50">
+        <span class="hint-auto" id="hint-pares"></span>
+      </div>
+      <div class="ctrl-group">
+        <label>Ímpares</label>
+        <input type="number" id="filtro-impares" class="ctrl-input" placeholder="ex: 25" min="0" max="50">
+        <span class="hint-auto" id="hint-impares"></span>
+      </div>
+      <div class="ctrl-group">
+        <label>Primos <span style="color:var(--faint);font-weight:400">(opcional)</span></label>
+        <input type="number" id="filtro-primos" class="ctrl-input" placeholder="ex: 20" min="0" max="50">
+      </div>
+    </div>
+    <button class="btn-generate" id="btn-gerar" onclick="gerarJogos()">
+      <i class="fa-solid fa-bolt"></i> Gerar jogos
+    </button>
+  </section>
+
+  <!-- RESULTADOS -->
+  <section id="resultados" style="display:none">
+    <div class="results-header">
+      <h3><i class="fa-solid fa-list-ol"></i> Jogos gerados</h3>
+      <span class="count" id="resultados-count"></span>
+    </div>
+    <button class="btn-save-all" onclick="salvarTodos()">
+      <i class="fa-solid fa-floppy-disk"></i> Salvar todos os jogos
+    </button>
+    <div id="container-jogos"></div>
+  </section>
+
+</main>
+
+<script>
+/* ============================================================
+   CONSTANTES — LOTOMANIA (0 a 99, 100 dezenas, 50 por jogo)
+   ============================================================ */
+const TOTAL_DEZENAS = 100;
+const PRIMOS = [2,3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59,61,67,71,73,79,83,89,97]; // 25 primos entre 0 e 99
+const ARQUIVO_JSON = 'historico_lotomania.json';
+
+/* ESTADO */
+let historico = [];
+let jogosGerados = [];
+
+/* ============================================================
+   UTILITÁRIOS
+   ============================================================ */
+const $ = id => document.getElementById(id);
+
+function toast(msg){
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(()=>{ t.classList.add('out'); setTimeout(()=>t.remove(), 300); }, 2400);
+}
+
+function concursoHeader(d){
+  return d.concurso || d.numero || d.id || '?';
+}
+function getDezenas(d){
+  const raw = d.dezenas || d.listaDezenas || [];
+  return raw.map(n => parseInt(n, 10)).filter(n => !isNaN(n));
+}
+function pad2(n){ return String(n).padStart(2, '0'); }
+function isPrimo(n){ return PRIMOS.includes(n); }
+
+/* ============================================================
+   CARREGAMENTO DO HISTÓRICO
+   ============================================================ */
+async function carregarHistorico(){
+  const cb = Date.now();
+  try{
+    const r = await fetch(`./${ARQUIVO_JSON}?v=${cb}`);
+    if(!r.ok) throw new Error('HTTP ' + r.status);
+    const data = await r.json();
+    if(!Array.isArray(data) || data.length === 0) throw new Error('Formato inválido');
+    historico = data
+      .filter(d => getDezenas(d).length > 0)
+      .sort((a,b) => Number(concursoHeader(b)) - Number(concursoHeader(a)));
+    return true;
+  } catch(e){
+    console.error('Erro ao carregar histórico:', e);
+    return false;
+  }
+}
+
+/* ============================================================
+   ANÁLISE DE REPETIÇÃO
+   ============================================================ */
+function calcularAnalise(){
+  if(historico.length < 2) return null;
+
+  const dist = {};
+  let totalPares = 0;
+  let somaRep = 0;
+  let maxRep = 0;
+  let minRep = 50;
+
+  for(let i=0;i<historico.length-1;i++){
+    const atual = new Set(getDezenas(historico[i]));
+    const anterior = getDezenas(historico[i+1]);
+    let rep = 0;
+    for(const n of anterior){ if(atual.has(n)) rep++; }
+    dist[rep] = (dist[rep] || 0) + 1;
+    somaRep += rep;
+    maxRep = Math.max(maxRep, rep);
+    minRep = Math.min(minRep, rep);
+    totalPares++;
+  }
+
+  const media = somaRep / totalPares;
+
+  let moda = 0, modaCount = 0;
+  Object.entries(dist).forEach(([qtd, c]) => {
+    if(c > modaCount){ modaCount = c; moda = Number(qtd); }
+  });
+
+  return { dist, totalPares, media, maxRep, minRep, moda, modaCount };
+}
+
+/* ============================================================
+   RENDER ANÁLISE
+   ============================================================ */
+function renderAnalise(){
+  const box = $('analise-content');
+  if(historico.length < 2){
+    box.innerHTML = `
+      <div class="empty-state">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <p>Histórico insuficiente ou ausente para análise.</p>
+        <p style="font-size:.75rem;margin-top:8px;color:var(--faint)">Verifique se <code>${ARQUIVO_JSON}</code> está na mesma pasta.</p>
+      </div>`;
+    return;
+  }
+
+  const a = calcularAnalise();
+  const ult = historico[0];
+  const pen = historico[1];
+  const dezUlt = getDezenas(ult);
+  const dezPen = getDezenas(pen);
+  const repetidasUlt = dezUlt.filter(n => dezPen.includes(n));
+
+  const qtds = Object.keys(a.dist).map(Number).sort((x,y)=>x-y);
+  const maiorCont = Math.max(...Object.values(a.dist));
+  const distHtml = qtds.map(q => {
+    const c = a.dist[q];
+    const pct = (c / a.totalPares * 100).toFixed(1);
+    const largura = (c / maiorCont * 100).toFixed(1);
+    return `<div class="dist-row">
+      <span class="qtd">${q}</span>
+      <div class="bar"><div class="fill" style="width:${largura}%"></div></div>
+      <span class="pct">${pct}%</span>
+    </div>`;
+  }).join('');
+
+  box.innerHTML = `
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="lbl"><i class="fa-solid fa-hashtag"></i> Concursos analisados</div>
+        <div class="val">${historico.length}</div>
+      </div>
+      <div class="stat-card">
+        <div class="lbl"><i class="fa-solid fa-arrows-rotate"></i> Média repetidas</div>
+        <div class="val">${a.media.toFixed(1)}</div>
+      </div>
+      <div class="stat-card">
+        <div class="lbl"><i class="fa-solid fa-star"></i> Valor mais comum</div>
+        <div class="val">${a.moda}</div>
+      </div>
+      <div class="stat-card">
+        <div class="lbl"><i class="fa-solid fa-arrow-trend-up"></i> Máx. / Mín.</div>
+        <div class="val">${a.maxRep} / ${a.minRep}</div>
+      </div>
+    </div>
+    <h4 style="font-family:var(--font-display);font-size:.92rem;color:var(--text);margin:14px 0 4px">
+      Distribuição de repetições
+    </h4>
+    <p style="color:var(--muted);font-size:.74rem;margin-bottom:8px">
+      Quantas dezenas do concurso anterior se repetiram no seguinte.
+    </p>
+    <div class="dist-list">${distHtml}</div>
+  `;
+
+  $('comparativo').style.display = 'block';
+  $('lbl-anterior').textContent = `Concurso ${concursoHeader(pen)}`;
+  $('lbl-ultimo').textContent   = `Concurso ${concursoHeader(ult)}`;
+
+  const gridAnterior = $('grid-anterior');
+  const gridUltimo   = $('grid-ultimo');
+  gridAnterior.innerHTML = '';
+  gridUltimo.innerHTML = '';
+
+  // Lotomania: de 00 a 99
+  for(let n=0;n<TOTAL_DEZENAS;n++){
+    const cA = document.createElement('div');
+    cA.className = 'dez-cell' + (dezPen.includes(n) ? ' sorteada' : '');
+    cA.textContent = pad2(n);
+    gridAnterior.appendChild(cA);
+
+    const cB = document.createElement('div');
+    const rep = repetidasUlt.includes(n);
+    cB.className = 'dez-cell' + (dezUlt.includes(n) ? (rep ? ' repetida' : ' sorteada') : '');
+    cB.textContent = pad2(n);
+    gridUltimo.appendChild(cB);
+  }
+
+  $('rep-info').innerHTML = `
+    <i class="fa-solid fa-arrows-rotate" style="color:var(--orange-light)"></i>
+    Repetiram do concurso <strong>${concursoHeader(pen)}</strong> para o
+    <strong>${concursoHeader(ult)}</strong>:
+    <strong>${repetidasUlt.length}</strong> dezena${repetidasUlt.length === 1 ? '' : 's'}
+  `;
+}
+
+/* ============================================================
+   STEPPER
+   ============================================================ */
+function stepper(id, delta){
+  const el = $(id);
+  let v = parseInt(el.value, 10) || 0;
+  const min = parseInt(el.min, 10);
+  const max = parseInt(el.max, 10);
+  v = Math.max(min, Math.min(max, v + delta));
+  el.value = v;
+  if(id === 'dezenas') sincronizarParesImpares('pares');
+}
+
+/* ============================================================
+   AUTO-SYNC PARES ↔ ÍMPARES
+   ============================================================ */
+function sincronizarParesImpares(origem){
+  const total = parseInt($('dezenas').value, 10) || 50;
+  if(origem === 'pares'){
+    const p = parseInt($('filtro-pares').value, 10);
+    if(!isNaN(p) && p >= 0 && p <= total){
+      $('filtro-impares').value = total - p;
+    }
+  } else if(origem === 'impares'){
+    const i = parseInt($('filtro-impares').value, 10);
+    if(!isNaN(i) && i >= 0 && i <= total){
+      $('filtro-pares').value = total - i;
+    }
+  }
+}
+
+/* ============================================================
+   GERAÇÃO — FILTROS RESPEITADOS
+   ============================================================ */
+function contarPares(dez){ return dez.filter(n => n % 2 === 0).length; }
+function contarPrimos(dez){ return dez.filter(n => isPrimo(n)).length; }
+
+function validarFiltrosPossiveis(total, pares, impares, primos){
+  const maxPares = 50;   // 0,2,4...98 → 50 pares
+  const maxImpares = 50; // 1,3,5...99 → 50 ímpares
+  const maxPrimos = PRIMOS.length;                              // 25
+  const primosPares = PRIMOS.filter(n => n % 2 === 0).length;   // só o 2
+  const primosImpares = PRIMOS.filter(n => n % 2 !== 0).length; // 24
+
+  if(pares != null && (pares < 0 || pares > Math.min(maxPares, total))){
+    return `Pares deve estar entre 0 e ${Math.min(maxPares, total)}.`;
+  }
+  if(impares != null && (impares < 0 || impares > Math.min(maxImpares, total))){
+    return `Ímpares deve estar entre 0 e ${Math.min(maxImpares, total)}.`;
+  }
+  if(primos != null && (primos < 0 || primos > Math.min(maxPrimos, total))){
+    return `Primos deve estar entre 0 e ${Math.min(maxPrimos, total)}.`;
+  }
+  if(pares != null && impares != null && (pares + impares) !== total){
+    return `Pares (${pares}) + Ímpares (${impares}) = ${pares + impares}. Deve ser exatamente ${total}.`;
+  }
+  if(primos != null){
+    const targetI = impares != null ? impares : (pares != null ? total - pares : null);
+    const targetP = pares != null ? pares : (impares != null ? total - impares : null);
+    if(targetI != null){
+      const minPI = Math.max(0, primos - primosPares);
+      if(minPI > targetI){
+        return `Combinação impossível: ${primos} primos + ${targetI} ímpares. Só existe 1 primo par (o 2). Seriam necessários ${minPI} primos ímpares.`;
+      }
+    }
+    if(targetP != null){
+      const minPP = Math.max(0, primos - primosImpares);
+      if(minPP > targetP){
+        return `Combinação impossível: ${primos} primos + ${targetP} pares. Seriam necessários ${minPP} primos pares.`;
+      }
+    }
+  }
+  return null;
+}
+
+function _calcErro(jogo, alvoP, alvoI, alvoPr){
+  const p = contarPares(jogo);
+  const i = jogo.length - p;
+  const pr = contarPrimos(jogo);
+  let e = 0;
+  if(alvoP != null) e += Math.abs(p - alvoP);
+  if(alvoI != null) e += Math.abs(i - alvoI);
+  if(alvoPr != null) e += Math.abs(pr - alvoPr);
+  return e;
+}
+
+function ajustarFiltros(jogo, alvoP, alvoI, alvoPr){
+  if(alvoP == null && alvoI == null && alvoPr == null) return [...jogo].sort((a,b)=>a-b);
+  let atual = [...jogo];
+  let err = _calcErro(atual, alvoP, alvoI, alvoPr);
+  if(err === 0) return atual.sort((a,b)=>a-b);
+
+  const universo = [];
+  for(let n=0;n<TOTAL_DEZENAS;n++) if(!atual.includes(n)) universo.push(n);
+
+  // Com 50 swaps possíveis e até 500 iterações, garante atendimento
+  for(let iter=0; iter<500 && err>0; iter++){
+    let melhorErr = err, melhorIdx = -1, melhorVal = null;
+    for(let i=0;i<atual.length;i++){
+      for(const v of universo){
+        const teste = [...atual];
+        teste[i] = v;
+        const e = _calcErro(teste, alvoP, alvoI, alvoPr);
+        if(e < melhorErr){
+          melhorErr = e;
+          melhorIdx = i;
+          melhorVal = v;
+          if(e === 0) break;
+        }
+      }
+      if(melhorErr === 0) break;
+    }
+    if(melhorIdx === -1) break;
+    const antigo = atual[melhorIdx];
+    atual[melhorIdx] = melhorVal;
+    universo.splice(universo.indexOf(melhorVal), 1);
+    universo.push(antigo);
+    err = melhorErr;
+  }
+  return atual.sort((a,b)=>a-b);
+}
+
+function escolherAleatorios(arr, qtd){
+  const copia = [...arr];
+  const out = [];
+  for(let i=0;i<qtd && copia.length>0;i++){
+    const idx = Math.floor(Math.random() * copia.length);
+    out.push(copia.splice(idx, 1)[0]);
+  }
+  return out;
+}
+
+function gerarUmJogo(dezUltimo, qtdDezenas, qtdRepetidas){
+  const repetidas = escolherAleatorios(dezUltimo, qtdRepetidas);
+  const universo = [];
+  for(let n=0;n<TOTAL_DEZENAS;n++) if(!dezUltimo.includes(n)) universo.push(n);
+  const novas = escolherAleatorios(universo, qtdDezenas - qtdRepetidas);
+  return [...repetidas, ...novas].sort((a,b)=>a-b);
+}
+
+function gerarJogos(){
+  if(historico.length < 2){
+    toast('Histórico insuficiente para gerar.');
+    return;
+  }
+
+  const btn = $('btn-gerar');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Gerando…';
+
+  setTimeout(() => {
+    const qtdDezenas  = parseInt($('dezenas').value, 10);
+    const qtdRepetidas = parseInt($('repetidas').value, 10);
+    const qtdJogos    = parseInt($('jogos').value, 10);
+
+    const pVazio = $('filtro-pares').value.trim();
+    const iVazio = $('filtro-impares').value.trim();
+    const prVazio = $('filtro-primos').value.trim();
+    const alvoP  = pVazio  === '' ? null : parseInt(pVazio, 10);
+    const alvoI  = iVazio  === '' ? null : parseInt(iVazio, 10);
+    const alvoPr = prVazio === '' ? null : parseInt(prVazio, 10);
+
+    if(qtdRepetidas > qtdDezenas){
+      toast('Repetidas não pode ser maior que dezenas.');
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-bolt"></i> Gerar jogos';
+      return;
+    }
+
+    const erroFiltros = validarFiltrosPossiveis(qtdDezenas, alvoP, alvoI, alvoPr);
+    if(erroFiltros){
+      alert('⚠️ Filtros impossíveis\n\n' + erroFiltros);
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-bolt"></i> Gerar jogos';
+      return;
+    }
+
+    const dezUltimo = getDezenas(historico[0]);
+    const jogos = [];
+    const avisos = [];
+    const MAX_TENT = 400;
+
+    for(let i=0; i<qtdJogos; i++){
+      let jogo = null;
+      let tent = 0;
+      while(tent < MAX_TENT){
+        tent++;
+        const c = gerarUmJogo(dezUltimo, qtdDezenas, qtdRepetidas);
+        if(_calcErro(c, alvoP, alvoI, alvoPr) === 0 &&
+           !jogos.some(j => j.join('-') === c.join('-'))){
+          jogo = c;
+          break;
+        }
+      }
+      if(!jogo){
+        const base = gerarUmJogo(dezUltimo, qtdDezenas, qtdRepetidas);
+        const ajustado = ajustarFiltros(base, alvoP, alvoI, alvoPr);
+        if(_calcErro(ajustado, alvoP, alvoI, alvoPr) !== 0){
+          avisos.push(`Jogo ${i+1}: pedido (P:${alvoP ?? '-'} I:${alvoI ?? '-'} Pr:${alvoPr ?? '-'}) → obtido (P:${contarPares(ajustado)} I:${ajustado.length-contarPares(ajustado)} Pr:${contarPrimos(ajustado)})`);
+        }
+        jogo = ajustado;
+      }
+      jogos.push(jogo);
+    }
+
+    jogosGerados = jogos;
+    renderResultados(dezUltimo, alvoP, alvoI, alvoPr);
+
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-bolt"></i> Gerar jogos';
+
+    if(avisos.length > 0){
+      console.warn('[Filtros] Avisos:\n' + avisos.join('\n'));
+      setTimeout(() => {
+        alert('⚠️ Alguns jogos não conseguiram atender 100% dos filtros:\n\n' + avisos.slice(0,5).join('\n') + (avisos.length>5?'\n...':''));
+      }, 100);
+    } else {
+      toast(`✅ ${jogos.length} jogo${jogos.length===1?'':'s'} gerado${jogos.length===1?'':'s'}.`);
+    }
+  }, 30);
+}
+
+/* ============================================================
+   RENDER RESULTADOS
+   ============================================================ */
+function renderResultados(dezUltimo, alvoP, alvoI, alvoPr){
+  const wrap = $('resultados');
+  const cont = $('container-jogos');
+
+  if(jogosGerados.length === 0){
+    wrap.style.display = 'none';
+    return;
+  }
+
+  wrap.style.display = 'block';
+  $('resultados-count').textContent = `${jogosGerados.length} jogo${jogosGerados.length===1?'':'s'}`;
+
+  cont.innerHTML = jogosGerados.map((jogo, i) => {
+    const repetidas = jogo.filter(n => dezUltimo.includes(n)).length;
+    const p = contarPares(jogo);
+    const pr = contarPrimos(jogo);
+    const i2 = jogo.length - p;
+
+    const bateuP = alvoP == null || p === alvoP;
+    const bateuI = alvoI == null || i2 === alvoI;
+    const bateuPr = alvoPr == null || pr === alvoPr;
+    const bateuTudo = bateuP && bateuI && bateuPr;
+    const cor = bateuTudo ? 'var(--good)' : 'var(--danger)';
+    const icone = bateuTudo ? '✅' : '⚠️';
+
+    const nums = jogo.map(n => {
+      const isRep = dezUltimo.includes(n);
+      return `<div class="gc-num${isRep?' is-repeat':''}" title="${isRep?'Repetida do último':'Nova'}">${pad2(n)}</div>`;
+    }).join('');
+
+    return `
+      <div class="game-card">
+        <div class="gc-head">
+          <div class="gc-title">
+            <i class="fa-solid fa-ticket"></i> Jogo ${i+1}
+          </div>
+          <div class="gc-meta">${repetidas} rep · ${p}P/${i2}I/${pr}Pr · <span style="color:${cor}">${icone}</span></div>
+        </div>
+        <div class="gc-numbers">${nums}</div>
+        <div class="gc-actions">
+          <button class="primary" onclick="salvarJogo(${i})">
+            <i class="fa-solid fa-floppy-disk"></i> Salvar
+          </button>
+          <button onclick="copiarJogo(${i})">
+            <i class="fa-solid fa-copy"></i> Copiar
+          </button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+/* ============================================================
+   SALVAR / COPIAR
+   ============================================================ */
+function salvarJogo(idx){
+  const jogo = jogosGerados[idx];
+  if(!jogo) return;
+  const lista = JSON.parse(localStorage.getItem('saved_games_list') || '[]');
+  lista.push({
+    loteria: 'Lotomania',
+    numeros: jogo,
+    data: new Date().toLocaleDateString('pt-BR'),
+    tipo: 'lotomania-estrategia',
+    repetidas: jogo.filter(n => getDezenas(historico[0]).includes(n)).length
+  });
+  localStorage.setItem('saved_games_list', JSON.stringify(lista));
+  toast(`💾 Jogo ${idx+1} salvo.`);
+}
+
+function salvarTodos(){
+  if(jogosGerados.length === 0){ toast('Nada para salvar.'); return; }
+  const lista = JSON.parse(localStorage.getItem('saved_games_list') || '[]');
+  const dezUlt = getDezenas(historico[0]);
+  jogosGerados.forEach(jogo => {
+    lista.push({
+      loteria: 'Lotomania',
+      numeros: jogo,
+      data: new Date().toLocaleDateString('pt-BR'),
+      tipo: 'lotomania-estrategia',
+      repetidas: jogo.filter(n => dezUlt.includes(n)).length
+    });
+  });
+  localStorage.setItem('saved_games_list', JSON.stringify(lista));
+  toast(`💾 ${jogosGerados.length} jogos salvos.`);
+}
+
+function copiarJogo(idx){
+  const jogo = jogosGerados[idx];
+  if(!jogo) return;
+  const txt = jogo.map(pad2).join(' ');
+  navigator.clipboard.writeText(txt).then(() => {
+    toast(`📋 Jogo ${idx+1} copiado.`);
+  }).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = txt;
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); toast(`📋 Jogo ${idx+1} copiado.`); }
+    catch { toast('Não foi possível copiar.'); }
+    ta.remove();
+  });
+}
+
+/* ============================================================
+   EVENTOS DE INPUT
+   ============================================================ */
+$('filtro-pares')?.addEventListener('input', () => sincronizarParesImpares('pares'));
+$('filtro-impares')?.addEventListener('input', () => sincronizarParesImpares('impares'));
+$('dezenas')?.addEventListener('input', () => sincronizarParesImpares('pares'));
+
+/* ============================================================
+   START
+   ============================================================ */
+(async function init(){
+  const ok = await carregarHistorico();
+  if(!ok){
+    $('analise-content').innerHTML = `
+      <div class="error-state">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <p>Não foi possível carregar <code>${ARQUIVO_JSON}</code>.</p>
+        <p style="font-size:.75rem;margin-top:8px;color:var(--faint)">
+          Coloque o arquivo JSON na mesma pasta desta página.
+        </p>
+      </div>`;
+    return;
+  }
+  renderAnalise();
+})();
+</script>
 </body>
 </html>
