@@ -73,6 +73,16 @@
     --font-size-xl: 1.5rem;
 }
 
+
+/* ✅ Pintura instantânea — evita tela branca antes do CSS completo carregar */
+html {
+    background-color: #f4f5f7;
+    color-scheme: light;
+}
+html.dark, html:has(meta[name="color-scheme"][content="dark"]) {
+    background-color: #07080C;
+    color-scheme: dark;
+}
 /* ============================================================
    RESET & BASE
    ============================================================ */
