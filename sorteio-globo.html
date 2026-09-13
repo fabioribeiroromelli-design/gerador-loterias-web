@@ -24,7 +24,6 @@ body{min-height:100vh;background:var(--stage-950);color:var(--paper-100);font-fa
 :focus-visible{outline:2px solid var(--brass-400);outline-offset:2px}
 h1,h2,h3{margin:0}p{margin:0}
 
-/* TOPBAR */
 .topbar{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding-top:1.8rem;flex-wrap:wrap}
 .back-btn{display:inline-flex;align-items:center;gap:.4rem;padding:.5rem .85rem;border-radius:999px;
   background:var(--stage-800);border:1px solid var(--stage-700);color:var(--paper-100);text-decoration:none;
@@ -42,7 +41,6 @@ h1,h2,h3{margin:0}p{margin:0}
 .games-badge{font-weight:700;font-size:.72rem;color:var(--paper-300);background:var(--stage-800);border:1px solid var(--stage-700);
   padding:.4rem .8rem;border-radius:999px;white-space:nowrap}
 
-/* TABS */
 .tab-rail{display:flex;gap:.3rem;margin:1.3rem 0 .3rem;border-bottom:1px solid var(--stage-700);padding-bottom:0}
 .tab-btn{background:transparent;border:none;color:var(--paper-500);padding:.75rem 1.1rem;font-family:var(--font-body);
   font-weight:700;font-size:.88rem;cursor:pointer;border-bottom:3px solid transparent;display:inline-flex;align-items:center;
@@ -54,7 +52,6 @@ h1,h2,h3{margin:0}p{margin:0}
 @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-/* TICKET RAIL */
 .ticket-rail{display:grid;grid-template-columns:repeat(5,1fr);gap:.5rem;margin:.9rem 0 1rem}
 @media(max-width:540px){.ticket-rail{grid-template-columns:repeat(3,1fr)}}
 .lot-card{--lot-color:var(--accent);position:relative;width:100%;background:var(--stage-850);border:1px solid var(--stage-700);
@@ -69,7 +66,6 @@ h1,h2,h3{margin:0}p{margin:0}
 .lot-card.active{border-color:var(--lot-color);background:var(--stage-800);
   box-shadow:0 0 0 1px var(--lot-color),0 8px 18px -8px var(--lot-color)}
 
-/* STAGE */
 .stage{position:relative;display:flex;flex-direction:column;align-items:center;padding:2rem 1rem 1.7rem;
   border-radius:24px;background:radial-gradient(ellipse at 50% -10%,var(--stage-800),var(--stage-950) 68%);overflow:hidden}
 .spotlight{position:absolute;top:-22%;left:50%;width:140%;height:68%;transform:translateX(-50%);
@@ -116,7 +112,6 @@ h1,h2,h3{margin:0}p{margin:0}
 .controls{display:flex;gap:.7rem;margin-top:1.5rem;width:100%;position:relative;z-index:2}
 .controls .btn{flex:1}
 
-/* BUTTONS */
 .btn{font-family:var(--font-body);font-weight:700;font-size:.9rem;border:none;border-radius:999px;padding:.85rem 1.2rem;
   display:inline-flex;align-items:center;justify-content:center;gap:.5rem;cursor:pointer;
   transition:transform .15s ease,box-shadow .15s ease,opacity .15s ease;white-space:nowrap}
@@ -128,7 +123,6 @@ h1,h2,h3{margin:0}p{margin:0}
 .btn-ghost{background:transparent;color:var(--paper-300);text-decoration:underline;text-underline-offset:3px;padding:.85rem .4rem}
 .btn-save{background:var(--good);color:#06281a}
 
-/* DRAWN AREA */
 .drawn-area{margin-top:2rem;display:none}
 .drawn-area.visible{display:block}
 .drawn-area h3{font-family:var(--font-display);font-weight:600;font-size:1.1rem;color:var(--paper-100);margin-bottom:.8rem}
@@ -144,7 +138,6 @@ h1,h2,h3{margin:0}p{margin:0}
 .extra-label{font-weight:700;color:var(--brass-300);font-size:.8rem}
 .extra-value{color:var(--paper-100);font-weight:600}
 
-/* EXCLUSIONS */
 .exclusion-section{margin-top:2.2rem;padding-top:1.6rem;border-top:1px solid var(--stage-700)}
 .exclusion-section h3{font-size:.92rem;font-weight:700;color:var(--paper-300);display:flex;align-items:center;gap:.5rem;margin-bottom:.9rem}
 .exclusion-form{display:flex;gap:.6rem;flex-wrap:wrap}
@@ -153,7 +146,6 @@ h1,h2,h3{margin:0}p{margin:0}
 #excludedInput:focus{border-color:var(--accent)}
 .hint{white-space:pre-line;color:var(--paper-500);font-size:.78rem;margin-top:.7rem;line-height:1.5}
 
-/* EXCLUDED CHIPS */
 .excluded-chips{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1rem;padding-top:.9rem;
   border-top:1px dashed var(--stage-700);align-items:center;min-height:2.6rem}
 .excluded-chip-label{font-size:.72rem;font-weight:700;color:var(--paper-500);text-transform:uppercase;
@@ -163,7 +155,6 @@ h1,h2,h3{margin:0}p{margin:0}
   box-shadow:0 3px 10px -3px rgba(224,85,63,.6);animation:ballIn .25s ease-out backwards}
 .excluded-empty{color:var(--paper-500);font-size:.78rem;font-style:italic}
 
-/* SUPER SETE GRID */
 .supersete-wrap{margin-top:1rem;overflow-x:auto}
 .ss-tip{color:var(--paper-500);font-size:.76rem;line-height:1.5;margin-top:.75rem;padding:.6rem .8rem;
   background:var(--stage-900);border-radius:8px;border-left:3px solid var(--brass-400)}
@@ -183,17 +174,14 @@ h1,h2,h3{margin:0}p{margin:0}
   background:transparent;color:var(--paper-500);font-family:var(--font-ball);font-weight:700;font-size:.72rem;
   transition:all .12s ease}
 
-/* RODAPÉ */
 .bottom-actions{display:flex;justify-content:space-between;align-items:center;margin-top:2.2rem;gap:1rem;flex-wrap:wrap}
 
-/* TOAST */
 .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:var(--stage-800);color:var(--paper-100);
   padding:12px 24px;border-radius:10px;border:1px solid var(--stage-700);box-shadow:0 8px 24px rgba(0,0,0,.4);
   z-index:9999;font-weight:600;max-width:90%;text-align:center;animation:fadeInUp .3s ease-out}
 .toast-out{opacity:0;transition:opacity .3s}
 @keyframes fadeInUp{from{opacity:0;transform:translateX(-50%) translateY(20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
 
-/* ============ ESTATÍSTICAS ============ */
 .stats-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;
   background:var(--stage-850);border:1px solid var(--stage-700);padding:1rem 1.2rem;border-radius:14px;margin-bottom:1.2rem}
 .stats-header h2{font-family:var(--font-display);font-weight:700;font-size:1.4rem}
@@ -337,7 +325,6 @@ h1,h2,h3{margin:0}p{margin:0}
 
   <nav class="ticket-rail" id="lotterySelector"></nav>
 
-  <!-- ============ SORTEIO ============ -->
   <section id="view-draw" class="view active">
     <section class="stage">
       <div class="spotlight"></div>
@@ -383,7 +370,6 @@ h1,h2,h3{margin:0}p{margin:0}
     </section>
   </section>
 
-  <!-- ============ ESTATÍSTICAS ============ -->
   <section id="view-stats" class="view">
     <div class="stats-header">
       <div>
@@ -561,7 +547,6 @@ let isSuperSete=false;
 let currentStatsKey='megasena';
 let currentStatsName='Mega-Sena';
 
-/* DOM */
 const $=id=>document.getElementById(id);
 const globo=$('globo'),currentNumber=$('currentNumber'),lotteryName=$('lotteryName');
 const totalNumbers=$('totalNumbers'),statusInfo=$('statusInfo'),gamesCount=$('gamesCount');
@@ -574,7 +559,7 @@ const globeBalls=$('globeBalls'),langSelect=$('langSelect');
 const excludedChips=$('excludedChips'),exclusionForm=$('exclusionForm');
 
 /* ============================================================
-   TRADUÇÃO UI  ← ✅ CORRIGIDO
+   TRADUÇÃO UI
    ============================================================ */
 function updateLanguageUI(){
   document.getElementById('txtBack').textContent=t('back');
@@ -599,8 +584,6 @@ function updateLanguageUI(){
     exclusionHint.textContent=t('hintText')+ex;
   }
 
-  // ✅ CORREÇÃO: sempre recria os botões inteiros (com o <span> correto)
-  // Removida a linha que buscava #lblDrawOne por id (causava crash no Super Sete).
   let labelDrawOne;
   if(isSuperSete){
     labelDrawOne = isGameFinished ? t('newDraw') : (t('colLabel') + ' ' + (drawnNumbers.length + 1));
@@ -608,8 +591,6 @@ function updateLanguageUI(){
     labelDrawOne = isGameFinished ? t('newDraw') : t('draw');
   }
   btnDrawOne.innerHTML = `<i class="fa-solid fa-circle-play"></i> <span>${labelDrawOne}</span>`;
-
-  // ✅ Botão "Sortear Todos" também recriado para consistência
   const labelDrawAll = isGameFinished ? t('newDraw') : t('drawAll');
   btnDrawAll.innerHTML = `<i class="fa-solid fa-forward-step"></i> <span>${labelDrawAll}</span>`;
 
@@ -624,9 +605,6 @@ function showToast(msg){
   setTimeout(()=>{toast.classList.add('toast-out');setTimeout(()=>toast.remove(),300);},2500);
 }
 
-/* ============================================================
-   CARDS DE LOTERIA
-   ============================================================ */
 function renderLotteryCards(){
   lotterySelector.innerHTML=Object.values(LOTTERY_TYPES).map(lot=>`
     <div class="lot-card ${lot.id===currentLotteryId?'active':''}" data-id="${lot.id}"
@@ -638,9 +616,6 @@ function renderLotteryCards(){
   document.querySelectorAll('.lot-card').forEach(c=>c.addEventListener('click',()=>selectLottery(c.dataset.id)));
 }
 
-/* ============================================================
-   SELEÇÃO DE LOTERIA
-   ============================================================ */
 function selectLottery(id){
   if(isDrawing) return;
   currentLotteryId=id;
@@ -677,9 +652,6 @@ function selectLottery(id){
   }
 }
 
-/* ============================================================
-   RESET
-   ============================================================ */
 function resetGame(){
   drawnNumbers=[];extraNumbers=[];luckyMonth='';heartTeam='';
   isGameFinished=false;isDrawing=false;
@@ -708,9 +680,7 @@ function buildAvailablePool(){
 function formatNumber(num){
   if(isSuperSete) return num.toString();
   // ✅ Lotomania: 0 e 100 viram "00" (o volante oficial usa 00–99)
-  if(config.id==='LOTOMANIA'){
-    if(num===0 || num===100) return '00';
-  }
+  if(config.id==='LOTOMANIA' && (num===0 || num===100)) return '00';
   return num<10?'0'+num:num.toString();
 }
 function getRandomNumber(min,max){return Math.floor(Math.random()*(max-min+1))+min;}
@@ -747,9 +717,6 @@ function updateStatus(){
   }
 }
 
-/* ============================================================
-   SORTEAR 1
-   ============================================================ */
 function drawOne(){
   if(isDrawing) return;
   if(isGameFinished){resetGame();return;}
@@ -796,9 +763,6 @@ function drawOne(){
   },50);
 }
 
-/* ============================================================
-   SORTEAR TODOS
-   ============================================================ */
 function drawAll(){
   if(isDrawing||isGameFinished) return;
   isDrawing=true;btnDrawOne.disabled=true;btnDrawAll.disabled=true;
@@ -832,14 +796,10 @@ function drawAll(){
   },800);
 }
 
-/* ============================================================
-   FINALIZAR
-   ============================================================ */
 function finishGame(){
   isGameFinished=true;gamesCompleted++;tray.classList.add('complete');
   if(config.hasExtraNumbers){
     while(extraNumbers.length<config.totalExtraNumbersToPick){
-      // ✅ CORRIGIDO: removida a atribuição global implícita
       const n=getRandomNumber(config.minExtraNumber, config.maxExtraNumber);
       if(!extraNumbers.includes(n)) extraNumbers.push(n);
     }
@@ -869,9 +829,6 @@ function updateDrawnArea(){
   drawnContainer.innerHTML=sorted.map(n=>`<div class="ball" style="background:${config.color}">${formatNumber(n)}</div>`).join('');
 }
 
-/* ============================================================
-   CHIPS DE EXCLUÍDOS
-   ============================================================ */
 function renderExcludedChips(){
   if(!excludedChips) return;
   if(isSuperSete){
@@ -896,9 +853,6 @@ function renderExcludedChips(){
   }
 }
 
-/* ============================================================
-   SUPER SETE — grade clicável
-   ============================================================ */
 function buildSuperSeteExclusionUI(){
   let html=`<div class="ss-grid"><div class="ss-corner">Col</div>`;
   for(let c=1;c<=7;c++) html+=`<div class="ss-col-head">C${c}</div>`;
@@ -910,7 +864,6 @@ function buildSuperSeteExclusionUI(){
     }
   }
   html+='</div>';
-  // Aviso de instrução
   html+=`<p class="ss-tip">${t('ssTip')}</p>`;
   superSeteContainer.innerHTML=html;
 
@@ -932,9 +885,6 @@ function buildSuperSeteExclusionUI(){
   renderExcludedChips();
 }
 
-/* ============================================================
-   APLICAR / LIMPAR EXCLUSÕES
-   ============================================================ */
 btnApplyExclusion.addEventListener('click',()=>{
   if(isSuperSete){
     superSeteExclusions={};
@@ -966,9 +916,6 @@ btnApplyExclusion.addEventListener('click',()=>{
   excludedInput.value='';
 });
 
-/* ============================================================
-   SALVAR / LIMPAR / EVENTOS
-   ============================================================ */
 btnSave.addEventListener('click',()=>{
   if(drawnNumbers.length===0){showToast(t('toastNoSaved'));return;}
   const list=JSON.parse(localStorage.getItem('saved_games_list')||'[]');
@@ -991,9 +938,6 @@ langSelect.addEventListener('change',e=>{
   if(isSuperSete) buildSuperSeteExclusionUI();
 });
 
-/* ============================================================
-   TABS
-   ============================================================ */
 document.querySelectorAll('.tab-btn').forEach(btn=>{
   btn.addEventListener('click',()=>{
     document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
@@ -1027,8 +971,7 @@ async function carregarHistoricoJSON(key){
 }
 const concursoHeader=d=>d.concurso||d.numero||d.id||'?';
 
-const display = (key==='lotomania' && n===100) ? '00' : String(n).padStart(2,'0');
-grid+=`<div class="num-cell ${cls}${never?' never':''}">${display}<div class="tip">${tipFmt(s.ocor[n]||[],s.atraso[n])}</div></div>`;
+function calcStats(draws,key){
   const total=TOTAL_NUMEROS[key]||60;
   // ✅ Lotomania: 00–99 (o JSON da Caixa grava "00" como 0).
   //    Demais loterias: 1–N.
@@ -1159,19 +1102,18 @@ async function carregarEstatisticas(key,name){
   document.getElementById('stats_subtitle').textContent=t('analyzed_total')(draws.length);
   document.getElementById('badge_fonte').innerHTML=`<i class="fa-solid fa-database"></i> ${t('source_label')(r.origem,numU)}`;
 
+  const displayFn = (n) => (key==='lotomania' && n===100) ? '00' : String(n).padStart(2,'0');
+
   let grid=`<div class="num-grid" style="grid-template-columns:repeat(${cols},1fr);">`;
   s.nums.forEach(n=>{
     const cls=classificar(n,s);
     const never=(s.freq[n]||0)===0;
-    grid+=`<div class="num-cell ${cls}${never?' never':''}">${String(n).padStart(2,'0')}<div class="tip">${tipFmt(s.ocor[n]||[],s.atraso[n])}</div></div>`;
+    grid+=`<div class="num-cell ${cls}${never?' never':''}">${displayFn(n)}<div class="tip">${tipFmt(s.ocor[n]||[],s.atraso[n])}</div></div>`;
   });
   grid+='</div>';
 
   const nU=(ultimo.dezenas||ultimo.listaDezenas||[]).map(n=>parseInt(n,10)).sort((a,b)=>a-b);
-  const ultBalls=nU.map(n=>{
-  const display = (key==='lotomania' && n===100) ? '00' : String(n).padStart(2,'0');
-  return `<div class="num-cell result-ball ${classificar(n,s)}">${display}<div class="tip">${tipFmt(s.ocor[n]||[],s.atraso[n])}</div></div>`;
-}).join('');
+  const ultBalls=nU.map(n=>`<div class="num-cell result-ball ${classificar(n,s)}">${displayFn(n)}<div class="tip">${tipFmt(s.ocor[n]||[],s.atraso[n])}</div></div>`).join('');
 
   const m=s.metricas;
   const metrics=[
@@ -1187,13 +1129,12 @@ async function carregarEstatisticas(key,name){
   ];
   const mHtml=`<div class="metric-grid">${metrics.map(x=>`<div class="metric-card"><div class="lbl"><i class="fa-solid ${x.i}"></i> ${x.l}</div><div class="val">${x.v}</div></div>`).join('')}</div>`;
 
- const lista=(arr,max,tipo)=>arr.map(it=>{
-  const pct=Math.round((it.freq/max)*100)||0;
-  const dPct=Math.round((it.atraso/s.metricas.atrasoMax)*100)||0;
-  const p=tipo==='delay'?dPct:pct;
-  const val=tipo==='delay'?`${it.atraso}`:`${it.freq}x`;
-  const display = (key==='lotomania' && it.num===100) ? '00' : String(it.num).padStart(2,'0');
-  return `<li class="list-row"><span class="row-num">${display}</span>
+  const lista=(arr,max,tipo)=>arr.map(it=>{
+    const pct=Math.round((it.freq/max)*100)||0;
+    const dPct=Math.round((it.atraso/m.atrasoMax)*100)||0;
+    const p=tipo==='delay'?dPct:pct;
+    const val=tipo==='delay'?`${it.atraso}`:`${it.freq}x`;
+    return `<li class="list-row"><span class="row-num">${displayFn(it.num)}</span>
       <div class="row-bar"><div class="row-fill ${tipo==='cold'?'cold':''}${tipo==='delay'?'delay':''}" style="width:${p}%"></div></div>
       <span class="row-val">${val}</span></li>`;
   }).join('');
@@ -1205,10 +1146,7 @@ async function carregarEstatisticas(key,name){
   const recentes=s.ultimos.map(d=>{
     const n=concursoHeader(d),data=d.data||d.dataApuracao||'';
     const bolas=(d.dezenas||d.listaDezenas||[]).map(x=>parseInt(x,10)).sort((a,b)=>a-b)
-  .map(x=>{
-    const display = (key==='lotomania' && x===100) ? '00' : String(x).padStart(2,'0');
-    return `<span class="num-cell recent-ball ${classificar(x,s)}">${display}</span>`;
-  }).join('');
+      .map(x=>`<span class="num-cell recent-ball ${classificar(x,s)}">${displayFn(x)}</span>`).join('');
     return `<div class="recent-row"><div><div class="rr-num">#${n}</div><div class="rr-date">${data}</div></div>
       <div class="recent-balls">${bolas}</div></div>`;
   }).join('');
