@@ -720,7 +720,7 @@ function refreshStandardPool(){
 
 function formatNumber(num){
   if(isSuperSete) return num.toString();
-  if(config.id==='LOTOMANIA' && num===0) return '00';
+  if(config.id==='LOTOMANIA' && (num===0 || num===100)) return '00';  // ← adiciona 100
   return num<10?'0'+num:num.toString();
 }
 function getRandomNumber(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
