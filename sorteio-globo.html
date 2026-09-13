@@ -1168,7 +1168,10 @@ async function carregarEstatisticas(key,name){
   grid+='</div>';
 
   const nU=(ultimo.dezenas||ultimo.listaDezenas||[]).map(n=>parseInt(n,10)).sort((a,b)=>a-b);
-  const ultBalls=nU.map(n=>`<div class="num-cell result-ball ${classificar(n,s)}">${String(n).padStart(2,'0')}<div class="tip">${tipFmt(s.ocor[n]||[],s.atraso[n])}</div></div>`).join('');
+  const ultBalls=nU.map(n=>{
+  const display = (key==='lotomania' && n===100) ? '00' : String(n).padStart(2,'0');
+  return `<div class="num-cell result-ball ${classificar(n,s)}">${display}<div class="tip">${tipFmt(s.ocor[n]||[],s.atraso[n])}</div></div>`;
+}).join('');
 
   const m=s.metricas;
   const metrics=[
