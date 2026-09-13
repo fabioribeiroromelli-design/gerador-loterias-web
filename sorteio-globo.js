@@ -1155,24 +1155,31 @@ async function carregarHistoricoJSON(loteria){
 function getConcursoHeader(draw){ return draw.concurso||draw.numero||draw.id||'?'; }
 
 function calcularEstatisticasCompletas(draws,loteria){
-  const totalNumeros=TOTAL_NUMEROS[loteria]||60;
-  const numeros=Array.from({length:totalNumeros},(_,i)=>i+1);
-  const valido=n=>(n>=1&&n<=totalNumeros);
-  const ordenadoDesc=[...draws].sort((a,b)=>Number(getConcursoHeader(b))-Number(getConcursoHeader(a)));
-  const freq={},ocorrencias={},atrasoAtual={};
-  numeros.forEach(n=>{freq[n]=0;ocorrencias[n]=[];atrasoAtual[n]=-1;});
+  const totalNumeros = TOTAL_NUMEROS[loteria] || 60;
+  // ✅ Lotomania: 00–99 (o JSON da Caixa grava o "00" como 0).
+  //    Demais loterias: 1–N.
+  const isLotomania = (loteria === 'lotomania');
+  const numeros = isLotomania
+    ? Array.from({length: 100}, (_, i) => i)                 // [0, 1, 2, ..., 99]
+    : Array.from({length: totalNumeros}, (_, i) => i + 1);   // [1, 2, ..., N]
+  const valido = n => isLotomania ? (n >= 0 && n <= 99) : (n >= 1 && n <= totalNumeros);
+
+  const ordenadoDesc = [...draws].sort((a,b)=>Number(getConcursoHeader(b))-Number(getConcursoHeader(a)));
+  const freq={}, ocorrencias={}, atrasoAtual={};
+  numeros.forEach(n=>{freq[n]=0; ocorrencias[n]=[]; atrasoAtual[n]=-1;});
+
   ordenadoDesc.forEach((draw,idx)=>{
     const num=getConcursoHeader(draw);
     const nums=(draw.dezenas||draw.listaDezenas||[]).map(n=>parseInt(n,10));
     nums.forEach(n=>{
       if(valido(n)){
-        freq[n]++;ocorrencias[n].push(num);
+        freq[n]++; ocorrencias[n].push(num);
         if(atrasoAtual[n]===-1) atrasoAtual[n]=idx;
       }
     });
   });
-  numeros.forEach(n=>{if(atrasoAtual[n]===-1) atrasoAtual[n]=ordenadoDesc.length;});
 
+  numeros.forEach(n=>{ if(atrasoAtual[n]===-1) atrasoAtual[n]=ordenadoDesc.length; });
   let somaTotal=0,paresTotal=0,imparesTotal=0,primosTotal=0,ampTotal=0,repTotal=0,maxSeq=0,contRep=0;
   ordenadoDesc.forEach((draw,idx)=>{
     const nums=(draw.dezenas||draw.listaDezenas||[]).map(n=>parseInt(n,10)).filter(n=>!isNaN(n));
