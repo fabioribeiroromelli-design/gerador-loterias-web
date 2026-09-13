@@ -707,7 +707,10 @@ function buildAvailablePool(){
 
 function formatNumber(num){
   if(isSuperSete) return num.toString();
-  if(config.id==='LOTOMANIA'&&num===0) return '00';
+  // ✅ Lotomania: 0 e 100 viram "00" (o volante oficial usa 00–99)
+  if(config.id==='LOTOMANIA'){
+    if(num===0 || num===100) return '00';
+  }
   return num<10?'0'+num:num.toString();
 }
 function getRandomNumber(min,max){return Math.floor(Math.random()*(max-min+1))+min;}
