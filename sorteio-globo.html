@@ -1187,12 +1187,13 @@ async function carregarEstatisticas(key,name){
   ];
   const mHtml=`<div class="metric-grid">${metrics.map(x=>`<div class="metric-card"><div class="lbl"><i class="fa-solid ${x.i}"></i> ${x.l}</div><div class="val">${x.v}</div></div>`).join('')}</div>`;
 
-  const lista=(arr,max,tipo)=>arr.map(it=>{
-    const pct=Math.round((it.freq/max)*100)||0;
-    const dPct=Math.round((it.atraso/m.atrasoMax)*100)||0;
-    const p=tipo==='delay'?dPct:pct;
-    const val=tipo==='delay'?`${it.atraso}`:`${it.freq}x`;
-    return `<li class="list-row"><span class="row-num">${String(it.num).padStart(2,'0')}</span>
+ const lista=(arr,max,tipo)=>arr.map(it=>{
+  const pct=Math.round((it.freq/max)*100)||0;
+  const dPct=Math.round((it.atraso/s.metricas.atrasoMax)*100)||0;
+  const p=tipo==='delay'?dPct:pct;
+  const val=tipo==='delay'?`${it.atraso}`:`${it.freq}x`;
+  const display = (key==='lotomania' && it.num===100) ? '00' : String(it.num).padStart(2,'0');
+  return `<li class="list-row"><span class="row-num">${display}</span>
       <div class="row-bar"><div class="row-fill ${tipo==='cold'?'cold':''}${tipo==='delay'?'delay':''}" style="width:${p}%"></div></div>
       <span class="row-val">${val}</span></li>`;
   }).join('');
