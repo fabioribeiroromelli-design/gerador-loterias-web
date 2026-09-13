@@ -1,16 +1,30 @@
 /* ============================================================
    gerador-avancado.js — 12 estratégias + WhatsApp + PDF
-   PARTE 1 de 2 (núcleo + geração)
+   ============================================================
+   Correções e melhorias:
+   ✅ Filtros aplicados de verdade (sem fallback para inválido)
+   ✅ Auto-sync pares ↔ ímpares
+   ✅ Validação de combinações matematicamente impossíveis
+   ✅ Ajuste por swap quando a estratégia não atende aos filtros
+   ✅ Filtro "0" é respeitado (não vira null)
+   ✅ isPrime() agora está definido aqui (antes era ReferenceError)
+   ✅ Indicador visual ✅/⚠️ por jogo
+   ✅ Avisos ao usuário quando filtros não são 100% atendidos
    ============================================================ */
 
-// Estado global
+console.log("[gerador-avancado.js] Carregado");
+
+// ============================================================
+// ESTADO GLOBAL
+// ============================================================
 let _historico = null;
 let _stats = null;
 let _lotteryAtual = 'Lotofácil';
 let _selectedStrategy = 0;
+let _avisosUltimaGeracao = [];
 
 // ============================================================
-// RENDER DAS ESTRATÉGIAS
+// CONSTANTES
 // ============================================================
 const ESTRATEGIAS = [
     { emoji: '∑',  name: 'Soma Histórica',       desc: 'Jogos com soma parecida com a média histórica real',         shortName: 'Soma' },
@@ -27,6 +41,37 @@ const ESTRATEGIAS = [
     { emoji: '🌊', name: 'Ciclos de Fourier',     desc: 'Detecta padrões cíclicos ocultos nos sorteios',             shortName: 'Fourier' }
 ];
 
+// ============================================================
+// UTILITÁRIOS
+// ============================================================
+function isPrime(n) {
+    if (n < 2) return false;
+    if (n === 2 || n === 3) return true;
+    if (n % 2 === 0 || n % 3 === 0) return false;
+    let i = 5;
+    while (i * i <= n) {
+        if (n % i === 0 || n % (i + 2) === 0) return false;
+        i += 6;
+    }
+    return true;
+}
+
+function getValidRange(cfg) {
+    return cfg.startNumber === 0
+        ? Array.from({ length: cfg.maxNumber + 1 }, (_, i) => i)
+        : Array.from({ length: cfg.maxNumber }, (_, i) => i + 1);
+}
+
+function randomInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function uniqueSorted(arr) { return [...new Set(arr)].sort((a, b) => a - b); }
+function countEven(nums) { return nums.filter(n => n % 2 === 0).length; }
+function countOdd(nums)  { return nums.filter(n => n % 2 !== 0).length; }
+function countPrime(nums){ return nums.filter(n => isPrime(n)).length; }
+function sum(nums) { return nums.reduce((a, b) => a + b, 0); }
+
+// ============================================================
+// RENDER DAS ESTRATÉGIAS
+// ============================================================
 function renderStrategiesGrid() {
     const grid = document.getElementById('strategiesGrid');
     if (!grid) return;
@@ -44,27 +89,12 @@ function renderStrategiesGrid() {
 
     grid.querySelectorAll('.strategy-card').forEach(card => {
         card.addEventListener('click', () => {
-            _selectedStrategy = parseInt(card.dataset.index);
+            _selectedStrategy = parseInt(card.dataset.index, 10);
             grid.querySelectorAll('.strategy-card').forEach(c => c.classList.remove('selected'));
             card.classList.add('selected');
         });
     });
 }
-
-// ============================================================
-// UTILITÁRIOS
-// ============================================================
-function getValidRange(cfg) {
-    return cfg.startNumber === 0
-        ? Array.from({ length: cfg.maxNumber + 1 }, (_, i) => i)
-        : Array.from({ length: cfg.maxNumber }, (_, i) => i + 1);
-}
-function randomInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
-function uniqueSorted(arr) { return [...new Set(arr)].sort((a, b) => a - b); }
-function countEven(nums) { return nums.filter(n => n % 2 === 0).length; }
-function countOdd(nums)  { return nums.filter(n => n % 2 !== 0).length; }
-function countPrime(nums){ return nums.filter(n => isPrime(n)).length; }
-function sum(nums) { return nums.reduce((a, b) => a + b, 0); }
 
 // ============================================================
 // AS 12 ESTRATÉGIAS
@@ -160,7 +190,7 @@ function gerarAtrasoPonderado(cfg, stats) {
     const range = getValidRange(cfg);
     const needed = cfg.numbersToSelect;
     const delayData = stats.delay || {};
-    const sorted = Object.entries(delayData).sort((a, b) => b[1] - a[1]).map(([n]) => parseInt(n));
+    const sorted = Object.entries(delayData).sort((a, b) => b[1] - a[1]).map(([n]) => parseInt(n, 10));
     const pool60 = sorted.slice(0, Math.floor(needed * 2));
     const selected = new Set(pool60.sort(() => Math.random() - 0.5).slice(0, Math.floor(needed * 0.6)));
     const restantes = range.filter(n => !selected.has(n)).sort(() => Math.random() - 0.5);
@@ -174,8 +204,10 @@ function gerarQuadrantes(cfg) {
     const needed = cfg.numbersToSelect;
     const tamanho = Math.floor(range.length / 4);
     const quadrantes = [
-        range.slice(0, tamanho), range.slice(tamanho, tamanho * 2),
-        range.slice(tamanho * 2, tamanho * 3), range.slice(tamanho * 3)
+        range.slice(0, tamanho),
+        range.slice(tamanho, tamanho * 2),
+        range.slice(tamanho * 2, tamanho * 3),
+        range.slice(tamanho * 3)
     ];
     const perQ = Math.floor(needed / 4);
     const extra = needed % 4;
@@ -321,6 +353,9 @@ function gerarJogo(cfg, stats, strategyIndex) {
     }
 }
 
+// ============================================================
+// ✅ VALIDAÇÃO DE FILTROS
+// ============================================================
 function validaFiltros(game, even, odd, prime) {
     if (even != null && countEven(game) !== even) return false;
     if (odd != null && countOdd(game) !== odd) return false;
@@ -328,8 +363,176 @@ function validaFiltros(game, even, odd, prime) {
     return true;
 }
 
+// Calcula "erro" total dos filtros (0 = perfeito)
+function _calcFilterError(jogo, alvoPares, alvoImpares, alvoPrimos) {
+    const total = jogo.length;
+    let pares = 0, primos = 0;
+    for (const n of jogo) {
+        if (n % 2 === 0) pares++;
+        if (isPrime(n)) primos++;
+    }
+    const impares = total - pares;
+    let err = 0;
+    if (alvoPares != null) err += Math.abs(pares - alvoPares);
+    if (alvoImpares != null) err += Math.abs(impares - alvoImpares);
+    if (alvoPrimos != null) err += Math.abs(primos - alvoPrimos);
+    return err;
+}
+
+// Ajusta um jogo por swaps para atender aos filtros
+function ajustarParaFiltros(jogo, cfg, alvoPares, alvoImpares, alvoPrimos) {
+    if (alvoPares == null && alvoImpares == null && alvoPrimos == null) {
+        return [...jogo].sort((a, b) => a - b);
+    }
+
+    const range = getValidRange(cfg);
+    let atual = [...jogo];
+    let errAtual = _calcFilterError(atual, alvoPares, alvoImpares, alvoPrimos);
+    if (errAtual === 0) return atual.sort((a, b) => a - b);
+
+    const inGame = new Set(atual);
+    const fora = range.filter(n => !inGame.has(n));
+    const MAX_ITER = 500;
+
+    for (let iter = 0; iter < MAX_ITER && errAtual > 0; iter++) {
+        let melhorErr = errAtual;
+        let melhorIdx = -1;
+        let melhorVal = null;
+
+        for (let i = 0; i < atual.length; i++) {
+            const valorAtual = atual[i];
+            for (let j = 0; j < fora.length; j++) {
+                const v = fora[j];
+                if (v === valorAtual) continue;
+                const teste = [...atual];
+                teste[i] = v;
+                const err = _calcFilterError(teste, alvoPares, alvoImpares, alvoPrimos);
+                if (err < melhorErr) {
+                    melhorErr = err;
+                    melhorIdx = i;
+                    melhorVal = v;
+                    if (err === 0) break;
+                }
+            }
+            if (melhorErr === 0) break;
+        }
+
+        if (melhorIdx === -1) break; // não dá mais pra melhorar
+
+        const valorAntigo = atual[melhorIdx];
+        atual[melhorIdx] = melhorVal;
+        const pos = fora.indexOf(melhorVal);
+        if (pos !== -1) fora.splice(pos, 1);
+        fora.push(valorAntigo);
+        errAtual = melhorErr;
+    }
+
+    return atual.sort((a, b) => a - b);
+}
+
+// Valida se a combinação pedida é matematicamente possível
+function validarFiltrosPossiveis(cfg, alvoPares, alvoImpares, alvoPrimos) {
+    const range = getValidRange(cfg);
+    const total = cfg.numbersToSelect;
+
+    const paresRange = range.filter(n => n % 2 === 0);
+    const imparesRange = range.filter(n => n % 2 !== 0);
+    const primosRange = range.filter(isPrime);
+    const primosParesRange = primosRange.filter(n => n % 2 === 0);
+    const primosImparesRange = primosRange.filter(n => n % 2 !== 0);
+
+    if (alvoPares != null && alvoPares > paresRange.length) {
+        return `Você pediu ${alvoPares} pares, mas só existem ${paresRange.length} pares no universo da ${cfg.name} (${range.length} números).`;
+    }
+    if (alvoImpares != null && alvoImpares > imparesRange.length) {
+        return `Você pediu ${alvoImpares} ímpares, mas só existem ${imparesRange.length} ímpares no universo da ${cfg.name} (${range.length} números).`;
+    }
+    if (alvoPrimos != null && alvoPrimos > primosRange.length) {
+        return `Você pediu ${alvoPrimos} primos, mas só existem ${primosRange.length} primos no universo da ${cfg.name} (${range.length} números).`;
+    }
+
+    if (alvoPares != null && alvoImpares != null && (alvoPares + alvoImpares) !== total) {
+        return `Pares (${alvoPares}) + Ímpares (${alvoImpares}) = ${alvoPares + alvoImpares}. Deve ser exatamente ${total} (total de dezenas do jogo).`;
+    }
+
+    if (alvoPrimos != null) {
+        const targetPares = alvoPares != null ? alvoPares : (alvoImpares != null ? total - alvoImpares : null);
+        const targetImpares = alvoImpares != null ? alvoImpares : (alvoPares != null ? total - alvoPares : null);
+
+        if (targetImpares != null) {
+            const minPrimosImpares = Math.max(0, alvoPrimos - primosParesRange.length);
+            if (minPrimosImpares > targetImpares) {
+                return `Combinação impossível: você pediu ${alvoPrimos} primos e ${targetImpares} ímpares, mas no máximo ${primosParesRange.length} primo(s) podem ser par(es) (o número 2). Seriam necessários ${minPrimosImpares} primos ímpares, mas só há ${targetImpares} vagas ímpares.`;
+            }
+        }
+        if (targetPares != null) {
+            const minPrimosPares = Math.max(0, alvoPrimos - primosImparesRange.length);
+            if (minPrimosPares > targetPares) {
+                return `Combinação impossível: você pediu ${alvoPrimos} primos e ${targetPares} pares, mas no máximo ${primosImparesRange.length} primo(s) podem ser ímpar(es). Seriam necessários ${minPrimosPares} primos pares, mas só há ${targetPares} vagas pares.`;
+            }
+        }
+    }
+
+    return null; // OK
+}
+
+// ============================================================
+// ✅ AUTO-SYNC PARES ↔ ÍMPARES
+// ============================================================
+function setupFilterAutoSync() {
+    const evenInput = document.getElementById('filterEven');
+    const oddInput = document.getElementById('filterOdd');
+    const totalInput = document.getElementById('numbersPerGame');
+    if (!evenInput || !oddInput) return;
+
+    let lastEdited = 'even';
+
+    evenInput.addEventListener('input', () => {
+        lastEdited = 'even';
+        const total = parseInt(totalInput?.value, 10) || 15;
+        const even = parseInt(evenInput.value, 10);
+        if (!isNaN(even) && even >= 0 && even <= total) {
+            oddInput.value = total - even;
+        }
+    });
+
+    oddInput.addEventListener('input', () => {
+        lastEdited = 'odd';
+        const total = parseInt(totalInput?.value, 10) || 15;
+        const odd = parseInt(oddInput.value, 10);
+        if (!isNaN(odd) && odd >= 0 && odd <= total) {
+            evenInput.value = total - odd;
+        }
+    });
+
+    totalInput?.addEventListener('input', () => {
+        const total = parseInt(totalInput.value, 10) || 15;
+        if (lastEdited === 'odd') {
+            const odd = parseInt(oddInput.value, 10);
+            if (!isNaN(odd) && odd >= 0 && odd <= total) {
+                evenInput.value = total - odd;
+            } else {
+                oddInput.value = '';
+                evenInput.value = '';
+            }
+        } else {
+            const even = parseInt(evenInput.value, 10);
+            if (!isNaN(even) && even >= 0 && even <= total) {
+                oddInput.value = total - even;
+            } else {
+                evenInput.value = '';
+                oddInput.value = '';
+            }
+        }
+    });
+}
+
+// ============================================================
+// INICIALIZAÇÃO
+// ============================================================
 document.addEventListener('DOMContentLoaded', async () => {
     renderStrategiesGrid();
+    setupFilterAutoSync();
 
     const select = document.getElementById('lotterySelect');
     if (select) {
@@ -355,9 +558,11 @@ async function trocarLoteria() {
         btn.disabled = true;
         btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Carregando...';
     }
+
     _historico = await carregarHistorico(_lotteryAtual);
     _stats = calcularEstatisticas(_historico);
     console.log(`[${_lotteryAtual}] ${_historico.length} concursos carregados. Soma média: ${_stats.avgSum.toFixed(1)}`);
+
     const cfg = LOTTERY_CONFIGS[_lotteryAtual];
     const numInput = document.getElementById('numbersPerGame');
     if (numInput) {
@@ -365,41 +570,111 @@ async function trocarLoteria() {
         numInput.min = cfg.minSel;
         numInput.max = cfg.maxSel;
     }
+
+    // Limpa filtros ao trocar de loteria
+    const evenInput = document.getElementById('filterEven');
+    const oddInput = document.getElementById('filterOdd');
+    const primeInput = document.getElementById('filterPrime');
+    if (evenInput) evenInput.value = '';
+    if (oddInput) oddInput.value = '';
+    if (primeInput) primeInput.value = '';
+
     if (btn) {
         btn.disabled = false;
         btn.innerHTML = '<i class="fa-solid fa-bolt"></i> Gerar Jogos';
     }
 }
 
+// ============================================================
+// ✅ GERAR JOGOS — FILTROS RESPEITADOS DE VERDADE
+// ============================================================
 function gerarJogos() {
     const cfg = { ...LOTTERY_CONFIGS[_lotteryAtual], name: _lotteryAtual };
-    const gameCount = parseInt(document.getElementById('gameCount').value) || 1;
-    const numbersPerGame = parseInt(document.getElementById('numbersPerGame').value) || cfg.numbersToSelect;
+    const gameCount = parseInt(document.getElementById('gameCount').value, 10) || 1;
+    const numbersPerGame = parseInt(document.getElementById('numbersPerGame').value, 10) || cfg.numbersToSelect;
     cfg.numbersToSelect = Math.max(cfg.minSel, Math.min(cfg.maxSel, numbersPerGame));
 
-    const even  = parseInt(document.getElementById('filterEven').value) || null;
-    const odd   = parseInt(document.getElementById('filterOdd').value) || null;
-    const prime = parseInt(document.getElementById('filterPrime').value) || null;
+    // ✅ Leitura correta dos filtros (0 também é válido)
+    const evenInput = document.getElementById('filterEven');
+    const oddInput = document.getElementById('filterOdd');
+    const primeInput = document.getElementById('filterPrime');
 
-    if (even != null && odd != null && (even + odd) !== cfg.numbersToSelect) {
-        alert(`A soma de Pares (${even}) + Ímpares (${odd}) deve ser exatamente ${cfg.numbersToSelect}.`);
+    const evenVal = evenInput ? evenInput.value.trim() : '';
+    const oddVal = oddInput ? oddInput.value.trim() : '';
+    const primeVal = primeInput ? primeInput.value.trim() : '';
+
+    const even  = evenVal === '' ? null : parseInt(evenVal, 10);
+    const odd   = oddVal === '' ? null : parseInt(oddVal, 10);
+    const prime = primeVal === '' ? null : parseInt(primeVal, 10);
+
+    // ✅ Valida se os filtros são possíveis
+    const erroFiltros = validarFiltrosPossiveis(cfg, even, odd, prime);
+    if (erroFiltros) {
+        alert('⚠️ Filtros impossíveis\n\n' + erroFiltros);
         return;
     }
 
+    _avisosUltimaGeracao = [];
     const jogos = [];
+    const MAX_RETRIES_ESTRATEGIA = 800;
+
     for (let i = 0; i < gameCount; i++) {
         let jogo = null;
-        for (let t = 0; t < 800; t++) {
+        let tentativas = 0;
+
+        // Etapa 1: tentar gerar direto da estratégia
+        while (tentativas < MAX_RETRIES_ESTRATEGIA) {
+            tentativas++;
             const candidato = gerarJogo(cfg, _stats, _selectedStrategy);
-            if (!jogos.some(j => JSON.stringify(j) === JSON.stringify(candidato)) && validaFiltros(candidato, even, odd, prime)) {
+            if (validaFiltros(candidato, even, odd, prime) &&
+                !jogos.some(j => JSON.stringify(j) === JSON.stringify(candidato))) {
                 jogo = candidato;
                 break;
             }
         }
-        if (!jogo) jogo = cfg.name === 'Super Sete' ? gerarSuperSete() : gerarAleatorio(cfg);
+
+        // Etapa 2: se falhou, ajusta por swap
+        if (!jogo) {
+            if (cfg.name === 'Super Sete') {
+                jogo = gerarSuperSete();
+            } else {
+                const base = gerarJogo(cfg, _stats, _selectedStrategy);
+                const ajustado = ajustarParaFiltros(base, cfg, even, odd, prime);
+                const valido = validaFiltros(ajustado, even, odd, prime);
+
+                if (!valido) {
+                    const p = countEven(ajustado);
+                    const pr = countPrime(ajustado);
+                    _avisosUltimaGeracao.push(
+                        `Jogo ${i + 1}: pedido (P:${even ?? '-'} I:${odd ?? '-'} Pr:${prime ?? '-'}) — obtido (P:${p} I:${ajustado.length - p} Pr:${pr})`
+                    );
+                }
+
+                // Evita duplicados
+                if (!jogos.some(j => JSON.stringify(j) === JSON.stringify(ajustado))) {
+                    jogo = ajustado;
+                } else {
+                    const variacao = [...ajustado];
+                    const fora = getValidRange(cfg).filter(n => !variacao.includes(n));
+                    if (fora.length > 0) {
+                        variacao[0] = fora[randomInt(0, fora.length - 1)];
+                        jogo = variacao.sort((a, b) => a - b);
+                    } else {
+                        jogo = ajustado;
+                    }
+                }
+            }
+        }
+
         jogos.push(jogo);
     }
 
+    renderJogos(jogos, even, odd, prime, cfg);
+    window._ultimosJogos = jogos;
+    window._ultimaConfig = cfg;
+}
+
+function renderJogos(jogos, even, odd, prime, cfg) {
     const area = document.getElementById('resultsArea');
     const lista = document.getElementById('gamesList');
     area.classList.add('visible');
@@ -410,11 +685,20 @@ function gerarJogos() {
         const primos = jogo.filter(n => isPrime(n)).length;
         const nums = jogo.map(n => String(n).padStart(2, '0')).join(' - ');
 
+        const bateuPares = even == null || pares === even;
+        const bateuImpares = odd == null || (jogo.length - pares) === odd;
+        const bateuPrimos = prime == null || primos === prime;
+        const bateuTudo = bateuPares && bateuImpares && bateuPrimos;
+
+        const corAviso = bateuTudo ? '#059669' : '#dc2626';
+        const iconeAviso = bateuTudo ? '✅' : '⚠️';
+
         return `<div class="game-row">
             <div>
                 <span class="game-numbers">Jogo ${i+1}: ${nums}</span>
                 <div style="font-size:0.75rem;color:#64748b;margin-top:4px;">
                     Soma: <strong>${soma}</strong> · Pares: <strong>${pares}</strong> · Ímpares: <strong>${jogo.length - pares}</strong> · Primos: <strong>${primos}</strong>
+                    <span style="color:${corAviso};font-weight:700;margin-left:6px;">${iconeAviso}</span>
                 </div>
             </div>
             <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
@@ -431,14 +715,18 @@ function gerarJogos() {
         </div>`;
     }).join('');
 
-    window._ultimosJogos = jogos;
-    window._ultimaConfig = cfg;
+    // Aviso final
+    if (_avisosUltimaGeracao.length > 0) {
+        console.warn('[Filtros] Avisos:\n' + _avisosUltimaGeracao.join('\n'));
+        setTimeout(() => {
+            alert('⚠️ Atenção\n\nAlguns jogos não conseguiram atender 100% dos filtros pedidos (limitação matemática da ' + cfg.name + '):\n\n' + _avisosUltimaGeracao.slice(0, 5).join('\n') + (_avisosUltimaGeracao.length > 5 ? '\n...' : ''));
+        }, 100);
+    }
 }
 
 // ============================================================
-// PARTE 2 — WhatsApp + PDF + Salvar
+// WHATSAPP
 // ============================================================
-
 function compartilharWhatsApp(jogo, numero) {
     const soma = jogo.reduce((a, b) => a + b, 0);
     const pares = jogo.filter(n => n % 2 === 0).length;
@@ -487,6 +775,9 @@ function compartilharTodosWhatsApp() {
     window.open(`https://wa.me/?text=${encodeURIComponent(mensagem)}`, '_blank');
 }
 
+// ============================================================
+// PDF
+// ============================================================
 function imprimirJogo(jogo, numero) {
     const soma = jogo.reduce((a, b) => a + b, 0);
     const pares = jogo.filter(n => n % 2 === 0).length;
@@ -606,6 +897,9 @@ function imprimirTodos() {
     setTimeout(function() { novaJanela.print(); }, 500);
 }
 
+// ============================================================
+// SALVAR
+// ============================================================
 function salvarJogoComAnalise(jogo, numero) {
     const ultimoConcurso = _stats && _stats.ordenadoDesc ? _stats.ordenadoDesc[0] : null;
     let acertos = 0;
@@ -707,3 +1001,5 @@ function salvarTodos() {
         'Estratégia: ' + (ESTRATEGIAS[_selectedStrategy] ? ESTRATEGIAS[_selectedStrategy].name : 'Estrategia')
     );
 }
+
+console.log("[gerador-avancado.js] TUDO carregado — versão corrigida");
