@@ -1204,7 +1204,10 @@ async function carregarEstatisticas(key,name){
   const recentes=s.ultimos.map(d=>{
     const n=concursoHeader(d),data=d.data||d.dataApuracao||'';
     const bolas=(d.dezenas||d.listaDezenas||[]).map(x=>parseInt(x,10)).sort((a,b)=>a-b)
-      .map(x=>`<span class="num-cell recent-ball ${classificar(x,s)}">${String(x).padStart(2,'0')}</span>`).join('');
+  .map(x=>{
+    const display = (key==='lotomania' && x===100) ? '00' : String(x).padStart(2,'0');
+    return `<span class="num-cell recent-ball ${classificar(x,s)}">${display}</span>`;
+  }).join('');
     return `<div class="recent-row"><div><div class="rr-num">#${n}</div><div class="rr-date">${data}</div></div>
       <div class="recent-balls">${bolas}</div></div>`;
   }).join('');
