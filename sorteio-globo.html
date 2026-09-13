@@ -1027,10 +1027,17 @@ async function carregarHistoricoJSON(key){
 }
 const concursoHeader=d=>d.concurso||d.numero||d.id||'?';
 
-function calcStats(draws,key){
+const display = (key==='lotomania' && n===100) ? '00' : String(n).padStart(2,'0');
+grid+=`<div class="num-cell ${cls}${never?' never':''}">${display}<div class="tip">${tipFmt(s.ocor[n]||[],s.atraso[n])}</div></div>`;
   const total=TOTAL_NUMEROS[key]||60;
-  const nums=Array.from({length:total},(_,i)=>i+1);
-  const valido=n=>n>=1&&n<=total;
+  // ✅ Lotomania: 00–99 (o JSON da Caixa grava "00" como 0).
+  //    Demais loterias: 1–N.
+  const isLotomania = (key === 'lotomania');
+  const nums = isLotomania
+    ? Array.from({length: 100}, (_, i) => i)                 // [0, 1, 2, ..., 99]
+    : Array.from({length: total}, (_, i) => i + 1);          // [1, 2, ..., N]
+  const valido = n => isLotomania ? (n >= 0 && n <= 99) : (n >= 1 && n <= total);
+
   const ord=[...draws].sort((a,b)=>Number(concursoHeader(b))-Number(concursoHeader(a)));
   const freq={},ocor={},atraso={};
   nums.forEach(n=>{freq[n]=0;ocor[n]=[];atraso[n]=-1;});
