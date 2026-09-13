@@ -1314,7 +1314,7 @@ async function carregarEstatisticas(loteria,nomeExibicao){
   stats.numeros.forEach(num=>{
     const cls=classificarNumero(num,stats);
     const isNever=(stats.freq[num]||0)===0;
-    const display=num.toString().padStart(2,'0');
+    const display = (loteria==='lotomania' && num===100) ? '00' : num.toString().padStart(2,'0');
     const tip=formatarTooltip(stats.ocorrencias[num]||[],stats.atrasoAtual[num]);
     gridHtml+=`<div class="number-cell ${cls}${isNever?' never':''}">${display}<div class="tooltip">${tip}</div></div>`;
   });
@@ -1324,7 +1324,7 @@ async function carregarEstatisticas(loteria,nomeExibicao){
   let ultimoBallsHtml='';
   [...numerosUltimo].sort((a,b)=>a-b).forEach(n=>{
     const cls=classificarNumero(n,stats);
-    const display=n.toString().padStart(2,'0');
+    const display = (loteria==='lotomania' && n===100) ? '00' : n.toString().padStart(2,'0');
     const tip=formatarTooltip(stats.ocorrencias[n]||[],stats.atrasoAtual[n]);
     ultimoBallsHtml+=`<div class="number-cell result-ball ${cls}">${display}<div class="tooltip">${tip}</div></div>`;
   });
@@ -1352,7 +1352,7 @@ async function carregarEstatisticas(loteria,nomeExibicao){
     const dPct=Math.round((item.atraso/m.atrasoMax)*100)||0;
     const pctFinal=tipo==='delay'?dPct:pct;
     const valTxt=tipo==='delay'?`${item.atraso}`:`${item.freq}x`;
-    const display=String(item.num).padStart(2,'0');
+    const display = (loteria==='lotomania' && item.num===100) ? '00' : String(item.num).padStart(2,'0');
     return `<li class="list-row">
       <span class="row-num">${display}</span>
       <div class="row-bar"><div class="row-fill ${tipo==='cold'?'cold':''} ${tipo==='delay'?'delay':''}" style="width:${pctFinal}%"></div></div>
@@ -1371,7 +1371,8 @@ async function carregarEstatisticas(loteria,nomeExibicao){
     const nums=(draw.dezenas||draw.listaDezenas||[]).map(n=>parseInt(n,10)).sort((a,b)=>a-b);
     const bolas=nums.map(n=>{
       const cls=classificarNumero(n,stats);
-      return `<span class="number-cell recent-ball ${cls}">${String(n).padStart(2,'0')}</span>`;
+      const display = (loteria==='lotomania' && n===100) ? '00' : String(n).padStart(2,'0');
+return `<span class="number-cell recent-ball ${cls}">${display}</span>`;
     }).join('');
     recentesHtml+=`
       <div class="recent-row">
